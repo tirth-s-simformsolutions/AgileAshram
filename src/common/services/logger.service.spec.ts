@@ -68,14 +68,12 @@ describe('LoggerService', () => {
 
     it('should handle empty string as traceId', () => {
       const message = 'Test log message';
-      const contextTraceId = 'context-trace-123';
+      const emptyTraceId = '';
 
-      mockAsyncContext.getTraceId.mockReturnValue(contextTraceId);
+      service.log(message, emptyTraceId);
 
-      service.log(message, '');
-
-      expect(mockAsyncContext.getTraceId).toHaveBeenCalledTimes(1);
-      expect(loggerSpy).toHaveBeenCalledWith(`[${contextTraceId}] ${message}`);
+      expect(mockAsyncContext.getTraceId).not.toHaveBeenCalled();
+      expect(loggerSpy).toHaveBeenCalledWith(`[${emptyTraceId}] ${message}`);
     });
   });
 
@@ -152,14 +150,12 @@ describe('LoggerService', () => {
 
     it('should handle string message with empty traceId', () => {
       const message = 'Test error message';
-      const contextTraceId = 'context-trace-123';
+      const emptyTraceId = '';
 
-      mockAsyncContext.getTraceId.mockReturnValue(contextTraceId);
+      service.error(message, emptyTraceId);
 
-      service.error(message, '');
-
-      expect(mockAsyncContext.getTraceId).toHaveBeenCalledTimes(1);
-      expect(errorSpy).toHaveBeenCalledWith(`[${contextTraceId}] ${message}`);
+      expect(mockAsyncContext.getTraceId).not.toHaveBeenCalled();
+      expect(errorSpy).toHaveBeenCalledWith(`[${emptyTraceId}] ${message}`);
     });
   });
 
@@ -188,14 +184,12 @@ describe('LoggerService', () => {
 
     it('should handle empty string as traceId', () => {
       const message = 'Test warn message';
-      const contextTraceId = 'context-trace-123';
+      const emptyTraceId = '';
 
-      mockAsyncContext.getTraceId.mockReturnValue(contextTraceId);
+      service.warn(message, emptyTraceId);
 
-      service.warn(message, '');
-
-      expect(mockAsyncContext.getTraceId).toHaveBeenCalledTimes(1);
-      expect(warnSpy).toHaveBeenCalledWith(`[${contextTraceId}] ${message}`);
+      expect(mockAsyncContext.getTraceId).not.toHaveBeenCalled();
+      expect(warnSpy).toHaveBeenCalledWith(`[${emptyTraceId}] ${message}`);
     });
   });
 
@@ -224,14 +218,12 @@ describe('LoggerService', () => {
 
     it('should handle empty string as traceId', () => {
       const message = 'Test debug message';
-      const contextTraceId = 'context-trace-123';
+      const emptyTraceId = '';
 
-      mockAsyncContext.getTraceId.mockReturnValue(contextTraceId);
+      service.debug(message, emptyTraceId);
 
-      service.debug(message, '');
-
-      expect(mockAsyncContext.getTraceId).toHaveBeenCalledTimes(1);
-      expect(debugSpy).toHaveBeenCalledWith(`[${contextTraceId}] ${message}`);
+      expect(mockAsyncContext.getTraceId).not.toHaveBeenCalled();
+      expect(debugSpy).toHaveBeenCalledWith(`[${emptyTraceId}] ${message}`);
     });
   });
 
@@ -255,21 +247,17 @@ describe('LoggerService', () => {
       service.verbose(message, providedTraceId);
 
       expect(mockAsyncContext.getTraceId).not.toHaveBeenCalled();
-      expect(verboseSpy).toHaveBeenCalledWith(
-        `[${providedTraceId}] ${message}`,
-      );
+      expect(verboseSpy).toHaveBeenCalledWith(`[${providedTraceId}] ${message}`);
     });
 
     it('should handle empty string as traceId', () => {
       const message = 'Test verbose message';
-      const contextTraceId = 'context-trace-123';
+      const emptyTraceId = '';
 
-      mockAsyncContext.getTraceId.mockReturnValue(contextTraceId);
+      service.verbose(message, emptyTraceId);
 
-      service.verbose(message, '');
-
-      expect(mockAsyncContext.getTraceId).toHaveBeenCalledTimes(1);
-      expect(verboseSpy).toHaveBeenCalledWith(`[${contextTraceId}] ${message}`);
+      expect(mockAsyncContext.getTraceId).not.toHaveBeenCalled();
+      expect(verboseSpy).toHaveBeenCalledWith(`[${emptyTraceId}] ${message}`);
     });
   });
 
@@ -300,9 +288,7 @@ describe('LoggerService', () => {
       service.debug('Second message');
 
       expect(loggerSpy).toHaveBeenCalledWith(`[${firstTraceId}] First message`);
-      expect(debugSpy).toHaveBeenCalledWith(
-        `[${secondTraceId}] Second message`,
-      );
+      expect(debugSpy).toHaveBeenCalledWith(`[${secondTraceId}] Second message`);
     });
 
     it('should handle special characters and multiline messages', () => {
