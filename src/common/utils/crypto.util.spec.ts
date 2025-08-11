@@ -34,13 +34,11 @@ describe('Crypto Utility', () => {
       mockRandomBytes.mockReturnValue(mockBuffer);
 
       // Mock pbkdf2 to call callback with success
-      mockPbkdf2.mockImplementation(
-        (value, salt, iterations, keylen, digest, callback) => {
-          const mockDerivedKey = Buffer.from(mockHash, 'hex');
-          mockDerivedKey.toString = jest.fn().mockReturnValue(mockHash);
-          setImmediate(() => callback(null, mockDerivedKey));
-        },
-      );
+      mockPbkdf2.mockImplementation((value, salt, iterations, keylen, digest, callback) => {
+        const mockDerivedKey = Buffer.from(mockHash, 'hex');
+        mockDerivedKey.toString = jest.fn().mockReturnValue(mockHash);
+        setImmediate(() => callback(null, mockDerivedKey));
+      });
 
       const result = await createHash(testValue);
 
@@ -66,13 +64,11 @@ describe('Crypto Utility', () => {
       mockBuffer.toString = jest.fn().mockReturnValue(mockSalt);
       mockRandomBytes.mockReturnValue(mockBuffer);
 
-      mockPbkdf2.mockImplementation(
-        (value, salt, iterations, keylen, digest, callback) => {
-          const mockDerivedKey = Buffer.from(mockHash, 'hex');
-          mockDerivedKey.toString = jest.fn().mockReturnValue(mockHash);
-          setImmediate(() => callback(null, mockDerivedKey));
-        },
-      );
+      mockPbkdf2.mockImplementation((value, salt, iterations, keylen, digest, callback) => {
+        const mockDerivedKey = Buffer.from(mockHash, 'hex');
+        mockDerivedKey.toString = jest.fn().mockReturnValue(mockHash);
+        setImmediate(() => callback(null, mockDerivedKey));
+      });
 
       const result = await createHash(testValue, customIterations);
 
@@ -95,15 +91,11 @@ describe('Crypto Utility', () => {
       mockBuffer.toString = jest.fn().mockReturnValue('salt123');
       mockRandomBytes.mockReturnValue(mockBuffer);
 
-      mockPbkdf2.mockImplementation(
-        (value, salt, iterations, keylen, digest, callback) => {
-          setImmediate(() => callback(mockError, Buffer.alloc(0)));
-        },
-      );
+      mockPbkdf2.mockImplementation((value, salt, iterations, keylen, digest, callback) => {
+        setImmediate(() => callback(mockError, Buffer.alloc(0)));
+      });
 
-      await expect(createHash(testValue)).rejects.toThrow(
-        'Crypto operation failed',
-      );
+      await expect(createHash(testValue)).rejects.toThrow('Crypto operation failed');
     });
 
     it('should call randomBytes with correct length and format', async () => {
@@ -114,13 +106,11 @@ describe('Crypto Utility', () => {
       mockBuffer.toString = jest.fn().mockReturnValue(mockSalt);
       mockRandomBytes.mockReturnValue(mockBuffer);
 
-      mockPbkdf2.mockImplementation(
-        (value, salt, iterations, keylen, digest, callback) => {
-          const mockDerivedKey = Buffer.from('hash', 'hex');
-          mockDerivedKey.toString = jest.fn().mockReturnValue('hash');
-          setImmediate(() => callback(null, mockDerivedKey));
-        },
-      );
+      mockPbkdf2.mockImplementation((value, salt, iterations, keylen, digest, callback) => {
+        const mockDerivedKey = Buffer.from('hash', 'hex');
+        mockDerivedKey.toString = jest.fn().mockReturnValue('hash');
+        setImmediate(() => callback(null, mockDerivedKey));
+      });
 
       await createHash(testValue);
 
@@ -138,11 +128,9 @@ describe('Crypto Utility', () => {
 
       const mockDerivedKey = Buffer.from(testHash, 'hex');
 
-      mockPbkdf2.mockImplementation(
-        (value, salt, iterations, keylen, digest, callback) => {
-          setImmediate(() => callback(null, mockDerivedKey));
-        },
-      );
+      mockPbkdf2.mockImplementation((value, salt, iterations, keylen, digest, callback) => {
+        setImmediate(() => callback(null, mockDerivedKey));
+      });
 
       // Mock Buffer.from calls
       jest
@@ -174,11 +162,9 @@ describe('Crypto Utility', () => {
 
       const mockDerivedKey = Buffer.from('differenthash', 'hex');
 
-      mockPbkdf2.mockImplementation(
-        (value, salt, iterations, keylen, digest, callback) => {
-          setImmediate(() => callback(null, mockDerivedKey));
-        },
-      );
+      mockPbkdf2.mockImplementation((value, salt, iterations, keylen, digest, callback) => {
+        setImmediate(() => callback(null, mockDerivedKey));
+      });
 
       jest
         .spyOn(Buffer, 'from')
@@ -227,15 +213,11 @@ describe('Crypto Utility', () => {
       const hashedValue = 'hash123.salt456';
       const mockError = new Error('Crypto comparison failed');
 
-      mockPbkdf2.mockImplementation(
-        (value, salt, iterations, keylen, digest, callback) => {
-          setImmediate(() => callback(mockError, Buffer.alloc(0)));
-        },
-      );
+      mockPbkdf2.mockImplementation((value, salt, iterations, keylen, digest, callback) => {
+        setImmediate(() => callback(mockError, Buffer.alloc(0)));
+      });
 
-      await expect(compareHash(testValue, hashedValue)).rejects.toThrow(
-        'Crypto comparison failed',
-      );
+      await expect(compareHash(testValue, hashedValue)).rejects.toThrow('Crypto comparison failed');
     });
 
     it('should return false when buffer lengths differ', async () => {
@@ -250,11 +232,9 @@ describe('Crypto Utility', () => {
         .mockReturnValueOnce(mockHashBuffer)
         .mockReturnValueOnce(mockDerivedBuffer);
 
-      mockPbkdf2.mockImplementation(
-        (value, salt, iterations, keylen, digest, callback) => {
-          setImmediate(() => callback(null, mockDerivedBuffer));
-        },
-      );
+      mockPbkdf2.mockImplementation((value, salt, iterations, keylen, digest, callback) => {
+        setImmediate(() => callback(null, mockDerivedBuffer));
+      });
 
       const result = await compareHash(testValue, hashedValue);
 
@@ -274,11 +254,9 @@ describe('Crypto Utility', () => {
         .mockReturnValueOnce(mockHashBuffer)
         .mockReturnValueOnce(mockDerivedBuffer);
 
-      mockPbkdf2.mockImplementation(
-        (value, salt, iterations, keylen, digest, callback) => {
-          setImmediate(() => callback(null, mockDerivedBuffer));
-        },
-      );
+      mockPbkdf2.mockImplementation((value, salt, iterations, keylen, digest, callback) => {
+        setImmediate(() => callback(null, mockDerivedBuffer));
+      });
 
       mockTimingSafeEqual.mockImplementation(() => {
         throw new Error('Timing comparison failed');
@@ -302,11 +280,9 @@ describe('Crypto Utility', () => {
         .mockReturnValueOnce(mockHashBuffer)
         .mockReturnValueOnce(mockDerivedBuffer);
 
-      mockPbkdf2.mockImplementation(
-        (value, salt, iterations, keylen, digest, callback) => {
-          setImmediate(() => callback(null, mockDerivedBuffer));
-        },
-      );
+      mockPbkdf2.mockImplementation((value, salt, iterations, keylen, digest, callback) => {
+        setImmediate(() => callback(null, mockDerivedBuffer));
+      });
 
       mockTimingSafeEqual.mockReturnValue(true);
 

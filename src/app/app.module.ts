@@ -4,10 +4,7 @@ import { join } from 'path';
 import { I18nModule, AcceptLanguageResolver } from 'nestjs-i18n';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
-import {
-  HttpExceptionsFilter,
-  ResponseInterceptor,
-} from '../core/interceptors';
+import { HttpExceptionsFilter, ResponseInterceptor } from '../core/interceptors';
 import { AuthModule } from '../modules/auth/auth.module';
 import { AuthGuard, CustomThrottlerGuard } from '../core/guards';
 import { UserModule } from '../modules/user/user.module';

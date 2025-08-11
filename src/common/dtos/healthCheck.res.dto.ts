@@ -5,9 +5,7 @@ class HealthCheckDataDto {
   @ApiProperty({ example: 1000 })
   uptime: number;
 }
-export class HealthCheckResponseDto extends PickType(CommonResponseDto, [
-  'error',
-]) {
+export class HealthCheckResponseDto extends PickType(CommonResponseDto, ['error']) {
   @ApiProperty({ example: 'Operation successful' })
   message: string;
 

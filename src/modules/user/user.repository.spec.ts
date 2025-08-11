@@ -82,9 +82,9 @@ describe('UserRepository', () => {
       mockPrismaService.user.findUnique.mockRejectedValue(dbError);
 
       // Act & Assert
-      await expect(
-        repository.findUserById(userId, selectFields),
-      ).rejects.toThrow('Database connection failed');
+      await expect(repository.findUserById(userId, selectFields)).rejects.toThrow(
+        'Database connection failed',
+      );
       expect(prismaService.user.findUnique).toHaveBeenCalledWith({
         where: { id: userId },
         select: selectFields,
@@ -104,10 +104,7 @@ describe('UserRepository', () => {
       mockPrismaService.user.findUnique.mockResolvedValue(expectedUser);
 
       // Act
-      const result = await repository.findUserById(
-        userId,
-        differentSelectFields,
-      );
+      const result = await repository.findUserById(userId, differentSelectFields);
 
       // Assert
       expect(result).toEqual(expectedUser);
@@ -151,9 +148,9 @@ describe('UserRepository', () => {
       mockPrismaService.user.update.mockRejectedValue(notFoundError);
 
       // Act & Assert
-      await expect(
-        repository.updateUserById(userId, updateData),
-      ).rejects.toThrow('Record to update not found');
+      await expect(repository.updateUserById(userId, updateData)).rejects.toThrow(
+        'Record to update not found',
+      );
       expect(prismaService.user.update).toHaveBeenCalledWith({
         where: { id: userId },
         data: updateData,
@@ -166,9 +163,9 @@ describe('UserRepository', () => {
       mockPrismaService.user.update.mockRejectedValue(dbError);
 
       // Act & Assert
-      await expect(
-        repository.updateUserById(userId, updateData),
-      ).rejects.toThrow('Database transaction failed');
+      await expect(repository.updateUserById(userId, updateData)).rejects.toThrow(
+        'Database transaction failed',
+      );
       expect(prismaService.user.update).toHaveBeenCalledWith({
         where: { id: userId },
         data: updateData,

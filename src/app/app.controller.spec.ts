@@ -95,7 +95,7 @@ describe('AppController', () => {
       };
 
       // Test all uptime values
-      await Promise.all(uptimes.map((uptime) => testUptime(uptime)));
+      await Promise.all(uptimes.map(uptime => testUptime(uptime)));
     });
 
     it('should handle successful health check with empty data', async () => {
@@ -131,9 +131,7 @@ describe('AppController', () => {
       const error = new Error('Database connection failed');
       (healthService.check as jest.Mock).mockRejectedValue(error);
 
-      await expect(controller.healthCheck()).rejects.toThrow(
-        'Database connection failed',
-      );
+      await expect(controller.healthCheck()).rejects.toThrow('Database connection failed');
 
       expect(healthService.check).toHaveBeenCalledTimes(1);
     });

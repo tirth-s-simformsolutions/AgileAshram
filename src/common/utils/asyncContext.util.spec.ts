@@ -44,7 +44,7 @@ describe('AsyncContext Utility', () => {
         capturedTraceId = asyncContext.getTraceId();
       });
 
-      expect(capturedTraceId!).toBe(mockTraceId);
+      expect(capturedTraceId).toBe(mockTraceId);
     });
 
     it('should make duration calculation available during execution', () => {
@@ -121,9 +121,7 @@ describe('AsyncContext Utility', () => {
       const outerTraceId = 'abc12345-e89b-12d3-a456-426614174003';
       const innerTraceId = 'def67890-e89b-12d3-a456-426614174004';
 
-      mockCrypto.randomUUID
-        .mockReturnValueOnce(outerTraceId)
-        .mockReturnValueOnce(innerTraceId);
+      mockCrypto.randomUUID.mockReturnValueOnce(outerTraceId).mockReturnValueOnce(innerTraceId);
 
       asyncContext.run(() => {
         const outerTrace = asyncContext.getTraceId();
@@ -146,7 +144,7 @@ describe('AsyncContext Utility', () => {
       const mockTraceId = 'ghi45678-e89b-12d3-a456-426614174005';
       mockCrypto.randomUUID.mockReturnValue(mockTraceId);
 
-      const promise = new Promise<string>((resolve) => {
+      const promise = new Promise<string>(resolve => {
         asyncContext.run(() => {
           setTimeout(() => {
             const traceId = asyncContext.getTraceId();

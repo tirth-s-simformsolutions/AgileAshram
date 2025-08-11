@@ -80,9 +80,7 @@ describe('UserController', () => {
       mockUserService.getProfile.mockRejectedValue(mockError);
 
       // Act & Assert
-      await expect(controller.getProfile(mockCurrentUser)).rejects.toThrow(
-        mockError,
-      );
+      await expect(controller.getProfile(mockCurrentUser)).rejects.toThrow(mockError);
       expect(userService.getProfile).toHaveBeenCalledWith('123');
     });
 
@@ -147,10 +145,7 @@ describe('UserController', () => {
       mockUserService.updateProfile.mockResolvedValue(mockResponse);
 
       // Act
-      const result = await controller.updateProfile(
-        mockCurrentUser,
-        updateData,
-      );
+      const result = await controller.updateProfile(mockCurrentUser, updateData);
 
       // Assert
       expect(result).toEqual(mockResponse);
@@ -169,9 +164,9 @@ describe('UserController', () => {
       mockUserService.updateProfile.mockRejectedValue(mockError);
 
       // Act & Assert
-      await expect(
-        controller.updateProfile(mockCurrentUser, updateData),
-      ).rejects.toThrow(mockError);
+      await expect(controller.updateProfile(mockCurrentUser, updateData)).rejects.toThrow(
+        mockError,
+      );
       expect(userService.updateProfile).toHaveBeenCalledWith('123', updateData);
     });
 
@@ -204,10 +199,7 @@ describe('UserController', () => {
       mockUserService.updateProfile.mockResolvedValue(mockResponse);
 
       // Act
-      const result = await controller.updateProfile(
-        mockCurrentUser,
-        updateData,
-      );
+      const result = await controller.updateProfile(mockCurrentUser, updateData);
 
       // Assert
       expect(result).toEqual(mockResponse);
@@ -225,9 +217,9 @@ describe('UserController', () => {
       mockUserService.updateProfile.mockRejectedValue(validationError);
 
       // Act & Assert
-      await expect(
-        controller.updateProfile(mockCurrentUser, updateData),
-      ).rejects.toThrow(validationError);
+      await expect(controller.updateProfile(mockCurrentUser, updateData)).rejects.toThrow(
+        validationError,
+      );
       expect(userService.updateProfile).toHaveBeenCalledWith('123', updateData);
     });
 
@@ -242,17 +234,11 @@ describe('UserController', () => {
       mockUserService.updateProfile.mockResolvedValue(mockResponse);
 
       // Act
-      const result = await controller.updateProfile(
-        mockCurrentUser,
-        updateData,
-      );
+      const result = await controller.updateProfile(mockCurrentUser, updateData);
 
       // Assert
       expect(result).toEqual(mockResponse);
-      expect(userService.updateProfile).toHaveBeenCalledWith(
-        'different-user-id',
-        updateData,
-      );
+      expect(userService.updateProfile).toHaveBeenCalledWith('different-user-id', updateData);
     });
   });
 });

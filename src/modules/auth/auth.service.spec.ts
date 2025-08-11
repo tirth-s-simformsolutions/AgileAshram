@@ -17,7 +17,7 @@ import { SUCCESS_MSG } from './messages';
 
 // Mock the utils module
 jest.mock('../../common/utils', () => ({
-  handleError: jest.fn((error) => {
+  handleError: jest.fn(error => {
     throw error;
   }),
   compareHash: jest.fn(),
@@ -139,9 +139,9 @@ describe('AuthService', () => {
       const existingUser = { id: 1, email: signupDto.email };
       mockUserRepository.findOneByCondition.mockResolvedValue(existingUser);
 
-      await expect(
-        service.signup(signupDto, mockResponse as Response),
-      ).rejects.toThrow(ConflictException);
+      await expect(service.signup(signupDto, mockResponse as Response)).rejects.toThrow(
+        ConflictException,
+      );
       expect(userRepository.findOneByCondition).toHaveBeenCalledWith({
         email: signupDto.email,
       });
@@ -177,10 +177,7 @@ describe('AuthService', () => {
       expect(userRepository.findOneByCondition).toHaveBeenCalledWith({
         email: loginDto.email,
       });
-      expect(utils.compareHash).toHaveBeenCalledWith(
-        loginDto.password,
-        user.password,
-      );
+      expect(utils.compareHash).toHaveBeenCalledWith(loginDto.password, user.password);
       expect(jwtService.signAsync).toHaveBeenCalledTimes(2);
       expect(mockResponse.cookie).toHaveBeenCalledTimes(2);
       expect(result.data).toEqual({
@@ -192,9 +189,9 @@ describe('AuthService', () => {
     it('should throw BadRequestException for invalid credentials', async () => {
       mockUserRepository.findOneByCondition.mockResolvedValue(null);
 
-      await expect(
-        service.login(loginDto, mockResponse as Response),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.login(loginDto, mockResponse as Response)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException for wrong password', async () => {
@@ -208,9 +205,9 @@ describe('AuthService', () => {
       mockUserRepository.findOneByCondition.mockResolvedValue(user);
       (utils.compareHash as jest.Mock).mockResolvedValue(false);
 
-      await expect(
-        service.login(loginDto, mockResponse as Response),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.login(loginDto, mockResponse as Response)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw UnprocessableEntityException for inactive user', async () => {
@@ -224,9 +221,9 @@ describe('AuthService', () => {
       mockUserRepository.findOneByCondition.mockResolvedValue(user);
       (utils.compareHash as jest.Mock).mockResolvedValue(true);
 
-      await expect(
-        service.login(loginDto, mockResponse as Response),
-      ).rejects.toThrow(UnprocessableEntityException);
+      await expect(service.login(loginDto, mockResponse as Response)).rejects.toThrow(
+        UnprocessableEntityException,
+      );
     });
   });
 
@@ -243,9 +240,9 @@ describe('AuthService', () => {
       const existingUser = { id: 1, email: 'test@example.com' };
       mockUserRepository.findOneByCondition.mockResolvedValue(existingUser);
 
-      await expect(
-        service.validateUserBeforeCreate({ email: 'test@example.com' }),
-      ).rejects.toThrow(ConflictException);
+      await expect(service.validateUserBeforeCreate({ email: 'test@example.com' })).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 
@@ -269,10 +266,7 @@ describe('AuthService', () => {
         .mockResolvedValueOnce(newAccessToken)
         .mockResolvedValueOnce(newRefreshToken);
 
-      const result = await service.refreshToken(
-        refreshToken,
-        mockResponse as Response,
-      );
+      const result = await service.refreshToken(refreshToken, mockResponse as Response);
 
       expect(mockJwtService.verifyAsync).toHaveBeenCalledWith(refreshToken, {
         secret: 'test-refresh-secret',
@@ -284,17 +278,17 @@ describe('AuthService', () => {
     });
 
     it('should throw UnauthorizedException for missing token', async () => {
-      await expect(
-        service.refreshToken('', mockResponse as Response),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(service.refreshToken('', mockResponse as Response)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should throw UnauthorizedException for invalid token', async () => {
       mockJwtService.verifyAsync.mockRejectedValue(new Error('jwt expired'));
 
-      await expect(
-        service.refreshToken(refreshToken, mockResponse as Response),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(service.refreshToken(refreshToken, mockResponse as Response)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should throw UnauthorizedException for inactive user', async () => {
@@ -307,9 +301,9 @@ describe('AuthService', () => {
       mockJwtService.verifyAsync.mockResolvedValue(tokenData);
       mockUserRepository.findUserById.mockResolvedValue(userInfo);
 
-      await expect(
-        service.refreshToken(refreshToken, mockResponse as Response),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(service.refreshToken(refreshToken, mockResponse as Response)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 
@@ -348,9 +342,7 @@ describe('AuthService', () => {
         changePasswordDto.oldPassword,
         userInfo.password,
       );
-      expect(utils.createHash).toHaveBeenCalledWith(
-        changePasswordDto.newPassword,
-      );
+      expect(utils.createHash).toHaveBeenCalledWith(changePasswordDto.newPassword);
       expect(mockUserRepository.updateUserById).toHaveBeenCalledWith(userId, {
         password: newPasswordHash,
       });
@@ -363,9 +355,9 @@ describe('AuthService', () => {
         newPassword: 'samePassword123',
       };
 
-      await expect(
-        service.changePassword(userId, samePasswordDto),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.changePassword(userId, samePasswordDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw ConflictException for invalid old password', async () => {
@@ -374,9 +366,9 @@ describe('AuthService', () => {
       mockUserRepository.findUserById.mockResolvedValue(userInfo);
       (utils.compareHash as jest.Mock).mockResolvedValue(false);
 
-      await expect(
-        service.changePassword(userId, changePasswordDto),
-      ).rejects.toThrow(ConflictException);
+      await expect(service.changePassword(userId, changePasswordDto)).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 
@@ -407,17 +399,13 @@ describe('AuthService', () => {
     });
 
     it('should throw UnauthorizedException for missing token', async () => {
-      await expect(service.validateAccessToken('')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.validateAccessToken('')).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException for invalid token', async () => {
       mockJwtService.verifyAsync.mockRejectedValue(new Error('jwt expired'));
 
-      await expect(service.validateAccessToken(accessToken)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.validateAccessToken(accessToken)).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException for non-existent user', async () => {
@@ -426,9 +414,7 @@ describe('AuthService', () => {
       mockJwtService.verifyAsync.mockResolvedValue(tokenData);
       mockUserRepository.findUserById.mockResolvedValue(null);
 
-      await expect(service.validateAccessToken(accessToken)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.validateAccessToken(accessToken)).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException for inactive user', async () => {
@@ -442,9 +428,7 @@ describe('AuthService', () => {
       mockJwtService.verifyAsync.mockResolvedValue(tokenData);
       mockUserRepository.findUserById.mockResolvedValue(userInfo);
 
-      await expect(service.validateAccessToken(accessToken)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.validateAccessToken(accessToken)).rejects.toThrow(UnauthorizedException);
     });
   });
 });

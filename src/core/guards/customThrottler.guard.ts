@@ -5,8 +5,6 @@ import { Request } from 'express';
 @Injectable()
 export class CustomThrottlerGuard extends ThrottlerGuard {
   protected async getTracker(request: Request): Promise<string> {
-    return (
-      request['userId'] ?? (request.ips.length ? request.ips[0] : request.ip)
-    );
+    return request['userId'] ?? (request.ips.length ? request.ips[0] : request.ip);
   }
 }

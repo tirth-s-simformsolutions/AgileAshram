@@ -21,7 +21,6 @@ module.exports = {
     '@typescript-eslint/return-await': 'off',
     '@typescript-eslint/no-inferrable-types': 'off',
     '@typescript-eslint/no-floating-promises': 'error',
-    '@typescript-eslint/prefer-nullish-coalescing': 'warn',
     '@typescript-eslint/prefer-optional-chain': 'warn',
     '@typescript-eslint/no-misused-promises': 'warn',
     '@typescript-eslint/await-thenable': 'warn',

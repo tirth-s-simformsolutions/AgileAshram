@@ -5,7 +5,7 @@ import { UserService } from './user.service';
 
 // Mock the utils module
 jest.mock('../../common/utils', () => ({
-  handleError: jest.fn((error) => {
+  handleError: jest.fn(error => {
     throw error;
   }),
 }));
@@ -120,9 +120,7 @@ describe('User Service', () => {
 
       mockUserRepository.updateUserById.mockRejectedValue(mockError);
 
-      await expect(service.updateProfile(userId, updateData)).rejects.toThrow(
-        mockError,
-      );
+      await expect(service.updateProfile(userId, updateData)).rejects.toThrow(mockError);
       expect(userRepository.updateUserById).toHaveBeenCalledWith(userId, {
         name: updateData.name,
       });

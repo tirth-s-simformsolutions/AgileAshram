@@ -10,10 +10,7 @@ export class TraceMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
     context.run(() => {
       const traceId = context.getTraceId();
-      this.logger.log(
-        `Request started: ${req.method} ${req.originalUrl}`,
-        traceId,
-      );
+      this.logger.log(`Request started: ${req.method} ${req.originalUrl}`, traceId);
 
       res.on('finish', () => {
         const duration = context.getDuration();

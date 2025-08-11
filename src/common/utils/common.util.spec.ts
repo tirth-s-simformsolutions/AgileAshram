@@ -27,12 +27,8 @@ jest.mock('class-validator');
 jest.mock('class-transformer');
 
 describe('Common Utility', () => {
-  const mockValidateSync = validateSync as jest.MockedFunction<
-    typeof validateSync
-  >;
-  const mockPlainToInstance = plainToInstance as jest.MockedFunction<
-    typeof plainToInstance
-  >;
+  const mockValidateSync = validateSync as jest.MockedFunction<typeof validateSync>;
+  const mockPlainToInstance = plainToInstance as jest.MockedFunction<typeof plainToInstance>;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -48,9 +44,7 @@ describe('Common Utility', () => {
         handleError(originalError);
       } catch (error) {
         expect(error).toBeInstanceOf(HttpException);
-        expect((error as HttpException).getStatus()).toBe(
-          HttpStatus.BAD_REQUEST,
-        );
+        expect((error as HttpException).getStatus()).toBe(HttpStatus.BAD_REQUEST);
         expect((error as HttpException).getResponse()).toEqual({
           message: 'Invalid input data',
         });
@@ -60,9 +54,7 @@ describe('Common Utility', () => {
     it('should wrap non-HttpException errors in InternalServerErrorException', () => {
       const originalError = new Error('Database connection failed');
 
-      expect(() => handleError(originalError)).toThrow(
-        InternalServerErrorException,
-      );
+      expect(() => handleError(originalError)).toThrow(InternalServerErrorException);
 
       try {
         handleError(originalError);
@@ -77,24 +69,17 @@ describe('Common Utility', () => {
     it('should handle TypeError correctly', () => {
       const originalError = new TypeError('Cannot read property of undefined');
 
-      expect(() => handleError(originalError)).toThrow(
-        InternalServerErrorException,
-      );
+      expect(() => handleError(originalError)).toThrow(InternalServerErrorException);
     });
 
     it('should handle ReferenceError correctly', () => {
       const originalError = new ReferenceError('Variable is not defined');
 
-      expect(() => handleError(originalError)).toThrow(
-        InternalServerErrorException,
-      );
+      expect(() => handleError(originalError)).toThrow(InternalServerErrorException);
     });
 
     it('should handle custom HttpException with custom status', () => {
-      const originalError = new HttpException(
-        'Forbidden access',
-        HttpStatus.FORBIDDEN,
-      );
+      const originalError = new HttpException('Forbidden access', HttpStatus.FORBIDDEN);
 
       try {
         handleError(originalError);
@@ -232,11 +217,9 @@ describe('Common Utility', () => {
       validateEnvVariables(mockConfig);
 
       expect(mockPlainToInstance).toHaveBeenCalledTimes(1);
-      expect(mockPlainToInstance).toHaveBeenCalledWith(
-        expect.any(Function),
-        mockConfig,
-        { enableImplicitConversion: true },
-      );
+      expect(mockPlainToInstance).toHaveBeenCalledWith(expect.any(Function), mockConfig, {
+        enableImplicitConversion: true,
+      });
     });
 
     it('should call validateSync with correct parameters', () => {

@@ -57,14 +57,12 @@ describe('HealthService', () => {
 
       // Mock handleError function (you might need to adjust this based on your implementation)
       jest.mock('../utils', () => ({
-        handleError: jest.fn((error) => {
+        handleError: jest.fn(error => {
           throw error;
         }),
       }));
 
-      await expect(service.check()).rejects.toThrow(
-        'Database connection failed',
-      );
+      await expect(service.check()).rejects.toThrow('Database connection failed');
       expect(prismaService.$queryRaw).toHaveBeenCalledTimes(1);
     });
 
