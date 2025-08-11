@@ -8,7 +8,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import * as sentry from '@sentry/node';
+import * as sentry from '@sentry/nestjs';
 import * as cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { AppModule } from './app/app.module';
@@ -85,10 +85,10 @@ const bootstrap = async (): Promise<void> => {
   // sentry setup
   const dsn = configService.get<string | null>('app.sentryDsn');
   const env = configService.get<string>('app.env');
-  if (dsn && (env === ENV.PRODUCTION || env === ENV.STAGING)) {
+  if (dsn && env !== ENV.LOCAL) {
     sentry.init({
       dsn,
-      tracesSampleRate: 0.8,
+      tracesSampleRate: 1.0,
       environment: env,
     });
   }
