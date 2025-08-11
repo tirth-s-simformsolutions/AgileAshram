@@ -28,3 +28,27 @@ export const validateEnvVariables = (config: Record<string, unknown>) => {
   }
   return validatedConfig;
 };
+
+export const sanitize = (obj: unknown, sensitiveKeys: string[], depth: number = 0): unknown => {
+  try {
+    if (depth > 10) {
+      return obj;
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map(item => sanitize(item, sensitiveKeys, depth + 1));
+    } else if (obj !== null && typeof obj === 'object') {
+      const sanitized: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(obj)) {
+        const isSensitive = sensitiveKeys.some(sensitiveKey =>
+          key.toLowerCase().includes(sensitiveKey),
+        );
+        sanitized[key] = isSensitive ? '[REDACTED]' : sanitize(value, sensitiveKeys, depth + 1);
+      }
+      return sanitized;
+    }
+  } catch {
+    // If sanitization fails, return the original object
+  }
+  return obj;
+};

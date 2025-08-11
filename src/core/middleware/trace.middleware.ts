@@ -1,22 +1,41 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { LoggerService } from '../../common/services';
 import { asyncContext as context } from '../../common/utils';
+
+interface AuthenticatedRequest extends Request {
+  userId?: string;
+}
 
 @Injectable()
 export class TraceMiddleware implements NestMiddleware {
   constructor(private readonly logger: LoggerService) {}
 
-  use(req: Request, res: Response, next: NextFunction) {
+  use(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     context.run(() => {
       const traceId = context.getTraceId();
-      this.logger.log(`Request started: ${req.method} ${req.originalUrl}`, traceId);
+
+      context.setRequestInfo(
+        req.method,
+        req.originalUrl,
+        req.ip,
+        req.headers['user-agent'] || 'unknown',
+        req?.body,
+      );
 
       res.on('finish', () => {
+        if (req?.userId) {
+          context.setUser(req.userId);
+        }
         const duration = context.getDuration();
-        this.logger.log(
-          `Request finished: ${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`,
+        const requestInfo = context.getRequestInfo();
+        this.logger.logRequestTrace(
+          { ...requestInfo, userId: req?.userId },
+          {
+            statusCode: res.statusCode,
+          },
           traceId,
+          { duration },
         );
       });
 

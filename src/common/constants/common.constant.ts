@@ -28,3 +28,5 @@ export const DEFAULT_MAX_LENGTH = 250;
 
 export const DEFAULT_PAGE = 0;
 export const DEFAULT_PAGE_SIZE = 10;
+
+export const SENSITIVE_KEYS = ['password', 'token', 'authorization'];

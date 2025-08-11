@@ -246,6 +246,33 @@ describe('AuthService', () => {
     });
   });
 
+  describe('getTokenExpiry', () => {
+    it('should convert minutes correctly', () => {
+      const result = service['getTokenExpiry']('15m');
+      expect(result).toBe(15 * 60 * 1000);
+    });
+
+    it('should convert hours correctly', () => {
+      const result = service['getTokenExpiry']('2h');
+      expect(result).toBe(2 * 60 * 60 * 1000);
+    });
+
+    it('should convert days correctly', () => {
+      const result = service['getTokenExpiry']('7d');
+      expect(result).toBe(7 * 24 * 60 * 60 * 1000);
+    });
+
+    it('should handle numeric values', () => {
+      const result = service['getTokenExpiry'](3600);
+      expect(result).toBe(3600 * 1000);
+    });
+
+    it('should handle invalid units by returning default expiry', () => {
+      const result = service['getTokenExpiry']('10z');
+      expect(result).toBe(15 * 60 * 1000); // default 15 minutes
+    });
+  });
+
   describe('refreshToken', () => {
     const refreshToken = 'valid_refresh_token';
 
@@ -291,6 +318,34 @@ describe('AuthService', () => {
       );
     });
 
+    it('should throw UnauthorizedException for TokenExpiredError', async () => {
+      const tokenExpiredError = new Error('jwt expired');
+      tokenExpiredError.name = 'TokenExpiredError';
+      mockJwtService.verifyAsync.mockRejectedValue(tokenExpiredError);
+
+      await expect(service.refreshToken(refreshToken, mockResponse as Response)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should throw UnauthorizedException for JsonWebTokenError', async () => {
+      const jsonWebTokenError = new Error('invalid token');
+      jsonWebTokenError.name = 'JsonWebTokenError';
+      mockJwtService.verifyAsync.mockRejectedValue(jsonWebTokenError);
+
+      await expect(service.refreshToken(refreshToken, mockResponse as Response)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should throw UnauthorizedException for missing userId in token payload', async () => {
+      mockJwtService.verifyAsync.mockResolvedValue({});
+
+      await expect(service.refreshToken(refreshToken, mockResponse as Response)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
     it('should throw UnauthorizedException for inactive user', async () => {
       const tokenData = { userId: '1' };
       const userInfo = {
@@ -315,6 +370,22 @@ describe('AuthService', () => {
       expect(mockResponse.clearCookie).toHaveBeenCalledWith('refresh_token');
       expect(result.message).toBe(SUCCESS_MSG.USER.LOGOUT);
       expect(result.data).toBeNull();
+    });
+
+    it('should handle errors during logout', async () => {
+      // Mock clearCookie to throw an error
+      const mockError = new Error('Cookie clearing error');
+      (mockResponse.clearCookie as jest.Mock).mockImplementationOnce(() => {
+        throw mockError;
+      });
+
+      // Spy on handleError function
+      const handleErrorSpy = jest.spyOn(utils, 'handleError');
+
+      await expect(service.logout(mockResponse as Response)).rejects.toThrow();
+
+      // Verify handleError was called with the thrown error
+      expect(handleErrorSpy).toHaveBeenCalledWith(mockError);
     });
   });
 
@@ -404,6 +475,28 @@ describe('AuthService', () => {
 
     it('should throw UnauthorizedException for invalid token', async () => {
       mockJwtService.verifyAsync.mockRejectedValue(new Error('jwt expired'));
+
+      await expect(service.validateAccessToken(accessToken)).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should throw UnauthorizedException for TokenExpiredError', async () => {
+      const tokenExpiredError = new Error('jwt expired');
+      tokenExpiredError.name = 'TokenExpiredError';
+      mockJwtService.verifyAsync.mockRejectedValue(tokenExpiredError);
+
+      await expect(service.validateAccessToken(accessToken)).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should throw UnauthorizedException for JsonWebTokenError', async () => {
+      const jsonWebTokenError = new Error('invalid token');
+      jsonWebTokenError.name = 'JsonWebTokenError';
+      mockJwtService.verifyAsync.mockRejectedValue(jsonWebTokenError);
+
+      await expect(service.validateAccessToken(accessToken)).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should throw UnauthorizedException for missing userId in token payload', async () => {
+      mockJwtService.verifyAsync.mockResolvedValue({});
 
       await expect(service.validateAccessToken(accessToken)).rejects.toThrow(UnauthorizedException);
     });
