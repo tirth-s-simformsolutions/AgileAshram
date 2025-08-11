@@ -8,19 +8,19 @@
 
 A **production-ready**, **enterprise-grade** NestJS boilerplate with PostgreSQL, Prisma ORM, JWT authentication, and comprehensive API documentation. This project provides a **solid foundation** for building modern, scalable backend applications with TypeScript.
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [⚡ Quick Start](#quick-start)
-- [🛠 Requirements](#requirements)
-- [✨ Features](#features)
-- [📁 Project Structure](#project-structure)
-- [🗄️ Database Setup](#database-setup)
-- [🔧 Development](#development)
-- [🧪 Testing](#testing)
-- [🐳 Docker Setup](#docker-setup)
-- [ License](#license)
+- [Quick Start](#quick-start)
+- [Requirements](#requirements)
+- [Features](#features)
+- [Project Structure](#project-structure)
+- [Database Setup](#database-setup)
+- [Development](#development)
+- [Testing](#testing)
+- [Docker Setup](#docker-setup)
+- [License](#license)
 
-## ⚡ Quick Start
+## Quick Start
 
 > **Perfect for developers who want to get up and running fast!**
 
@@ -85,7 +85,7 @@ Your application is now running! Here are the key endpoints:
 
 ---
 
-## 🛠 Requirements
+## Requirements
 
 **Essential Requirements:**
 
@@ -102,7 +102,7 @@ Your application is now running! Here are the key endpoints:
 | **[Volta](https://volta.sh/)**        | Node.js version management | Automatically uses correct Node/npm versions |
 | **[Docker](https://www.docker.com/)** | Containerization           | Easy deployment and consistent environments  |
 
-## ✨ Features
+## Features
 
 ### 🏗️ **Core Framework**
 
@@ -152,7 +152,7 @@ Your application is now running! Here are the key endpoints:
 - **Database Studio** - Visual database explorer
 - **Docker Support** - Containerized development and deployment
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 nestjs-boilerplate/
@@ -232,7 +232,7 @@ nestjs-boilerplate/
 └── 📄 LICENSE                            # License information
 ```
 
-## 🗄️ Database Setup
+## Database Setup
 
 ### Prisma Commands 🔧
 
@@ -292,7 +292,7 @@ npm run prisma:deploy
 npm run prisma:generate
 ```
 
-## 🔧 Development
+## Development
 
 ### Start Development Server 🚀
 
@@ -315,9 +315,9 @@ The application will start on `http://localhost:3000` (or your configured PORT).
 | `npm run prettier`       | 💅 **Format** code with Prettier   | Code formatting   |
 | `npm run prettier:check` | 👀 **Check** code formatting       | CI/CD             |
 
-> **� Tip**: For database commands, see the [Database Setup](#️-database-setup) section above.
+> **Tip**: For database commands, see the [Database Setup](#database-setup) section above.
 
-## 🧪 Testing
+## Testing
 
 ### Quick Test Commands 🚀
 
@@ -363,7 +363,7 @@ const mockPrismaService = {
 };
 ```
 
-## 🐳 Docker Setup
+## Docker Setup
 
 ### Development with Docker 🛠️
 
@@ -412,6 +412,6 @@ docker run -p 3000:3000 \
 | `docker-compose exec backend bash`              | Access app container         |
 | `docker-compose exec postgres psql -U postgres` | Access database              |
 
-## 📄 License
+## License
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
