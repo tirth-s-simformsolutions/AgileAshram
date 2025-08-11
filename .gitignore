@@ -42,3 +42,4 @@ src/generated
 
 .env
 .env.*
+!.env.example

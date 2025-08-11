@@ -6,38 +6,37 @@
 [![PostgreSQL](https://img.shields.io/badge/postgresql-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Swagger](https://img.shields.io/badge/-Swagger-%23Clojure?style=for-the-badge&logo=swagger&logoColor=white)](https://swagger.io/)
 
-A robust and scalable NestJS boilerplate with PostgreSQL, Prisma ORM, and comprehensive API documentation. This project provides a solid foundation for building modern backend applications with TypeScript.
+A **production-ready**, **enterprise-grade** NestJS boilerplate with PostgreSQL, Prisma ORM, JWT authentication, and comprehensive API documentation. This project provides a **solid foundation** for building modern, scalable backend applications with TypeScript.
 
 ## 📋 Table of Contents
 
-- [Quick Start](#-quick-start)
-- [Requirements](#-requirements)
-- [Features](#-features)
-- [Project Structure](#-project-structure)
-- [Getting Started](#-getting-started)
-- [Database Setup](#-database-setup)
-- [Development](#-development)
-- [Testing](#-testing)
-- [API Documentation](#-api-documentation)
-- [Health Check](#-health-check)
-- [Deployment](#-deployment)
-- [Contributing](#-contributing)
+- [⚡ Quick Start](#quick-start)
+- [🛠 Requirements](#requirements)
+- [✨ Features](#features)
+- [📁 Project Structure](#project-structure)
+- [🗄️ Database Setup](#database-setup)
+- [🔧 Development](#development)
+- [🧪 Testing](#testing)
+- [🐳 Docker Setup](#docker-setup)
+- [ License](#license)
 
 ## ⚡ Quick Start
 
-Get up and running:
+> **Perfect for developers who want to get up and running fast!**
 
-### Prerequisites Check
+### Prerequisites Check ✅
 
-```bash
-# Check if Node.js is installed (requires v18+ or v20+)
-node --version
+Ensure you have these installed:
 
-# Check if PostgreSQL is running
-psql --version
-```
+| Tool           | Minimum Version | Download Link                                               |
+| -------------- | --------------- | ----------------------------------------------------------- |
+| **Node.js**    | `v22+`          | [Download Node.js](https://nodejs.org/)                     |
+| **PostgreSQL** | `v15+`          | [Download PostgreSQL](https://www.postgresql.org/download/) |
+| **npm**        | `v10.9.2+`      | Comes with Node.js                                          |
 
-### 1. Clone and Install
+> **💡 Pro Tip**: Use [Volta](https://volta.sh/) for Node.js version management to automatically switch between Node versions in different projects.
+
+### 1. Clone & Install 📦
 
 ```bash
 git clone <repository-url>
@@ -45,344 +44,374 @@ cd nestjs-boilerplate
 npm install
 ```
 
-### 2. Database Setup
+### 2. Setup Environment 🔧
 
 ```bash
-# Copy environment file
+# Copy the example environment file
 cp .env.example .env
 ```
 
-### 3. Configure Environment
+Update `.env` with your database credentials and JWT secrets.
 
-Edit `.env` file with your database credentials:
-
-```env
-DATABASE_URL=postgresql://your_username:your_password@localhost:5432/nestjs_boilerplate
-```
-
-### 4. Initialize Database
+### 3. Database Setup 🗄️
 
 ```bash
-# Generate Prisma client and run migrations
+# Generate Prisma client
 npm run prisma:generate
+
+# Run database migrations
 npm run prisma:migrate
+
+# Optional: Seed with test data
+npm run db:seed
 ```
 
-### 5. Start Development Server
+### 4. Start Development 🚀
 
 ```bash
 npm run dev
 ```
 
-🎉 **That's it!** Your app is running at `http://localhost:3000`
+### 🎉 You're Ready!
 
-- **API Documentation**: `http://localhost:3000/docs`
-- **Health Check**: `http://localhost:3000/api/v1/health`
+Your application is now running! Here are the key endpoints:
+
+| Service             | URL                                 | Description            |
+| ------------------- | ----------------------------------- | ---------------------- |
+| **API Server**      | http://localhost:3000               | Main application       |
+| **API Docs**        | http://localhost:3000/docs          | Interactive Swagger UI |
+| **Health Check**    | http://localhost:3000/api/v1/health | System status          |
+| **Database Studio** | `npm run prisma:studio`             | Visual DB explorer     |
 
 ---
 
 ## 🛠 Requirements
 
-Before getting started, ensure you have the following installed:
+**Essential Requirements:**
 
-- **[Volta](https://volta.sh/)** for Node.js version management
-- **[PostgreSQL v16](https://www.postgresql.org/)** or higher
-- **[npm](https://www.npmjs.com)** (comes with Node.js) - Version >= 10.9.2
-- **[Node](https://nodejs.org/en/download)** - Version >= 22.15.0
-- **[Git](https://git-scm.com/downloads)** for version control
+| Tool                                          | Version   | Purpose            | Installation                                     |
+| --------------------------------------------- | --------- | ------------------ | ------------------------------------------------ |
+| **[Node.js](https://nodejs.org/)**            | v22.15.0+ | JavaScript runtime | [Download](https://nodejs.org/en/download)       |
+| **[PostgreSQL](https://www.postgresql.org/)** | v15+      | Database           | [Download](https://www.postgresql.org/download/) |
+| **[npm](https://www.npmjs.com/)**             | v10.9.2+  | Package manager    | Comes with Node.js                               |
 
-### Optional Tools
+**Recommended Tools:**
 
-- **[Docker](https://www.docker.com/)** for containerized development
-- **[Postman](https://www.postman.com/)** or similar API testing tool
+| Tool                                  | Purpose                    | Why We Recommend                             |
+| ------------------------------------- | -------------------------- | -------------------------------------------- |
+| **[Volta](https://volta.sh/)**        | Node.js version management | Automatically uses correct Node/npm versions |
+| **[Docker](https://www.docker.com/)** | Containerization           | Easy deployment and consistent environments  |
 
 ## ✨ Features
 
-- 🏗️ **NestJS Framework** - Progressive Node.js framework
-- 🗃️ **PostgreSQL** - Robust relational database
-- 🔍 **Prisma ORM** - Type-safe database client
-- 📚 **Swagger/OpenAPI** - Interactive API documentation
-- 🧪 **Testing Setup** - Unit and integration tests
-- 🔧 **Environment Configuration** - Flexible environment management
-- 📊 **Health Check** - Application monitoring endpoint
-- 🚀 **Production Ready** - Optimized for deployment
+### 🏗️ **Core Framework**
+
+- **NestJS** - Progressive Node.js framework with TypeScript
+- **Express.js** - Fast, unopinionated web framework
+- **TypeScript** - Type-safe development experience
+- **Internationalization** - Multi-language support with i18n
+
+### 🗄️ **Database & ORM**
+
+- **PostgreSQL** - Robust relational database
+- **Prisma ORM** - Type-safe database client with migrations
+- **Database Seeding** - Pre-populated test data for development
+
+### 🔐 **Authentication & Security**
+
+- **JWT Authentication** - Secure token-based auth with refresh tokens
+- **Cookie-based Auth** - HttpOnly, secure cookie storage
+- **Password Hashing** - PBKDF2 with salt for secure password storage
+- **Rate Limiting** - Built-in request throttling
+- **CORS & Helmet** - Security headers and cross-origin protection
+
+### 📚 **API Documentation**
+
+- **Swagger/OpenAPI** - Interactive API documentation
+- **Auto-generated Docs** - Documentation from decorators
+- **API Versioning** - Built-in API version management
+
+### 🧪 **Testing & Quality**
+
+- **Jest Testing** - Unit tests with comprehensive coverage
+- **Test Coverage** - Coverage reports and thresholds
+- **ESLint & Prettier** - Code formatting and linting
+- **Husky & lint-staged** - Pre-commit hooks
+
+### 📊 **Monitoring & Logging**
+
+- **Health Checks** - Application and database health monitoring
+- **Request Tracing** - Unique trace IDs for each request
+- **Structured Logging** - Consistent log formatting
+- **Sentry Integration** - Error tracking and monitoring
+
+### 🛠️ **Developer Experience**
+
+- **Hot Reload** - Instant development feedback
+- **Environment Configuration** - Flexible env management with validation
+- **Database Studio** - Visual database explorer
+- **Docker Support** - Containerized development and deployment
 
 ## 📁 Project Structure
 
 ```
-├── src/
-│   ├── common/                     # Shared utilities and decorators
-│   ├── config/                     # Configuration modules
-│   ├── database/                   # Database module
-│   │   ├── migrations/               # Database migration files
-│   │   ├── schema.prisma             # Database schema definition
-│   │   └── prisma.service.ts/        # Prisma Service File
-│   ├── modules/                    # Feature modules
-│   │   ├── auth/                     # Authentication module
-│   │   └── users/                    # User management module
-│   ├── core/                       # Core utilities and decorators
-│   │   ├── class/                    # Base classes and abstract implementations
-│   │   ├── decorators/               # Custom decorators for enhanced functionality
-│   │   ├── guards/                   # Authentication and Authorization guards
-│   │   ├── interceptors/             # Request/response transformation interceptors
-│   │   ├── interfaces/               # Typescript interfaces for type safety
-│   │   └── middleware/               # Custom middleware functions
-│   ├── guards/                     # Authentication & authorization guards
-│   ├── interceptors/               # Request/response interceptors
-│   ├── pipes/                      # Validation pipes
-│   ├── filters/                    # Exception filters
-│   ├── app.module.ts               # Root application module
-│   └── main.ts                     # Application entry point
-├── test/                         # Test files (e2e, unit)
-├── .env.example                  # Environment variables template
-├── .gitignore                    # Git ignore rules
-├── package.json                  # Dependencies and scripts
-├── tsconfig.json                 # TypeScript configuration
-└── README.md                     # Project documentation
+nestjs-boilerplate/
+├── 📄 README.md                          # You are here!
+├── 📄 package.json                       # Dependencies and scripts
+├── 📄 .env.example                       # Environment variables template
+├── 📄 docker-compose.yml                 # Docker setup for local development
+│
+├── 📂 src/                               # 🎯 Main application source code
+│   ├── 📂 app/                           # Application module (entry point)
+│   │   ├── app.controller.ts             # Health check endpoints
+│   │   ├── app.module.ts                 # Root application module
+│   │   └── app.controller.spec.ts        # Controller tests
+│   │
+│   ├── 📂 common/                        # 🔧 Shared utilities and components
+│   │   ├── 📂 constants/                 # Application constants
+│   │   ├── 📂 dtos/                      # Data Transfer Objects
+│   │   ├── 📂 interfaces/                # TypeScript interfaces
+│   │   ├── 📂 messages/                  # Error/success messages
+│   │   ├── 📂 services/                  # Shared services (health, logger)
+│   │   └── 📂 utils/                     # Utility functions (crypto, common)
+│   │
+│   ├── 📂 config/                        # ⚙️ Configuration modules
+│   │   ├── app.config.ts                 # App-level configuration
+│   │   ├── database.config.ts            # Database configuration
+│   │   └── jwt.config.ts                 # JWT configuration
+│   │
+│   ├── 📂 core/                          # 🎛️ Core application features
+│   │   ├── 📂 class/                     # Base classes (ResponseResult)
+│   │   ├── 📂 decorators/                # Custom decorators (@CurrentUser, @Public)
+│   │   ├── 📂 guards/                    # Route guards (AuthGuard, ThrottlerGuard)
+│   │   ├── 📂 interceptors/              # Request/response interceptors
+│   │   ├── 📂 interfaces/                # Core interfaces
+│   │   └── 📂 middleware/                # Custom middleware (TraceMiddleware)
+│   │
+│   ├── 📂 database/                      # 🗄️ Database configuration
+│   │   ├── 📂 migrations/                # Prisma migration files
+│   │   ├── schema.prisma                 # Database schema definition
+│   │   ├── prisma.service.ts             # Prisma service provider
+│   │   └── seed.ts                       # Database seeding script
+│   │
+│   ├── 📂 i18n/                          # 🌐 Internationalization
+│   │   └── 📂 en/                        # English translations
+│   │       ├── error.json                # error messages
+│   │
+│   ├── 📂 modules/                             # 🧩 Feature modules
+│   │   └── 📂 feature/                         # Feature module
+│   │       ├── 📂 dtos/                        # Feature-specific DTOs
+│   │       ├── 📂 interfaces/                  # Feature interfaces
+│   │       ├── 📂 messages/                    # Feature messages
+│   │       ├── feature.controller.ts           # Feature endpoints
+│   │       ├── feature.controller.spec.ts      # Feature endpoints tests
+│   │       ├── feature.service.ts              # Feature business logic
+│   │       ├── feature.service.spec.ts         # Feature business logic tests
+│   │       ├── feature.repository.ts           # Feature specifice repository
+│   │       ├── feature.repository.spec.ts      # Feature specifice repository tests
+│   │       ├── feature.module.ts               # Feature module
+│   │       └── feature.constant.ts             # Feature-specific constants
+│   │
+│   └── main.ts                           # 🚀 Application entry point
+│
+├── 📂 test/                              # 🧪 Test configuration and utilities
+│   ├── app.e2e-spec.ts                   # End-to-end tests
+│   ├── helpers.ts                        # Test helper functions
+│   ├── jest-e2e.json                     # E2E test configuration
+│   └── setup.ts                          # Test setup and global mocks
+│
+├── 📄 .eslintrc.js                       # ESLint configuration
+├── 📄 .prettierrc                        # Prettier configuration
+├── 📄 commitlint.config.js               # Commit message linting
+├── 📄 jest.config.js                     # Jest testing configuration
+├── 📄 tsconfig.json                      # TypeScript configuration
+├── 📄 tsconfig.build.json                # Build-specific TypeScript config
+├── 📄 nest-cli.json                      # NestJS CLI configuration
+├── 📄 Dockerfile                         # Production Docker image
+├── 📄 Dockerfile.dev                     # Development Docker image
+└── 📄 LICENSE                            # License information
 ```
-
-## 🚀 Getting Started
-
-### 1. Clone the Repository
-
-```bash
-git clone <repository-url>
-cd nestjs-boilerplate
-```
-
-### 2. Install Dependencies
-
-```bash
-npm install
-```
-
-**Note**: If you have Volta installed, the correct Node.js and npm versions will be automatically selected when you enter the project directory.
-
-### 3. Environment Configuration
-
-Create a `.env` file in the root directory and copy the contents from `.env.example`:
-
-```bash
-cp .env.example .env
-```
-
-Update the environment variables in `.env` file according to your setup:
-
-### 4. Verify Your Setup
-
-After completing the setup, verify everything is working:
-
-```bash
-# Check database connection
-npm run prisma:studio
-
-# Run health check
-curl http://localhost:3000/api/v1/health
-```
-
-### 🌟 Next Steps
-
-Once your local environment is running:
-
-1. **Explore the API**: Visit `http://localhost:3000/docs` for Swagger documentation
-2. **Run Tests**: Execute `npm run test` to ensure everything works
-3. **Start Coding**: Check out the project structure and start building features
-4. **Database Management**: Use `npm run prisma:studio` for a visual database editor
 
 ## 🗄️ Database Setup
 
-### Prerequisites
-
-Ensure PostgreSQL is running and you have created a database for the project.
-
-### 1. Configure Database Connection
-
-Add your database connection string to the `.env` file:
-
-```env
-DATABASE_URL=postgresql://username:password@localhost:5432/your_database_name?schema=public
-```
-
-### 2. Run Database Migrations
-
-Generate and apply database tables:
+### Prisma Commands 🔧
 
 ```bash
-npm run prisma:migrate
-```
-
-### 3. Generate Prisma Client
-
-```bash
+# Generate Prisma client from schema
 npm run prisma:generate
+
+# Run database migrations (creates tables)
+npm run prisma:migrate
+
+# Optional: Seed database with test data
+npm run db:seed
+
+# Open Prisma Studio (visual database browser)
+npm run prisma:studio
 ```
 
-## 📊 Database Migration Commands
+### Verify Setup ✅
 
-### Creating New Migrations
+Check if the application is running correctly by visiting the health endpoint at `/api/v1/health`.
 
-1. **Update the schema**: Modify `prisma/schema.prisma`
+### Available Database Commands 📊
+
+| Command                   | Description                          | Use Case              |
+| ------------------------- | ------------------------------------ | --------------------- |
+| `npm run prisma:generate` | Generate Prisma client               | After schema changes  |
+| `npm run prisma:migrate`  | Create and apply migration           | Schema updates        |
+| `npm run prisma:deploy`   | Deploy migrations (production)       | Production deployment |
+| `npm run prisma:studio`   | Open database GUI                    | Data exploration      |
+| `npm run db:reset`        | ⚠️ Reset database (deletes all data) | Development reset     |
+| `npm run db:seed`         | Seed with test data                  | Development setup     |
+
+### Working with Migrations 🔄
+
+<details>
+<summary><strong>Creating New Migrations</strong></summary>
+
+1. **Update schema**: Edit `src/database/schema.prisma`
 2. **Generate migration**:
-
    ```bash
    npm run prisma:migrate
+   # Follow the prompts to name your migration
    ```
+3. **Review migration**: Check the generated SQL in `src/database/migrations/`
 
-### Available Migration Commands
+</details>
 
-| Command                   | Description                          |
-| ------------------------- | ------------------------------------ |
-| `npm run prisma:migrate`  | Create and apply new migration       |
-| `npm run prisma:deploy`   | Deploy migrations in production      |
-| `npm run prisma:generate` | Generate Prisma client               |
-| `npm run prisma:studio`   | Open Prisma Studio (Database GUI)    |
-| `npm run db:reset`        | ⚠️ Reset database (deletes all data) |
-| `npm run db:seed`         | Seed database with initial data      |
+### Production Database 🚀
 
-### Production Deployment
+For production deployments:
 
 ```bash
+# Deploy migrations without prompts
 npm run prisma:deploy
+
+# Generate client for production
+npm run prisma:generate
 ```
 
 ## 🔧 Development
 
-### Start Development Server
+### Start Development Server 🚀
 
 ```bash
+# Start with hot reload
 npm run dev
 ```
 
-The application will start on `http://localhost:3000` (or the port specified in your `.env` file).
+The application will start on `http://localhost:3000` (or your configured PORT).
 
-### Available Scripts
+### Available Scripts 📜
 
-| Script             | Description                              |
-| ------------------ | ---------------------------------------- |
-| `npm run dev`      | Start development server with hot reload |
-| `npm run build`    | Build the application for production     |
-| `npm run start`    | Start production server                  |
-| `npm run lint`     | Fix ESLint issues automatically          |
-| `npm run lint:fix` | Run ESLint                               |
+| Script                   | Description                        | Use Case          |
+| ------------------------ | ---------------------------------- | ----------------- |
+| `npm run dev`            | 🔥 **Development** with hot reload | Daily development |
+| `npm run build`          | 🏗️ **Build** for production        | Pre-deployment    |
+| `npm run start`          | 🚀 **Start** production server     | Production        |
+| `npm run lint`           | 🧹 **Fix** ESLint issues           | Code cleanup      |
+| `npm run lint:check`     | 👀 **Check** lint issues           | CI/CD             |
+| `npm run prettier`       | 💅 **Format** code with Prettier   | Code formatting   |
+| `npm run prettier:check` | 👀 **Check** code formatting       | CI/CD             |
+
+> **� Tip**: For database commands, see the [Database Setup](#️-database-setup) section above.
 
 ## 🧪 Testing
 
-### Run Tests
+### Quick Test Commands 🚀
 
 ```bash
-# Unit tests
+# Run all unit tests
 npm run test
 
-# End-to-end tests
-npm run test:e2e
-
-# Test coverage
+# Run tests with coverage
 npm run test:cov
 
-# Watch mode for development
+# Run tests in watch mode (for development)
 npm run test:watch
 ```
 
-### Testing Strategy
+### Writing Tests ✍️
 
-- **Unit Tests**: Test individual components and services
-- **Integration Tests**: Test module interactions
-- **E2E Tests**: Test complete API endpoints
+The project follows standard Jest testing patterns with proper TypeScript support and mocking. All tests are unit tests that focus on testing individual components in isolation.
 
-### Writing Tests
+### Testing Best Practices ✅
 
-Follow these conventions when writing tests:
+1. **Test Structure**: Follow AAA pattern (Arrange, Act, Assert)
+2. **Mocking**: Mock external dependencies and services
+3. **Data**: Use factory functions for test data
+4. **Isolation**: Each test should be independent
+5. **Coverage**: Aim for meaningful test coverage, not just numbers
+
+### Test Configuration ⚙️
+
+The project uses Jest with TypeScript support and comprehensive coverage thresholds for unit testing.
+
+### Test Database 🗄️
+
+For unit tests, the project uses mocked database services to ensure tests run quickly and don't require a real database connection.
 
 ```typescript
-// Unit test example
-describe('UserService', () => {
-  it('should create a user', async () => {
-    // Test implementation
-  });
-});
-
-// E2E test example
-describe('Users (e2e)', () => {
-  it('/users (POST)', () => {
-    return request(app.getHttpServer()).post('/users').send(createUserDto).expect(201);
-  });
-});
+// Example: Mocking Prisma service in unit tests
+const mockPrismaService = {
+  user: {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    findMany: jest.fn(),
+  },
+};
 ```
 
-## 📖 API Documentation
+## 🐳 Docker Setup
 
-### Swagger Documentation
+### Development with Docker 🛠️
 
-Access the interactive API documentation:
-
-```
-http://localhost:{PORT}/docs
-```
-
-### Using Swagger
-
-1. Start the development server
-2. Navigate to `http://localhost:{PORT}/docs`
-3. Explore and test API endpoints directly in the browser
-
-## 🏥 Health Check
-
-### Health Check Endpoint
-
-Monitor application health:
+Run the entire stack (app + database) with Docker Compose:
 
 ```bash
-curl http://localhost:3000/api/v1/health
+# Build and start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
 ```
 
-## 🚀 Deployment
+**What's included:**
 
-### Production Build
+- ✅ **PostgreSQL database** (with persistent volume)
+- ✅ **NestJS application** (with hot reload)
+- ✅ **Network configuration** (services can communicate)
+
+### Production Docker Image 🚀
+
+Build optimized production image:
 
 ```bash
-npm run build
-npm run start
+# Build production image
+docker build -t nestjs-app .
+
+# Run production container
+docker run -p 3000:3000 \
+  -e DATABASE_URL="your_production_db_url" \
+  -e JWT_ACCESS_SECRET_KEY="your_secret" \
+  nestjs-app
 ```
 
-## 🤝 Contributing
+### Docker Commands 🐳
 
-### Development Guidelines
-
-1. **Code Style**: Follow the existing code style and use Prettier for formatting
-2. **Commit Messages**: Use conventional commit messages
-3. **Testing**: Write tests for new features and bug fixes
-4. **Documentation**: Update documentation for API changes
-
-### Folder Structure Conventions
-
-When adding new features:
-
-1. **Modules**: Create new modules in `src/modules/`
-2. **DTOs**: Place data transfer objects in module-specific folders
-3. **Guards**: Add authentication guards in `src/guards/`
-4. **Interceptors**: Add interceptors in `src/interceptors/`
-5. **Tests**: Mirror the source structure in `test/` directory
-
-### Example Module Structure
-
-```
-src/modules/example/
-├── dto/
-│   ├── create-example.dto.ts
-│   └── update-example.dto.ts
-├── messages/
-│   ├── success.message.ts
-│   ├── error.message.ts
-│   └── index.ts
-├── example.repository.ts
-├── example.repository.spec.ts
-├── example.controller.ts
-├── example.controller.spec.ts
-├── example.service.ts
-├── example.service.spec.ts
-└── example.module.ts
-```
+| Command                                         | Description                  |
+| ----------------------------------------------- | ---------------------------- |
+| `docker-compose up`                             | Start all services           |
+| `docker-compose up -d`                          | Start services in background |
+| `docker-compose down`                           | Stop and remove containers   |
+| `docker-compose logs backend`                   | View app logs                |
+| `docker-compose exec backend bash`              | Access app container         |
+| `docker-compose exec postgres psql -U postgres` | Access database              |
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
