@@ -42,10 +42,7 @@ export class HttpExceptionsFilter implements ExceptionFilter {
         sentry.captureException(exception);
       }
       return response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        message: this.translateErrorMessage(
-          ERROR_MSG.SERVER.INTERNAL_SERVER,
-          i18n,
-        ),
+        message: this.translateErrorMessage(ERROR_MSG.SERVER.INTERNAL_SERVER, i18n),
         data: null,
         error: null,
       });
@@ -64,10 +61,7 @@ export class HttpExceptionsFilter implements ExceptionFilter {
       errMsg.toLowerCase().includes('unique constraint')
     ) {
       return response.status(HttpStatus.CONFLICT).json({
-        message: this.translateErrorMessage(
-          ERROR_MSG.DB.VALIDATION.UQ_ERROR,
-          i18n,
-        ),
+        message: this.translateErrorMessage(ERROR_MSG.DB.VALIDATION.UQ_ERROR, i18n),
         data: null,
         error: null,
       });
@@ -78,10 +72,7 @@ export class HttpExceptionsFilter implements ExceptionFilter {
       errMsg.toLowerCase().includes('foreign key constraint')
     ) {
       return response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        message: this.translateErrorMessage(
-          ERROR_MSG.DB.VALIDATION.FK_ERROR,
-          i18n,
-        ),
+        message: this.translateErrorMessage(ERROR_MSG.DB.VALIDATION.FK_ERROR, i18n),
         data: null,
         error: null,
       });
@@ -89,10 +80,7 @@ export class HttpExceptionsFilter implements ExceptionFilter {
 
     if (statusCode === HttpStatus.INTERNAL_SERVER_ERROR) {
       return response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        message: this.translateErrorMessage(
-          ERROR_MSG.SERVER.INTERNAL_SERVER,
-          i18n,
-        ),
+        message: this.translateErrorMessage(ERROR_MSG.SERVER.INTERNAL_SERVER, i18n),
         data: null,
         error: null,
       });
@@ -101,8 +89,7 @@ export class HttpExceptionsFilter implements ExceptionFilter {
     if (exception instanceof NotFoundException) {
       return response.status(HttpStatus.NOT_FOUND).json({
         message:
-          this.translateErrorMessage(ERROR_MSG.SERVER.PAGE_NOT_FOUND, i18n) ||
-          'Page not found',
+          this.translateErrorMessage(ERROR_MSG.SERVER.PAGE_NOT_FOUND, i18n) || 'Page not found',
         data: null,
         error: null,
       });
@@ -112,14 +99,11 @@ export class HttpExceptionsFilter implements ExceptionFilter {
       const validationErrors = exception.getResponse() as { message: string[] };
       let translatedErrors: string[] = [];
       if (Array.isArray(validationErrors.message)) {
-        translatedErrors = validationErrors.message.map((error) =>
+        translatedErrors = validationErrors.message.map(error =>
           this.translateErrorMessage(error, i18n),
         );
       } else if (typeof validationErrors.message === 'string') {
-        const translatedError = this.translateErrorMessage(
-          validationErrors.message,
-          i18n,
-        );
+        const translatedError = this.translateErrorMessage(validationErrors.message, i18n);
         translatedErrors.push(translatedError);
       }
       const latestTranslatedError = translatedErrors.reverse()[0];
@@ -137,10 +121,7 @@ export class HttpExceptionsFilter implements ExceptionFilter {
     });
   }
 
-  private translateErrorMessage(
-    errorMessage: string,
-    i18n: I18nContext,
-  ): string {
+  private translateErrorMessage(errorMessage: string, i18n: I18nContext): string {
     let error = errorMessage;
     const errorMessageArr = errorMessage.split('||');
 

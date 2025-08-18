@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
-import { handleError, validateEnvVariables } from './common.util';
+import { handleError, sanitize, validateEnvVariables } from './common.util';
 
 // Mock the DTO import to avoid decorator issues
 jest.mock('../dtos', () => ({
@@ -27,12 +27,8 @@ jest.mock('class-validator');
 jest.mock('class-transformer');
 
 describe('Common Utility', () => {
-  const mockValidateSync = validateSync as jest.MockedFunction<
-    typeof validateSync
-  >;
-  const mockPlainToInstance = plainToInstance as jest.MockedFunction<
-    typeof plainToInstance
-  >;
+  const mockValidateSync = validateSync as jest.MockedFunction<typeof validateSync>;
+  const mockPlainToInstance = plainToInstance as jest.MockedFunction<typeof plainToInstance>;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -48,9 +44,7 @@ describe('Common Utility', () => {
         handleError(originalError);
       } catch (error) {
         expect(error).toBeInstanceOf(HttpException);
-        expect((error as HttpException).getStatus()).toBe(
-          HttpStatus.BAD_REQUEST,
-        );
+        expect((error as HttpException).getStatus()).toBe(HttpStatus.BAD_REQUEST);
         expect((error as HttpException).getResponse()).toEqual({
           message: 'Invalid input data',
         });
@@ -60,9 +54,7 @@ describe('Common Utility', () => {
     it('should wrap non-HttpException errors in InternalServerErrorException', () => {
       const originalError = new Error('Database connection failed');
 
-      expect(() => handleError(originalError)).toThrow(
-        InternalServerErrorException,
-      );
+      expect(() => handleError(originalError)).toThrow(InternalServerErrorException);
 
       try {
         handleError(originalError);
@@ -77,24 +69,17 @@ describe('Common Utility', () => {
     it('should handle TypeError correctly', () => {
       const originalError = new TypeError('Cannot read property of undefined');
 
-      expect(() => handleError(originalError)).toThrow(
-        InternalServerErrorException,
-      );
+      expect(() => handleError(originalError)).toThrow(InternalServerErrorException);
     });
 
     it('should handle ReferenceError correctly', () => {
       const originalError = new ReferenceError('Variable is not defined');
 
-      expect(() => handleError(originalError)).toThrow(
-        InternalServerErrorException,
-      );
+      expect(() => handleError(originalError)).toThrow(InternalServerErrorException);
     });
 
     it('should handle custom HttpException with custom status', () => {
-      const originalError = new HttpException(
-        'Forbidden access',
-        HttpStatus.FORBIDDEN,
-      );
+      const originalError = new HttpException('Forbidden access', HttpStatus.FORBIDDEN);
 
       try {
         handleError(originalError);
@@ -232,11 +217,9 @@ describe('Common Utility', () => {
       validateEnvVariables(mockConfig);
 
       expect(mockPlainToInstance).toHaveBeenCalledTimes(1);
-      expect(mockPlainToInstance).toHaveBeenCalledWith(
-        expect.any(Function),
-        mockConfig,
-        { enableImplicitConversion: true },
-      );
+      expect(mockPlainToInstance).toHaveBeenCalledWith(expect.any(Function), mockConfig, {
+        enableImplicitConversion: true,
+      });
     });
 
     it('should call validateSync with correct parameters', () => {
@@ -250,6 +233,144 @@ describe('Common Utility', () => {
       expect(mockValidateSync).toHaveBeenCalledWith(transformedConfig, {
         skipMissingProperties: false,
       });
+    });
+  });
+
+  describe('sanitize', () => {
+    it('should redact sensitive keys in objects', () => {
+      const testObject = {
+        username: 'test',
+        password: 'secret123',
+        data: {
+          apiKey: 'abc123',
+          userId: 123,
+        },
+      };
+
+      const sensitiveKeys = ['password', 'key'];
+      const result = sanitize(testObject, sensitiveKeys);
+
+      expect(result).toEqual({
+        username: 'test',
+        password: '[REDACTED]',
+        data: {
+          apiKey: '[REDACTED]',
+          userId: 123,
+        },
+      });
+    });
+
+    it('should sanitize arrays of objects', () => {
+      const testArray = [
+        { id: 1, secret: 'hidden1' },
+        { id: 2, secret: 'hidden2' },
+      ];
+
+      const sensitiveKeys = ['secret'];
+      const result = sanitize(testArray, sensitiveKeys);
+
+      expect(result).toEqual([
+        { id: 1, secret: '[REDACTED]' },
+        { id: 2, secret: '[REDACTED]' },
+      ]);
+    });
+
+    it('should handle nested arrays', () => {
+      const nestedArray = [
+        [
+          { apiKey: 'key1', data: 'public1' },
+          { apiKey: 'key2', data: 'public2' },
+        ],
+        [{ apiKey: 'key3', data: 'public3' }],
+      ];
+
+      const sensitiveKeys = ['apikey'];
+      const result = sanitize(nestedArray, sensitiveKeys);
+
+      expect(result).toEqual([
+        [
+          { apiKey: '[REDACTED]', data: 'public1' },
+          { apiKey: '[REDACTED]', data: 'public2' },
+        ],
+        [{ apiKey: '[REDACTED]', data: 'public3' }],
+      ]);
+    });
+
+    it('should return primitive values unchanged', () => {
+      expect(sanitize('string', ['password'])).toBe('string');
+      expect(sanitize(123, ['password'])).toBe(123);
+      expect(sanitize(true, ['password'])).toBe(true);
+      expect(sanitize(null, ['password'])).toBe(null);
+      expect(sanitize(undefined, ['password'])).toBe(undefined);
+    });
+
+    it('should handle nested objects', () => {
+      const nestedObject = {
+        user: {
+          details: {
+            name: 'John',
+            credentials: {
+              password: '12345',
+              token: 'abcde',
+            },
+          },
+          publicInfo: {
+            displayName: 'John Doe',
+          },
+        },
+      };
+
+      const sensitiveKeys = ['password', 'token', 'credentials'];
+      const result = sanitize(nestedObject, sensitiveKeys);
+
+      expect(result).toEqual({
+        user: {
+          details: {
+            name: 'John',
+            credentials: '[REDACTED]',
+          },
+          publicInfo: {
+            displayName: 'John Doe',
+          },
+        },
+      });
+    });
+
+    it('should handle case-insensitive key matching', () => {
+      const testObject = {
+        Password: 'secret',
+        TOKEN: 'abc123',
+        apikey: '12345',
+      };
+
+      const sensitiveKeys = ['password', 'token', 'key'];
+      const result = sanitize(testObject, sensitiveKeys);
+
+      expect(result).toEqual({
+        Password: '[REDACTED]',
+        TOKEN: '[REDACTED]',
+        apikey: '[REDACTED]',
+      });
+    });
+
+    it('should handle empty arrays and objects', () => {
+      expect(sanitize([], ['password'])).toEqual([]);
+      expect(sanitize({}, ['password'])).toEqual({});
+    });
+
+    it('should return original object if sanitization throws an error', () => {
+      // Create an object that will cause an error during sanitization
+      const problemObject = {};
+      Object.defineProperty(problemObject, 'problematic', {
+        get: () => {
+          throw new Error('Intentional error');
+        },
+        enumerable: true,
+      });
+
+      // The sanitize function should catch the error and return the original
+      const result = sanitize(problemObject, ['secret']);
+      expect(result).toBe(problemObject);
     });
   });
 });

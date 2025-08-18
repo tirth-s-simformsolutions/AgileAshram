@@ -26,10 +26,7 @@ export class ResponseInterceptor implements NestInterceptor {
     response.status(status);
 
     return of({
-      message: this.translateMessage(
-        body?.message ?? STATUS_MESSAGES[status],
-        i18n,
-      ),
+      message: this.translateMessage(body?.message ?? STATUS_MESSAGES[status], i18n),
       data: body?.data ?? null,
       error: null,
     });

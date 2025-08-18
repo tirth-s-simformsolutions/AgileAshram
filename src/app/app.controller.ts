@@ -1,9 +1,9 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Public } from '../core/decorators';
 import { SWAGGER_TAGS } from '../common/constants';
 import { HealthCheckResponseDto } from '../common/dtos';
 import { HealthService } from '../common/services';
+import { Public } from '../core/decorators';
 
 @Controller()
 export class AppController {
@@ -12,8 +12,7 @@ export class AppController {
   @ApiTags(SWAGGER_TAGS.GENERAL)
   @ApiOperation({
     summary: 'Service Health check API',
-    description:
-      'This API is used to check health service and database connection',
+    description: 'This API is used to check health service and database connection',
   })
   @ApiOkResponse({
     description: 'Health check api success',

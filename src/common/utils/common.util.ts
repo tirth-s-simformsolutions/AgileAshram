@@ -1,6 +1,6 @@
 import { HttpException, InternalServerErrorException } from '@nestjs/common';
-import { validateSync } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
+import { validateSync } from 'class-validator';
 import { EnvVariablesDto } from '../dtos';
 
 export const handleError = (error: Error): void => {
@@ -22,11 +22,33 @@ export const validateEnvVariables = (config: Record<string, unknown>) => {
 
   if (errors.length > 0) {
     const errorMessages = errors
-      .map((error) => Object.values(error.constraints || {}).join(', '))
+      .map(error => Object.values(error.constraints ?? {}).join(', '))
       .join(', ');
-    throw new Error(
-      `Environment Variables Validation Failed: ${errorMessages}`,
-    );
+    throw new Error(`Environment Variables Validation Failed: ${errorMessages}`);
   }
   return validatedConfig;
+};
+
+export const sanitize = (obj: unknown, sensitiveKeys: string[], depth: number = 0): unknown => {
+  try {
+    if (depth > 10) {
+      return obj;
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map(item => sanitize(item, sensitiveKeys, depth + 1));
+    } else if (obj !== null && typeof obj === 'object') {
+      const sanitized: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(obj)) {
+        const isSensitive = sensitiveKeys.some(sensitiveKey =>
+          key.toLowerCase().includes(sensitiveKey),
+        );
+        sanitized[key] = isSensitive ? '[REDACTED]' : sanitize(value, sensitiveKeys, depth + 1);
+      }
+      return sanitized;
+    }
+  } catch {
+    // If sanitization fails, return the original object
+  }
+  return obj;
 };

@@ -44,7 +44,7 @@ describe('AsyncContext Utility', () => {
         capturedTraceId = asyncContext.getTraceId();
       });
 
-      expect(capturedTraceId!).toBe(mockTraceId);
+      expect(capturedTraceId).toBe(mockTraceId);
     });
 
     it('should make duration calculation available during execution', () => {
@@ -121,9 +121,7 @@ describe('AsyncContext Utility', () => {
       const outerTraceId = 'abc12345-e89b-12d3-a456-426614174003';
       const innerTraceId = 'def67890-e89b-12d3-a456-426614174004';
 
-      mockCrypto.randomUUID
-        .mockReturnValueOnce(outerTraceId)
-        .mockReturnValueOnce(innerTraceId);
+      mockCrypto.randomUUID.mockReturnValueOnce(outerTraceId).mockReturnValueOnce(innerTraceId);
 
       asyncContext.run(() => {
         const outerTrace = asyncContext.getTraceId();
@@ -146,7 +144,7 @@ describe('AsyncContext Utility', () => {
       const mockTraceId = 'ghi45678-e89b-12d3-a456-426614174005';
       mockCrypto.randomUUID.mockReturnValue(mockTraceId);
 
-      const promise = new Promise<string>((resolve) => {
+      const promise = new Promise<string>(resolve => {
         asyncContext.run(() => {
           setTimeout(() => {
             const traceId = asyncContext.getTraceId();
@@ -157,6 +155,155 @@ describe('AsyncContext Utility', () => {
 
       const result = await promise;
       expect(result).toBe(mockTraceId);
+    });
+  });
+
+  describe('setRequestInfo', () => {
+    it('should set request information in the context', () => {
+      asyncContext.run(() => {
+        const method = 'GET';
+        const originalUrl = '/api/users';
+        const ip = '127.0.0.1';
+        const userAgent = 'Mozilla/5.0';
+        const requestBody = { username: 'testuser', password: 'password123' };
+
+        asyncContext.setRequestInfo(method, originalUrl, ip, userAgent, requestBody);
+
+        const requestInfo = asyncContext.getRequestInfo();
+
+        expect(requestInfo.method).toBe(method);
+        expect(requestInfo.originalUrl).toBe(originalUrl);
+        expect(requestInfo.ip).toBe(ip);
+        expect(requestInfo.userAgent).toBe(userAgent);
+        expect(requestInfo.requestBody).toEqual(
+          expect.objectContaining({
+            username: 'testuser',
+            password: '[REDACTED]', // Should be sanitized
+          }),
+        );
+      });
+    });
+
+    it('should not throw error when called outside of context', () => {
+      expect(() => {
+        asyncContext.setRequestInfo('GET', '/api/test', '127.0.0.1', 'Test Agent');
+      }).not.toThrow();
+    });
+  });
+
+  describe('getRequestInfo', () => {
+    it('should return null for requestBody when not set', () => {
+      asyncContext.run(() => {
+        const requestInfo = asyncContext.getRequestInfo();
+        expect(requestInfo.requestBody).toBeNull();
+      });
+    });
+
+    it('should sanitize sensitive information in requestBody', () => {
+      asyncContext.run(() => {
+        asyncContext.setRequestInfo('POST', '/api/login', '127.0.0.1', 'Test Agent', {
+          email: 'user@example.com',
+          password: 'secret',
+        });
+
+        const requestInfo = asyncContext.getRequestInfo();
+
+        expect(requestInfo.requestBody).toEqual({
+          email: 'user@example.com',
+          password: '[REDACTED]',
+        });
+      });
+    });
+
+    it('should sanitize complex nested objects with sensitive information', () => {
+      asyncContext.run(() => {
+        const complexBody = {
+          user: {
+            profile: {
+              email: 'test@example.com',
+              passwordHash: 'hash123',
+              preferences: {
+                theme: 'dark',
+              },
+            },
+          },
+          payment: {
+            token: 'payment-token-123',
+            details: {
+              cardNumber: '4111-1111-1111-1111',
+            },
+          },
+          items: [
+            { id: 1, name: 'Item 1' },
+            { id: 2, name: 'Item 2', authToken: 'secret-token' },
+          ],
+        };
+
+        asyncContext.setRequestInfo('POST', '/api/order', '127.0.0.1', 'Test Agent', complexBody);
+
+        const requestInfo = asyncContext.getRequestInfo();
+
+        expect(requestInfo.requestBody).toEqual({
+          user: {
+            profile: {
+              email: 'test@example.com',
+              passwordHash: '[REDACTED]', // Should be sanitized
+              preferences: {
+                theme: 'dark',
+              },
+            },
+          },
+          payment: {
+            token: '[REDACTED]', // Should be sanitized
+            details: {
+              cardNumber: '4111-1111-1111-1111',
+            },
+          },
+          items: [
+            { id: 1, name: 'Item 1' },
+            { id: 2, name: 'Item 2', authToken: '[REDACTED]' }, // Should be sanitized
+          ],
+        });
+      });
+    });
+
+    it('should return server information when available', () => {
+      asyncContext.run(() => {
+        const requestInfo = asyncContext.getRequestInfo();
+        expect(requestInfo.server).toBeDefined();
+      });
+    });
+
+    it('should return empty object properties when called outside of context', () => {
+      const requestInfo = asyncContext.getRequestInfo();
+
+      expect(requestInfo).toEqual({
+        method: undefined,
+        originalUrl: undefined,
+        ip: undefined,
+        userAgent: undefined,
+        server: undefined,
+        requestBody: null,
+        userId: undefined,
+      });
+    });
+  });
+
+  describe('setUser', () => {
+    it('should set user ID in the context', () => {
+      asyncContext.run(() => {
+        const userId = 'user-123';
+        asyncContext.setUser(userId);
+
+        const requestInfo = asyncContext.getRequestInfo();
+        expect(requestInfo.userId).toBe(userId);
+      });
+    });
+
+    it('should not throw error when called outside of context', () => {
+      expect(() => {
+        asyncContext.setUser('user-456');
+      }).not.toThrow();
     });
   });
 });

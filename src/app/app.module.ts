@@ -1,24 +1,21 @@
 import { MiddlewareConsumer, Module } from '@nestjs/common';
-import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { join } from 'path';
-import { I18nModule, AcceptLanguageResolver } from 'nestjs-i18n';
 import { ConfigModule } from '@nestjs/config';
-import { AppController } from './app.controller';
-import {
-  HttpExceptionsFilter,
-  ResponseInterceptor,
-} from '../core/interceptors';
-import { AuthModule } from '../modules/auth/auth.module';
-import { AuthGuard, CustomThrottlerGuard } from '../core/guards';
-import { UserModule } from '../modules/user/user.module';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { AcceptLanguageResolver, I18nModule } from 'nestjs-i18n';
+import { join } from 'path';
+import { PrismaService } from 'src/database/prisma.service';
+import { HealthService, LoggerService } from '../common/services';
+import { validateEnvVariables } from '../common/utils';
 import appConfig from '../config/app.config';
 import databaseConfig from '../config/database.config';
 import jwtConfig from '../config/jwt.config';
-import { HealthService, LoggerService } from '../common/services';
-import { validateEnvVariables } from '../common/utils';
+import { AuthGuard, CustomThrottlerGuard } from '../core/guards';
+import { HttpExceptionsFilter, ResponseInterceptor } from '../core/interceptors';
 import { TraceMiddleware } from '../core/middleware';
-import { ThrottlerModule } from '@nestjs/throttler';
-import { PrismaService } from 'src/database/prisma.service';
+import { AuthModule } from '../modules/auth/auth.module';
+import { UserModule } from '../modules/user/user.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [

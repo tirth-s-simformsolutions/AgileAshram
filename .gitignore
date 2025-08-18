@@ -41,3 +41,5 @@ npm-cache/
 src/generated
 
 .env
+.env.*
+!.env.example

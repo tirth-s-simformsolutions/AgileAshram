@@ -39,9 +39,7 @@ export const createMockPrismaService = () => ({
 /**
  * Mock factory for ConfigService
  */
-export const createMockConfigService = (
-  config: Record<string, unknown> = {},
-) => ({
+export const createMockConfigService = (config: Record<string, unknown> = {}) => ({
   get: jest.fn((key: string) => config[key]),
   getOrThrow: jest.fn((key: string) => {
     if (!(key in config)) {

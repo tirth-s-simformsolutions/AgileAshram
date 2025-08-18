@@ -1,10 +1,5 @@
 import { Body, Controller, Post, Req, Res } from '@nestjs/common';
-import {
-  ApiCreatedResponse,
-  ApiOkResponse,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { SWAGGER_TAGS } from '../../common/constants';
 import { ICurrentUser } from '../../common/interfaces';
@@ -58,8 +53,7 @@ export class AuthController {
   @ApiTags(SWAGGER_TAGS.AUTH)
   @ApiOperation({
     summary: 'Refresh Token API',
-    description:
-      'This API is used to create new access token from refresh token',
+    description: 'This API is used to create new access token from refresh token',
   })
   @ApiOkResponse({
     description: 'Refresh token generated successfully',
@@ -96,10 +90,7 @@ export class AuthController {
     type: ChangePasswordResponseDto,
   })
   @Post('/change-password')
-  changePassword(
-    @CurrentUser() currentUser: ICurrentUser,
-    @Body() data: ChangePasswordDto,
-  ) {
+  changePassword(@CurrentUser() currentUser: ICurrentUser, @Body() data: ChangePasswordDto) {
     return this.authService.changePassword(currentUser.userId, data);
   }
 }

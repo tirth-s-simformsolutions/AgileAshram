@@ -3,11 +3,7 @@ import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SWAGGER_TAGS } from '../../common/constants';
 import { ICurrentUser } from '../../common/interfaces';
 import { CurrentUser } from '../../core/decorators';
-import {
-  GetProfileResponseDto,
-  UpdateProfileDto,
-  UpdateProfileResponseDto,
-} from './dtos';
+import { GetProfileResponseDto, UpdateProfileDto, UpdateProfileResponseDto } from './dtos';
 import { UserService } from './user.service';
 
 @Controller('user')
@@ -38,10 +34,7 @@ export class UserController {
     type: UpdateProfileResponseDto,
   })
   @Put('/profile')
-  updateProfile(
-    @CurrentUser() currentUser: ICurrentUser,
-    @Body() data: UpdateProfileDto,
-  ) {
+  updateProfile(@CurrentUser() currentUser: ICurrentUser, @Body() data: UpdateProfileDto) {
     return this.userService.updateProfile(currentUser.userId, data);
   }
 }

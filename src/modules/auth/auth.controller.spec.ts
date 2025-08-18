@@ -73,10 +73,7 @@ describe('AuthController', () => {
       mockAuthService.signup.mockResolvedValue(mockSignupResponse);
 
       // Act
-      const result = await controller.signup(
-        signupDto,
-        mockResponse as Response,
-      );
+      const result = await controller.signup(signupDto, mockResponse as Response);
 
       // Assert
       expect(authService.signup).toHaveBeenCalledWith(signupDto, mockResponse);
@@ -90,9 +87,9 @@ describe('AuthController', () => {
       mockAuthService.signup.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.signup(signupDto, mockResponse as Response),
-      ).rejects.toThrow('Email already exists');
+      await expect(controller.signup(signupDto, mockResponse as Response)).rejects.toThrow(
+        'Email already exists',
+      );
       expect(authService.signup).toHaveBeenCalledWith(signupDto, mockResponse);
     });
   });
@@ -134,9 +131,9 @@ describe('AuthController', () => {
       mockAuthService.login.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.login(loginDto, mockResponse as Response),
-      ).rejects.toThrow('Invalid credentials');
+      await expect(controller.login(loginDto, mockResponse as Response)).rejects.toThrow(
+        'Invalid credentials',
+      );
       expect(authService.login).toHaveBeenCalledWith(loginDto, mockResponse);
     });
   });
@@ -161,10 +158,7 @@ describe('AuthController', () => {
       );
 
       // Assert
-      expect(authService.refreshToken).toHaveBeenCalledWith(
-        refreshToken,
-        mockResponse,
-      );
+      expect(authService.refreshToken).toHaveBeenCalledWith(refreshToken, mockResponse);
       expect(authService.refreshToken).toHaveBeenCalledTimes(1);
       expect(result).toEqual(mockRefreshTokenResponse);
     });
@@ -181,10 +175,7 @@ describe('AuthController', () => {
       );
 
       // Assert
-      expect(authService.refreshToken).toHaveBeenCalledWith(
-        undefined,
-        mockResponse,
-      );
+      expect(authService.refreshToken).toHaveBeenCalledWith(undefined, mockResponse);
       expect(result).toEqual(mockRefreshTokenResponse);
     });
 
@@ -197,15 +188,9 @@ describe('AuthController', () => {
 
       // Act & Assert
       await expect(
-        controller.refreshToken(
-          mockRequest as Request,
-          mockResponse as Response,
-        ),
+        controller.refreshToken(mockRequest as Request, mockResponse as Response),
       ).rejects.toThrow('Invalid refresh token');
-      expect(authService.refreshToken).toHaveBeenCalledWith(
-        refreshToken,
-        mockResponse,
-      );
+      expect(authService.refreshToken).toHaveBeenCalledWith(refreshToken, mockResponse);
     });
 
     it('should handle case when cookies object is undefined', async () => {
@@ -220,10 +205,7 @@ describe('AuthController', () => {
       );
 
       // Assert
-      expect(authService.refreshToken).toHaveBeenCalledWith(
-        undefined,
-        mockResponse,
-      );
+      expect(authService.refreshToken).toHaveBeenCalledWith(undefined, mockResponse);
       expect(result).toEqual(mockRefreshTokenResponse);
     });
   });
@@ -254,9 +236,7 @@ describe('AuthController', () => {
       mockAuthService.logout.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(controller.logout(mockResponse as Response)).rejects.toThrow(
-        'Logout failed',
-      );
+      await expect(controller.logout(mockResponse as Response)).rejects.toThrow('Logout failed');
       expect(authService.logout).toHaveBeenCalledWith(mockResponse);
     });
   });
@@ -280,15 +260,10 @@ describe('AuthController', () => {
 
     it('should change password successfully', async () => {
       // Arrange
-      mockAuthService.changePassword.mockResolvedValue(
-        mockChangePasswordResponse,
-      );
+      mockAuthService.changePassword.mockResolvedValue(mockChangePasswordResponse);
 
       // Act
-      const result = await controller.changePassword(
-        mockCurrentUser,
-        changePasswordDto,
-      );
+      const result = await controller.changePassword(mockCurrentUser, changePasswordDto);
 
       // Assert
       expect(authService.changePassword).toHaveBeenCalledWith(
@@ -305,9 +280,9 @@ describe('AuthController', () => {
       mockAuthService.changePassword.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.changePassword(mockCurrentUser, changePasswordDto),
-      ).rejects.toThrow('Old password is incorrect');
+      await expect(controller.changePassword(mockCurrentUser, changePasswordDto)).rejects.toThrow(
+        'Old password is incorrect',
+      );
       expect(authService.changePassword).toHaveBeenCalledWith(
         mockCurrentUser.userId,
         changePasswordDto,
@@ -320,15 +295,10 @@ describe('AuthController', () => {
         userId: '999',
         name: 'Different User',
       };
-      mockAuthService.changePassword.mockResolvedValue(
-        mockChangePasswordResponse,
-      );
+      mockAuthService.changePassword.mockResolvedValue(mockChangePasswordResponse);
 
       // Act
-      const result = await controller.changePassword(
-        differentUser,
-        changePasswordDto,
-      );
+      const result = await controller.changePassword(differentUser, changePasswordDto);
 
       // Assert
       expect(authService.changePassword).toHaveBeenCalledWith(

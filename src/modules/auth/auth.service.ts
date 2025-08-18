@@ -14,11 +14,7 @@ import { compareHash, createHash, handleError } from '../../common/utils';
 import { ResponseResult } from '../../core/class/';
 import { UserRepository } from '../user/user.repository';
 import { ChangePasswordDto, LoginDto, SignupDto } from './dtos';
-import {
-  ICookieConfig,
-  ITokenPayload,
-  IUserValidationResult,
-} from './interfaces';
+import { ICookieConfig, ITokenPayload, IUserValidationResult } from './interfaces';
 import { ERROR_MSG, SUCCESS_MSG } from './messages';
 
 @Injectable()
@@ -32,25 +28,13 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
   ) {
-    this.accessTokenSecretKey = this.configService.get<string>(
-      'jwt.accessToken.secretKey',
-    );
-    this.refreshTokenSecretKey = this.configService.get<string>(
-      'jwt.refreshToken.secretKey',
-    );
-    this.accessTokenExpire = this.configService.get<number | string>(
-      'jwt.accessToken.expire',
-    );
-    this.refreshTokenExpire = this.configService.get<number | string>(
-      'jwt.refreshToken.expire',
-    );
+    this.accessTokenSecretKey = this.configService.get<string>('jwt.accessToken.secretKey');
+    this.refreshTokenSecretKey = this.configService.get<string>('jwt.refreshToken.secretKey');
+    this.accessTokenExpire = this.configService.get<number | string>('jwt.accessToken.expire');
+    this.refreshTokenExpire = this.configService.get<number | string>('jwt.refreshToken.expire');
   }
 
-  private setTokenCookies(
-    res: Response,
-    accessToken: string,
-    refreshToken: string,
-  ): void {
+  private setTokenCookies(res: Response, accessToken: string, refreshToken: string): void {
     const cookieConfig: Omit<ICookieConfig, 'maxAge'> = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -103,8 +87,7 @@ export class AuthService {
         status: UserStatus.active,
       };
 
-      const createdUserInfo =
-        await this.userRepository.createUser(createUserPayload);
+      const createdUserInfo = await this.userRepository.createUser(createUserPayload);
 
       const accessToken = await this.jwtService.signAsync(
         {
@@ -126,14 +109,11 @@ export class AuthService {
         },
       );
 
-      const userInfo = await this.userRepository.findUserById(
-        createdUserInfo.id,
-        {
-          id: true,
-          email: true,
-          name: true,
-        },
-      );
+      const userInfo = await this.userRepository.findUserById(createdUserInfo.id, {
+        id: true,
+        email: true,
+        name: true,
+      });
 
       // Set tokens in cookies
       this.setTokenCookies(res, accessToken, refreshToken);
@@ -165,21 +145,18 @@ export class AuthService {
       const { email, password } = data;
 
       const isUserFound = await this.userRepository.findOneByCondition({
-        email: email,
+        email,
       });
 
       // check user exists or not
-      const isPasswordValid =
-        isUserFound && (await compareHash(password, isUserFound.password));
+      const isPasswordValid = isUserFound && (await compareHash(password, isUserFound.password));
 
       if (!isPasswordValid) {
         throw new BadRequestException(ERROR_MSG.INVALID_CREDENTIALS);
       }
 
       if (isUserFound.status !== UserStatus.active) {
-        throw new UnprocessableEntityException(
-          ERROR_MSG.USER.ACCOUNT_NOT_ACTIVE,
-        );
+        throw new UnprocessableEntityException(ERROR_MSG.USER.ACCOUNT_NOT_ACTIVE);
       }
 
       const accessToken = await this.jwtService.signAsync(
@@ -228,10 +205,9 @@ export class AuthService {
         throw new UnauthorizedException(ERROR_MSG.UNAUTHORIZED);
       }
 
-      const tokenData = await this.jwtService.verifyAsync<ITokenPayload>(
-        refreshToken,
-        { secret: this.refreshTokenSecretKey },
-      );
+      const tokenData = await this.jwtService.verifyAsync<ITokenPayload>(refreshToken, {
+        secret: this.refreshTokenSecretKey,
+      });
 
       if (!tokenData?.userId) {
         throw new UnauthorizedException(ERROR_MSG.UNAUTHORIZED);
@@ -239,7 +215,7 @@ export class AuthService {
 
       const userInfo = await this.userRepository.findUserById(tokenData.userId);
 
-      if (userInfo.status !== UserStatus.active) {
+      if (userInfo?.status !== UserStatus.active) {
         throw new UnauthorizedException(ERROR_MSG.USER.ACCOUNT_NOT_ACTIVE);
       }
 
@@ -342,9 +318,7 @@ export class AuthService {
         throw new UnauthorizedException(ERROR_MSG.UNAUTHORIZED);
       }
 
-      const loginUserInfo = await this.userRepository.findUserById(
-        decode?.userId,
-      );
+      const loginUserInfo = await this.userRepository.findUserById(decode?.userId);
 
       if (!loginUserInfo) {
         throw new UnauthorizedException(ERROR_MSG.UNAUTHORIZED);

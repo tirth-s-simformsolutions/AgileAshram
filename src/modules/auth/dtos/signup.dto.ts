@@ -1,13 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import {
-  IsEmail,
-  IsNotEmpty,
-  IsString,
-  Matches,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 import { DEFAULT_MAX_LENGTH } from '../../../common/constants';
 import { VALIDATION_MSG } from '../../../common/messages';
 import { ERROR_MSG } from '../messages';
