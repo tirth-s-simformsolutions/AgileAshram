@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { handleError } from '../../common/utils';
 import { ResponseResult } from '../../core/class/';
-import { DEFAULT_DEPARTMENTS, SUCCESS_MSG } from './department.constants';
+import { DEFAULT_DEPARTMENTS } from './department.constants';
 import { DepartmentRepository } from './department.repository';
+import { ERROR_MSG, SUCCESS_MSG } from './messages';
 
 @Injectable()
 export class DepartmentService {
@@ -14,7 +15,7 @@ export class DepartmentService {
 
       if (count > 0) {
         return new ResponseResult({
-          message: SUCCESS_MSG.ALREADY_EXISTS,
+          message: ERROR_MSG.ALREADY_EXISTS,
           data: await this.departmentRepository.findAll(),
         });
       }

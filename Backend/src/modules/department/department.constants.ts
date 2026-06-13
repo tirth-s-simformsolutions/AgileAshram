@@ -1,7 +1,7 @@
 export const DEFAULT_DEPARTMENTS = [
   {
     name: 'Garbage / Waste Management Department',
-    responsibility: [
+    responsibilities: [
       'Collection of household waste.',
       'Collection of commercial waste.',
       'Removal of garbage from public places.',
@@ -15,10 +15,27 @@ export const DEFAULT_DEPARTMENTS = [
       'Collection of hazardous household waste.',
       'Public sanitation and cleanliness initiatives.',
     ],
+    keywords: [
+      'garbage',
+      'waste',
+      'trash',
+      'rubbish',
+      'sanitation',
+      'sweeping',
+      'dustbin',
+      'dumpster',
+      'litter',
+      'filth',
+      'dump',
+      'recycling',
+      'landfill',
+      'overflowing bin',
+      'unclean street',
+    ],
   },
   {
     name: 'Industry Department',
-    responsibility: [
+    responsibilities: [
       'Industrial licensing and permits.',
       'Factory operations compliance.',
       'Industrial pollution control.',
@@ -34,10 +51,22 @@ export const DEFAULT_DEPARTMENTS = [
       'Labor law compliance in industries.',
       'Industrial utility services.',
     ],
+    keywords: [
+      'factory',
+      'industry',
+      'industrial',
+      'manufacturing',
+      'pollution',
+      'emission',
+      'chemical',
+      'smoke',
+      'fumes',
+      'hazardous',
+      'workplace',
+      'labor',
+      'permit',
+      'license',
+      'inspection',
+    ],
   },
 ];
-
-export const SUCCESS_MSG = {
-  SEED: 'departmentSuccess.SEED',
-  ALREADY_EXISTS: 'departmentSuccess.ALREADY_EXISTS',
-};

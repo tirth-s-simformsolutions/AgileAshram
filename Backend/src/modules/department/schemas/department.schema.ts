@@ -22,6 +22,10 @@ export class Department {
   @Prop({ type: [String], required: true, default: [] })
   responsibilities: string[];
 
+  // Keywords for improved search and matching (e.g. ["roads", "potholes", "asphalt"]).
+  @Prop({ type: [String], required: false, default: [] })
+  keywords: string[];
+
   // Where verified complaints are forwarded (P1 — e.g. AMC CCRS inbox).
   @Prop()
   contactEmail?: string;
