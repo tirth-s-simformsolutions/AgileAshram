@@ -38,6 +38,7 @@ export class EnvVariablesDto {
   @IsString()
   @IsNotEmpty()
   GOOGLE_GENAI_MODEL: string;
+
   @IsString()
   @IsNotEmpty()
   CLOUDFLARE_R2_ACCOUNT_ID: string;
@@ -61,6 +62,18 @@ export class EnvVariablesDto {
   @IsString()
   @IsNotEmpty()
   CLOUDFLARE_R2_PUBLIC_URL: string;
+
+  @IsString()
+  @IsNotEmpty()
+  TWILIO_ACCOUNT_SID: string;
+
+  @IsString()
+  @IsNotEmpty()
+  TWILIO_AUTH_TOKEN: string;
+
+  @IsString()
+  @IsNotEmpty()
+  TWILIO_FROM_NUMBER: string;
 
   @IsOptional()
   @IsString()
