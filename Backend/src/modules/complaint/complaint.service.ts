@@ -1,19 +1,24 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { Types } from 'mongoose';
+import { FilterQuery, Types } from 'mongoose';
+import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from '../../common/constants';
+import { PaginationDto } from '../../common/dtos';
 import { handleError } from '../../common/utils';
 import { ResponseResult } from '../../core/class';
 import { AiService } from '../ai/ai.service';
 import { CounterService } from '../counter/counter.service';
 import { DepartmentRepository } from '../department/department.repository';
+import { UserRole } from '../user/schemas/user.schema';
+import { UserRepository } from '../user/user.repository';
 import { ComplaintRepository } from './complaint.repository';
-import { CreateComplaintDto } from './dtos';
+import { CreateComplaintDto, UpdateStatusDto } from './dtos';
 import { ERROR_MSG, SUCCESS_MSG } from './messages';
-import { ComplaintSeverity, ComplaintStatus } from './schemas/complaint.schema';
+import { ComplaintDocument, ComplaintSeverity, ComplaintStatus } from './schemas/complaint.schema';
 
 /** Shapes returned inside the AiService ResponseResult.data payloads. */
 interface ValidationData {
@@ -24,6 +29,7 @@ interface ValidationData {
 interface SuggestionData {
   industryId: string | null;
   summary: string;
+  severity: ComplaintSeverity;
 }
 
 @Injectable()
@@ -33,7 +39,47 @@ export class ComplaintService {
     private readonly aiService: AiService,
     private readonly counterService: CounterService,
     private readonly departmentRepository: DepartmentRepository,
+    private readonly userRepository: UserRepository,
   ) {}
+
+  /**
+   * Role-scoped, paginated list (shared endpoint):
+   *   citizen    -> only their own complaints
+   *   department -> complaints routed to their department
+   *   admin      -> all complaints
+   */
+  async list(query: PaginationDto, currentUserId: string) {
+    try {
+      const user = await this.userRepository.findUserById(currentUserId);
+      if (!user) {
+        throw new NotFoundException(ERROR_MSG.COMPLAINT.NOT_FOUND);
+      }
+
+      const filter: FilterQuery<ComplaintDocument> = {};
+      if (user.role === UserRole.CITIZEN) {
+        filter.citizenId = new Types.ObjectId(currentUserId);
+      } else if (user.role === UserRole.DEPARTMENT) {
+        filter.departmentId = user.departmentId;
+      }
+      // admin -> no filter (all complaints)
+
+      const page = query.page ?? DEFAULT_PAGE;
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const skip = page * pageSize;
+
+      const [complaints, total] = await Promise.all([
+        this.complaintRepository.list(filter, skip, pageSize),
+        this.complaintRepository.count(filter),
+      ]);
+
+      return new ResponseResult({
+        message: SUCCESS_MSG.COMPLAINT.FETCHED,
+        data: { complaints, total, page, pageSize },
+      });
+    } catch (error) {
+      handleError(error);
+    }
+  }
 
   /**
    * Citizen submits a complaint:
@@ -90,7 +136,7 @@ export class ComplaintService {
         description: dto.description,
         imageUrl: dto.imageUrl,
         departmentId: new Types.ObjectId(departmentId),
-        severity: ComplaintSeverity.MEDIUM, // TODO: source severity from AI scoring
+        severity: this.resolveSeverity(suggestion?.severity), // AI-scored; severityRank derived by hook
         gps: { lat: dto.location.lat, lng: dto.location.lng },
         reportedAddress: dto.location.address,
         status: ComplaintStatus.ROUTED,
@@ -110,6 +156,59 @@ export class ComplaintService {
     } catch (error) {
       handleError(error);
     }
+  }
+
+  /**
+   * Update a complaint's status (department/admin only — enforced by RolesGuard).
+   * A department user may only act on complaints routed to their own department.
+   * Appends to statusHistory and stamps resolvedBy/resolvedAt on RESOLVED.
+   */
+  async updateStatus(id: string, dto: UpdateStatusDto, currentUserId: string) {
+    try {
+      const user = await this.userRepository.findUserById(currentUserId);
+      if (!user) {
+        throw new ForbiddenException(ERROR_MSG.COMPLAINT.NOT_YOUR_DEPARTMENT);
+      }
+
+      const complaint = await this.complaintRepository.findDocById(id);
+      if (!complaint) {
+        throw new NotFoundException(ERROR_MSG.COMPLAINT.NOT_FOUND);
+      }
+
+      // A department user can only act on its own department's complaints.
+      if (
+        user.role === UserRole.DEPARTMENT &&
+        String(complaint.departmentId) !== String(user.departmentId)
+      ) {
+        throw new ForbiddenException(ERROR_MSG.COMPLAINT.NOT_YOUR_DEPARTMENT);
+      }
+
+      const now = new Date();
+      complaint.status = dto.status;
+      complaint.statusHistory.push({
+        status: dto.status,
+        note: dto.note,
+        at: now,
+        byUserId: new Types.ObjectId(currentUserId),
+      });
+
+      if (dto.status === ComplaintStatus.RESOLVED) {
+        complaint.resolvedBy = new Types.ObjectId(currentUserId);
+        complaint.resolvedAt = now;
+      }
+
+      await complaint.save(); // .save() so the severityRank pre-save hook stays consistent
+
+      return new ResponseResult({ message: SUCCESS_MSG.COMPLAINT.STATUS_UPDATED, data: complaint });
+    } catch (error) {
+      handleError(error);
+    }
+  }
+
+  /** Map the AI's severity string onto the enum, defaulting to Medium if missing/invalid. */
+  private resolveSeverity(value?: string): ComplaintSeverity {
+    const allowed = Object.values(ComplaintSeverity) as string[];
+    return allowed.includes(value ?? '') ? (value as ComplaintSeverity) : ComplaintSeverity.MEDIUM;
   }
 
   async findByTicketId(ticketId: string) {

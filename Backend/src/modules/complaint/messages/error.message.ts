@@ -3,5 +3,6 @@ export const ERROR_MSG = {
     NOT_FOUND: 'complaintError.NOT_FOUND',
     NO_DEPARTMENT: 'complaintError.NO_DEPARTMENT',
     INVALID: 'complaintError.INVALID',
+    NOT_YOUR_DEPARTMENT: 'complaintError.NOT_YOUR_DEPARTMENT',
   },
 };
