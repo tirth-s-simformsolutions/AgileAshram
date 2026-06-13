@@ -1,0 +1,6 @@
+{
+  "OPEN": "Your complaint {ticketId} has been registered and assigned to {departmentName}. We will keep you updated.",
+  "IN_PROGRESS": "Update on {ticketId}: {departmentName} has started working on your complaint.",
+  "RESOLVED": "Good news! Your complaint {ticketId} handled by {departmentName} has been resolved.",
+  "REJECTED": "Your complaint {ticketId} with {departmentName} has been rejected. Please visit the app for details."
+}

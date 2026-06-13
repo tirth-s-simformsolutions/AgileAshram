@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { FilterQuery, Types } from 'mongoose';
+import { I18nService } from 'nestjs-i18n';
 import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from '../../common/constants';
 import { PaginationDto } from '../../common/dtos';
 import { handleError } from '../../common/utils';
@@ -13,11 +14,12 @@ import { ResponseResult } from '../../core/class';
 import { AiService } from '../ai/ai.service';
 import { CounterService } from '../counter/counter.service';
 import { DepartmentRepository } from '../department/department.repository';
+import { SmsService } from '../sms/sms.service';
 import { UserRole } from '../user/schemas/user.schema';
 import { UserRepository } from '../user/user.repository';
 import { ComplaintRepository } from './complaint.repository';
 import { CreateComplaintDto, ReassignDepartmentDto, UpdateStatusDto } from './dtos';
-import { ERROR_MSG, SUCCESS_MSG } from './messages';
+import { ERROR_MSG, SMS_MSG, SUCCESS_MSG } from './messages';
 import { ComplaintDocument, ComplaintSeverity, ComplaintStatus } from './schemas/complaint.schema';
 
 /** Shapes returned inside the AiService ResponseResult.data payloads. */
@@ -40,7 +42,22 @@ export class ComplaintService {
     private readonly counterService: CounterService,
     private readonly departmentRepository: DepartmentRepository,
     private readonly userRepository: UserRepository,
+    private readonly smsService: SmsService,
+    private readonly i18n: I18nService,
   ) {}
+
+  private sendStatusSms(
+    phone: string | undefined,
+    status: ComplaintStatus,
+    ticketId: string,
+    departmentName: string,
+  ): void {
+    if (!phone) return;
+    const body = this.i18n.t(SMS_MSG.COMPLAINT[status], {
+      args: { ticketId, departmentName },
+    }) as string;
+    this.smsService.send({ to: phone, body, metadata: { ticketId, status } }).catch(() => void 0);
+  }
 
   /**
    * Role-scoped, paginated list (shared endpoint):
@@ -149,6 +166,12 @@ export class ComplaintService {
         statusHistory: [{ status: ComplaintStatus.OPEN, at: now }],
       });
 
+      const [citizen, department] = await Promise.all([
+        this.userRepository.findUserById(citizenId),
+        this.departmentRepository.findById(departmentId),
+      ]);
+      this.sendStatusSms(citizen?.phone, ComplaintStatus.OPEN, ticketId, department?.name ?? '');
+
       return new ResponseResult({ message: SUCCESS_MSG.COMPLAINT.CREATED, data: complaint });
     } catch (error) {
       handleError(error);
@@ -195,6 +218,12 @@ export class ComplaintService {
       }
 
       await complaint.save(); // .save() so the severityRank pre-save hook stays consistent
+
+      const [citizen, department] = await Promise.all([
+        this.userRepository.findUserById(String(complaint.citizenId)),
+        this.departmentRepository.findById(String(complaint.departmentId)),
+      ]);
+      this.sendStatusSms(citizen?.phone, dto.status, complaint.ticketId, department?.name ?? '');
 
       return new ResponseResult({ message: SUCCESS_MSG.COMPLAINT.STATUS_UPDATED, data: complaint });
     } catch (error) {
