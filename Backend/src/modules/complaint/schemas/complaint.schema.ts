@@ -13,8 +13,7 @@ export enum ComplaintSeverity {
 }
 
 export enum ComplaintStatus {
-  SUBMITTED = 'SUBMITTED',
-  ROUTED = 'ROUTED',
+  OPEN = 'OPEN',
   IN_PROGRESS = 'IN_PROGRESS',
   RESOLVED = 'RESOLVED',
   REJECTED = 'REJECTED',
@@ -139,7 +138,7 @@ export class Complaint {
   reportedAddress?: string;
 
   // --- Lifecycle ---
-  @Prop({ enum: ComplaintStatus, default: ComplaintStatus.SUBMITTED, index: true })
+  @Prop({ enum: ComplaintStatus, default: ComplaintStatus.OPEN, index: true })
   status: ComplaintStatus;
 
   @Prop({ type: [StatusHistoryEntrySchema], default: [] })

@@ -70,7 +70,8 @@ export class AuthController {
   @ApiTags(SWAGGER_TAGS.AUTH)
   @ApiOperation({
     summary: 'DigiLocker initiate API',
-    description: 'Initiates DigiLocker login for citizens — returns a loginUrl to redirect the user to',
+    description:
+      'Initiates DigiLocker login for citizens — returns a loginUrl to redirect the user to',
   })
   @ApiOkResponse({
     description: 'DigiLocker login initiated',
@@ -86,7 +87,8 @@ export class AuthController {
   @ApiTags(SWAGGER_TAGS.AUTH)
   @ApiOperation({
     summary: 'DigiLocker complete API',
-    description: 'Completes DigiLocker login — exchanges Setu request ID for a session (sets JWT cookies)',
+    description:
+      'Completes DigiLocker login — exchanges Setu request ID for a session (sets JWT cookies)',
   })
   @ApiOkResponse({
     description: 'Login successful',
@@ -95,7 +97,10 @@ export class AuthController {
   @Public()
   @HttpCode(HttpStatus.OK)
   @Post('/digilocker/complete')
-  digilockerComplete(@Body() data: DigilockerCompleteDto, @Res({ passthrough: true }) res: Response) {
+  digilockerComplete(
+    @Body() data: DigilockerCompleteDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     return this.authService.digilockerComplete(data.id, res);
   }
 

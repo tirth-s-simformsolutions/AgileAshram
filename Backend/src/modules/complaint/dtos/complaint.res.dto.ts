@@ -152,7 +152,9 @@ export class GetComplaintResponseDto extends PickType(CommonResponseDto, ['error
   data: ComplaintResDto;
 }
 
-export class UpdateComplaintStatusResponseDto extends PickType(CommonResponseDto, ['error'] as const) {
+export class UpdateComplaintStatusResponseDto extends PickType(CommonResponseDto, [
+  'error',
+] as const) {
   @ApiProperty({ example: 'Complaint status updated successfully' })
   message: string;
 

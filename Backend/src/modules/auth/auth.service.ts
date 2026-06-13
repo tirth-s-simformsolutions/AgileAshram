@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ConflictException,
-  HttpStatus,
   Injectable,
   InternalServerErrorException,
   UnauthorizedException,
@@ -15,7 +14,13 @@ import { ResponseResult } from '../../core/class/';
 import { UserRole, UserStatus } from '../user/schemas/user.schema';
 import { UserRepository } from '../user/user.repository';
 import { AdminLoginDto, ChangePasswordDto } from './dtos';
-import { ICookieConfig, ISetuInitiateResponse, ISetuStatusResponse, ITokenPayload, IUserValidationResult } from './interfaces';
+import {
+  ICookieConfig,
+  ISetuInitiateResponse,
+  ISetuStatusResponse,
+  ITokenPayload,
+  IUserValidationResult,
+} from './interfaces';
 import { ERROR_MSG, SUCCESS_MSG } from './messages';
 
 @Injectable()
@@ -276,7 +281,7 @@ export class AuthService {
         throw new InternalServerErrorException(ERROR_MSG.DIGILOCKER.FAILED);
       }
 
-      const body = await response.json() as ISetuInitiateResponse;
+      const body = (await response.json()) as ISetuInitiateResponse;
 
       return new ResponseResult({
         message: SUCCESS_MSG.USER.DIGILOCKER_INITIATE,
@@ -308,7 +313,7 @@ export class AuthService {
           throw new InternalServerErrorException(ERROR_MSG.DIGILOCKER.FAILED);
         }
 
-        const body = await response.json() as ISetuStatusResponse;
+        const body = (await response.json()) as ISetuStatusResponse;
 
         if (body.status !== 'authenticated') {
           throw new BadRequestException(ERROR_MSG.DIGILOCKER.NOT_AUTHENTICATED);
