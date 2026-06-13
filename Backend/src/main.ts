@@ -48,8 +48,7 @@ const bootstrap = async (): Promise<void> => {
 
   // setup cors
   app.enableCors({
-    origin: '*',
-    allowedHeaders: '*',
+    origin: true,
     methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE', 'PATCH'],
     optionsSuccessStatus: HttpStatus.OK,
     credentials: true,
