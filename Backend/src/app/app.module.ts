@@ -19,6 +19,8 @@ import { HttpExceptionsFilter, ResponseInterceptor } from '../core/interceptors'
 import { TraceMiddleware } from '../core/middleware';
 import { AiModule } from '../modules/ai/ai.module';
 import { AuthModule } from '../modules/auth/auth.module';
+import { ComplaintModule } from '../modules/complaint/complaint.module';
+import { CounterModule } from '../modules/counter/counter.module';
 import { DepartmentModule } from '../modules/department/department.module';
 import { SmsModule } from '../modules/sms/sms.module';
 import { UploadModule } from '../modules/upload/upload.module';
@@ -64,6 +66,8 @@ import { AppController } from './app.controller';
     }),
     AiModule,
     AuthModule,
+    ComplaintModule,
+    CounterModule,
     DepartmentModule,
     UserModule,
     UploadModule,

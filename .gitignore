@@ -29,6 +29,9 @@ yarn-error.log
 !.vscode/mcp.json
 .history/*
 
+# MCP config (contains credentials)
+.mcp.json
+
 # Miscellaneous
 /.angular/cache
 .sass-cache/
