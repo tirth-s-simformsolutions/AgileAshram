@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { FilterQuery, Model } from 'mongoose';
-import { Complaint, ComplaintDocument } from './schemas/complaint.schema';
+import { FilterQuery, Model, Types } from 'mongoose';
+import { Complaint, ComplaintDocument, ComplaintStatus } from './schemas/complaint.schema';
 
 @Injectable()
 export class ComplaintRepository {
@@ -53,9 +53,28 @@ export class ComplaintRepository {
 
   /** Returns lat/lng for all complaints that have a GPS point set. */
   findAllGps() {
+    return this.complaintModel.find(
+      { gps: { $exists: true, $ne: null } },
+      { 'gps.lat': 1, 'gps.lng': 1, _id: 0 },
+    );
+  }
+
+  /**
+   * Returns unresolved complaints for a department that have GPS coordinates and a
+   * classified context (aiMeta.rawLabel set). Used for nearby-duplicate detection.
+   */
+  findUnresolvedByDepartment(departmentId: Types.ObjectId) {
     return this.complaintModel
-      .find({ gps: { $exists: true, $ne: null } }, { 'gps.lat': 1, 'gps.lng': 1, _id: 0 })
+      .find({
+        departmentId,
+        status: { $in: [ComplaintStatus.OPEN, ComplaintStatus.IN_PROGRESS] },
+        'gps.lat': { $exists: true },
+        'gps.lng': { $exists: true },
+        'aiMeta.rawLabel': { $exists: true, $not: { $in: [null, ''] } },
+      })
+      .select('gps ticketId description reportedAddress aiMeta.rawLabel')
       .lean()
+      .limit(25)
       .exec();
   }
 }

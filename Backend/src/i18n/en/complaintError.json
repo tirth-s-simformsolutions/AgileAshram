@@ -8,5 +8,6 @@
   "NOT_YOUR_COMPLAINT": "You can only submit feedback for your own complaints",
   "COMPLAINT_NOT_RESOLVED": "Feedback can only be submitted for resolved complaints",
   "FEEDBACK_ALREADY_SUBMITTED": "Feedback has already been submitted for this complaint",
-  "RESOLUTION_NOTE_REQUIRED": "A resolution comment is required when marking a complaint as resolved"
+  "RESOLUTION_NOTE_REQUIRED": "A resolution comment is required when marking a complaint as resolved",
+  "DUPLICATE_NEARBY": "A similar unresolved complaint already exists within 200 metres of this location. Please check the existing complaint before submitting a new one."
 }

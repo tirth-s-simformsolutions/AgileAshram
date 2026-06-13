@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { handleError } from '../../common/utils';
 import { ResponseResult } from '../../core/class';
 import { DepartmentRepository } from '../department/department.repository';
-import { CLASSIFY_PROMPT, IMAGE_ANALYSIS_SECTION, VALIDATE_PROMPT } from './ai.constants';
+import { CLASSIFY_PROMPT, DUPLICATE_CHECK_PROMPT, IMAGE_ANALYSIS_SECTION, VALIDATE_PROMPT } from './ai.constants';
 import { SUCCESS_MSG } from './messages';
 
 @Injectable()
@@ -56,6 +56,43 @@ export class AiService {
 
       return new ResponseResult({
         message: SUCCESS_MSG.AI.INDUSTRY_SUGGESTED,
+        data: result,
+      });
+    } catch (error) {
+      handleError(error);
+    }
+  }
+
+  async checkDuplicate(
+    newDescription: string,
+    newLocation: string,
+    existingComplaints: Array<{ ticketId: string; description: string; reportedAddress?: string; rawLabel?: string }>,
+  ) {
+    try {
+      const existingJson = JSON.stringify(
+        existingComplaints.map(c => ({
+          ticketId: c.ticketId,
+          description: c.rawLabel || c.description,
+          location: c.reportedAddress ?? 'unknown',
+        })),
+      );
+
+      const prompt = DUPLICATE_CHECK_PROMPT
+        .replace('{{new_description}}', newDescription)
+        .replace('{{new_location}}', newLocation)
+        .replace('{{existing_complaints_json}}', existingJson);
+
+      const response = await this.genAI.models.generateContent({
+        model: this.model,
+        contents: [{ parts: [{ text: prompt }] }],
+      });
+
+      const rawText = response.text.trim();
+      const result: { isDuplicate: boolean; matchedTicketId?: string; reason?: string } =
+        JSON.parse(rawText);
+
+      return new ResponseResult({
+        message: SUCCESS_MSG.AI.COMPLAINT_VALIDATED,
         data: result,
       });
     } catch (error) {

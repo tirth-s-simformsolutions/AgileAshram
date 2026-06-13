@@ -28,6 +28,20 @@ import {
 import { ERROR_MSG, SMS_MSG, SUCCESS_MSG } from './messages';
 import { ComplaintDocument, ComplaintSeverity, ComplaintStatus } from './schemas/complaint.schema';
 
+const DUPLICATE_CANDIDATE_RADIUS_METERS = 200;
+
+/** Haversine distance in metres between two GPS coordinates. */
+function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6_371_000;
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 /** Shapes returned inside the AiService ResponseResult.data payloads. */
 interface ValidationData {
   isLegit: boolean;
@@ -38,6 +52,11 @@ interface SuggestionData {
   industryId: string | null;
   summary: string;
   severity: ComplaintSeverity;
+}
+interface DuplicateCheckData {
+  isDuplicate: boolean;
+  matchedTicketId?: string;
+  reason?: string;
 }
 
 @Injectable()
@@ -151,6 +170,34 @@ export class ComplaintService {
 
       // 3. Resolve the ward from the GPS point (null if outside known wards).
       const ward = await this.wardService.findByPoint(dto.location.lat, dto.location.lng);
+
+
+      // 4. Reject if AI determines this is a duplicate of an existing unresolved complaint nearby.
+      const allUnresolved = await this.complaintRepository.findUnresolvedByDepartment(
+        new Types.ObjectId(departmentId),
+      );
+      // Pre-filter to 500 m candidates before sending to AI to keep the payload small.
+      const candidates = allUnresolved.filter(
+        (c) => haversineMeters(dto.location.lat, dto.location.lng, c.gps.lat, c.gps.lng) <= DUPLICATE_CANDIDATE_RADIUS_METERS,
+      );
+      if (candidates.length) {
+        const duplicateRes = await this.aiService.checkDuplicate(
+          dto.description,
+          dto.location.address ?? '',
+          candidates.map((c) => ({
+            ticketId: c.ticketId,
+            description: c.description,
+            reportedAddress: c.reportedAddress,
+            rawLabel: c.aiMeta?.rawLabel,
+          })),
+        );
+        const duplicate = duplicateRes?.data as DuplicateCheckData;
+        if (duplicate?.isDuplicate) {
+          throw new BadRequestException(
+            duplicate.reason ?? ERROR_MSG.COMPLAINT.DUPLICATE_NEARBY,
+          );
+        }
+      }
 
       // 4. Human-readable ticket id (atomic).
       const ticketId = await this.counterService.nextTicketId();
