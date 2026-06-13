@@ -5,12 +5,21 @@ import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { User } from '../models/user.model';
 
-const TOKEN_KEY = 'nv_token';
-const USER_KEY  = 'nv_user';
+// Only user object is persisted — tokens live in HttpOnly cookies (never readable by JS)
+const USER_KEY          = 'nv_user';
+const SETU_REQUEST_KEY  = 'nv_setu_req_id';
 
-interface AuthResponse {
-  token: string;
-  user: User;
+interface InitiateResponse {
+  setuRequestId: string;
+  loginUrl: string;
+}
+
+interface CompleteResponse {
+  userInfo: User;
+}
+
+interface AdminLoginResponse {
+  userInfo: User;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -22,7 +31,7 @@ export class AuthService {
   readonly currentUser = signal<User | null>(this.loadUser());
 
   // ---------------------------------------------------------------------------
-  // Session helpers
+  // Session helpers (token is HttpOnly cookie — never touch it in JS)
   // ---------------------------------------------------------------------------
 
   private isBrowser(): boolean {
@@ -33,72 +42,99 @@ export class AuthService {
     if (!isPlatformBrowser(this.platformId)) return null;
     const raw = localStorage.getItem(USER_KEY);
     if (!raw) return null;
-    try {
-      return JSON.parse(raw) as User;
-    } catch {
-      return null;
-    }
+    try { return JSON.parse(raw) as User; } catch { return null; }
   }
 
-  saveSession(token: string, user: User): void {
+  saveUser(user: User): void {
     if (!this.isBrowser()) return;
-    localStorage.setItem(TOKEN_KEY, token);
     localStorage.setItem(USER_KEY, JSON.stringify(user));
     this.currentUser.set(user);
   }
 
-  getToken(): string | null {
-    if (!this.isBrowser()) return null;
-    return localStorage.getItem(TOKEN_KEY);
-  }
-
   isAuthenticated(): boolean {
-    return this.getToken() !== null && this.currentUser() !== null;
+    return this.currentUser() !== null;
   }
 
   isAdmin(): boolean {
     const role = this.currentUser()?.role;
-    return role === 'admin_infrastructure' || role === 'admin_sanitation';
+    return role === 'department' || role === 'admin' || role === 'admin_infrastructure' || role === 'admin_sanitation';
   }
 
   logout(): void {
     if (this.isBrowser()) {
-      localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(SETU_REQUEST_KEY);
     }
     this.currentUser.set(null);
+    // Ask backend to clear HttpOnly cookies
+    this.http.post('/api/v1/auth/logout', {}).subscribe({ error: () => {} });
     this.router.navigate(['/login']);
   }
 
   // ---------------------------------------------------------------------------
-  // DigiLocker OAuth
+  // DigiLocker — two-step: initiate → redirect → complete
   // ---------------------------------------------------------------------------
 
   loginWithDigiLocker(): void {
-    const authorizeUrl = 'https://sandbox.api-setu.in/digilocker/oauth/authorize';
-    const params = new URLSearchParams({
-      response_type: 'code',
-      client_id:     'nagarvaani',
-      redirect_uri:  `${window.location.origin}/login`,
-      scope:         'openid profile',
-      state:         crypto.randomUUID(),
-    });
-    window.location.href = `${authorizeUrl}?${params.toString()}`;
+    this.http
+      .post<{ data: InitiateResponse }>('/api/v1/auth/digilocker/initiate', {})
+      .subscribe({
+        next: res => {
+          if (!this.isBrowser()) return;
+          const { setuRequestId, loginUrl } = res.data;
+          sessionStorage.setItem(SETU_REQUEST_KEY, setuRequestId);
+
+          // Mock mode: backend returns a non-navigable placeholder URL.
+          // Skip the redirect and complete auth in-place.
+          if (loginUrl.startsWith('http://mock')) {
+            this.completeDigiLockerAuth().subscribe({
+              next: () => this.router.navigate(['/citizen/dashboard']),
+            });
+            return;
+          }
+
+          window.location.href = loginUrl;
+        },
+      });
   }
 
-  handleOAuthCallback(code: string): Observable<AuthResponse> {
+  /** Called when the user lands back on /login after DigiLocker auth. */
+  completeDigiLockerAuth(): Observable<{ data: CompleteResponse }> {
+    const requestId = this.isBrowser()
+      ? (sessionStorage.getItem(SETU_REQUEST_KEY) ?? '')
+      : '';
     return this.http
-      .post<AuthResponse>('/api/auth/digilocker/callback', { code })
-      .pipe(tap(res => this.saveSession(res.token, res.user)));
+      .post<{ data: CompleteResponse }>('/api/v1/auth/digilocker/complete', { id: requestId })
+      .pipe(
+        tap(res => {
+          if (this.isBrowser()) sessionStorage.removeItem(SETU_REQUEST_KEY);
+          this.saveUser(res.data.userInfo);
+        })
+      );
+  }
+
+  hasPendingDigiLockerCallback(): boolean {
+    if (!this.isBrowser()) return false;
+    return sessionStorage.getItem(SETU_REQUEST_KEY) !== null;
   }
 
   // ---------------------------------------------------------------------------
   // Admin login
   // ---------------------------------------------------------------------------
 
-  adminLogin(username: string, password: string): Observable<AuthResponse> {
+  adminLogin(email: string, password: string, role = 'department'): Observable<{ data: AdminLoginResponse }> {
     return this.http
-      .post<AuthResponse>('/api/auth/admin/login', { username, password })
-      .pipe(tap(res => this.saveSession(res.token, res.user)));
+      .post<{ data: AdminLoginResponse }>('/api/v1/auth/admin/login', { email, password, role })
+      .pipe(tap(res => this.saveUser(res.data.userInfo)));
+  }
+
+  // ---------------------------------------------------------------------------
+  // Profile refresh (call after app init to hydrate currentUser from cookie)
+  // ---------------------------------------------------------------------------
+
+  fetchProfile(): Observable<{ data: User }> {
+    return this.http
+      .get<{ data: User }>('/api/v1/user/profile')
+      .pipe(tap(res => this.saveUser(res.data)));
   }
 }

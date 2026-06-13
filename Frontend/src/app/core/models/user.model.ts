@@ -1,11 +1,13 @@
-export type UserRole = 'citizen' | 'admin_infrastructure' | 'admin_sanitation';
+export type UserRole = 'citizen' | 'department' | 'admin' | 'admin_infrastructure' | 'admin_sanitation';
 
 export interface User {
-  id?: string;
-  name: string;
+  _id: string;
+  role: UserRole;
+  status?: string;
+  // Citizen fields
   digilockerId?: string;
   phone?: string;
+  // Admin fields
+  name?: string;
   email?: string;
-  role: UserRole;
-  token?: string;
 }

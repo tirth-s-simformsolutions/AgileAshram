@@ -21,16 +21,52 @@ export interface Complaint {
   updatedAt?: Date;
 }
 
+export interface CreateComplaintDto {
+  description: string;
+  imageUrl: string;
+  location: Location;
+}
+
+// POST /api/v1/complaints response payload — backend AI-routes + grades on submit.
+export interface SubmittedComplaint {
+  _id: string;
+  ticketId: string;
+  description: string;
+  imageUrl?: string;
+  departmentId?: { _id: string; name: string };
+  severity: string;
+  status: string;
+  reportedAddress?: string;
+  createdAt?: string;
+}
+
+export interface PresignedUrlResponse {
+  presignedUrl: string;
+  key: string;
+  publicUrl: string;
+  expiresAt: string;
+}
+
+// Raw AI routing suggestion from POST /api/v1/ai/suggest-industries.
+// industryId is a Department _id, or null when confidence is low.
+export interface AiSuggestion {
+  industryId: string | null;
+  summary: string;
+  severity: string;
+}
+
+export interface DepartmentItem {
+  _id: string;
+  name: string;
+  responsibilities?: string[];
+  keywords?: string[];
+  contactEmail?: string;
+  isActive?: boolean;
+}
+
 export interface ChatMessage {
   role: 'user' | 'bot';
   text: string;
   timestamp?: Date;
   imageUrl?: string;
-}
-
-export interface GeminiClassification {
-  category: ComplaintCategory;
-  severity: ComplaintSeverity;
-  department: Department;
-  summary: string;
 }

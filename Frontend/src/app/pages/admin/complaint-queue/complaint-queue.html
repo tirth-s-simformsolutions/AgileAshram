@@ -63,6 +63,24 @@
             </button>
           }
         </div>
+        <!-- Department filter -->
+        @if (departments().length) {
+          <div>
+            <label for="dept-filter" class="sr-only">Filter by department</label>
+            <select
+              id="dept-filter"
+              [ngModel]="activeDepartment()"
+              (ngModelChange)="setDepartment($event)"
+              class="px-3 py-2 sm:py-1.5 text-sm rounded-[var(--radius-control)] border outline-none transition-all cursor-pointer"
+              style="border-color: var(--color-paper-400); background: white; color: var(--color-ink-900); font-family: var(--font-sans);"
+              aria-controls="complaint-table">
+              <option value="all">All departments</option>
+              @for (d of departments(); track d._id) {
+                <option [value]="d.name">{{ d.name }}</option>
+              }
+            </select>
+          </div>
+        }
         <!-- Search -->
         <div class="ml-auto w-full sm:w-auto">
           <label for="queue-search" class="sr-only">Search complaints</label>

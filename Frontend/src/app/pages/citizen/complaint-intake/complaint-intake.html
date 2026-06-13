@@ -24,7 +24,6 @@
       <p class="text-xs text-[color:var(--color-ink-400)] truncate" style="font-family: var(--font-sans)">
         @switch (currentStep()) {
           @case ('chat') { Describe your civic issue }
-          @case ('confirming') { Review AI classification }
           @case ('submitting') { Submitting… }
           @case ('done') { Submitted successfully }
         }
@@ -220,8 +219,8 @@
           style="border-color: var(--color-paper-400); background: white; color: var(--color-ink-900); font-family: var(--font-sans); font-size: 16px;"
           onfocus="this.style.borderColor='var(--color-saffron-500)'; this.style.boxShadow='0 0 0 3px rgba(232,131,12,0.15)'"
           onblur="this.style.boxShadow='none'"
-          [attr.aria-label]="currentStep() === 'confirming' ? 'Reply yes to confirm or rephrase your complaint' : 'Describe your civic problem'"
-          [placeholder]="currentStep() === 'confirming' ? 'Type yes to confirm or rephrase…' : 'Describe your problem…'">
+          aria-label="Describe your civic problem"
+          placeholder="Describe your problem…">
         </textarea>
         <button
           type="button"
