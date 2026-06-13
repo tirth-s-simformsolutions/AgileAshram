@@ -1,9 +1,10 @@
 import { Body, Controller, Post, Req, Res, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { SWAGGER_TAGS } from '../../common/constants';
 import { ICurrentUser } from '../../common/interfaces';
-import { CurrentUser, Public } from '../../core/decorators';
+import { CurrentUser, Public, Roles } from '../../core/decorators';
+import { UserRole } from '../user/schemas/user.schema';
 import { AuthService } from './auth.service';
 import {
   AdminLoginDto,
@@ -15,28 +16,11 @@ import {
   DigilockerInitiateResponseDto,
   LogoutResponseDto,
   RefreshTokenResponseDto,
-  SignupDto,
-  SignupResponseDto,
 } from './dtos';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-
-  @ApiTags(SWAGGER_TAGS.AUTH)
-  @ApiOperation({
-    summary: 'Sign up for user API',
-    description: 'This API is used to register a new user',
-  })
-  @ApiCreatedResponse({
-    description: 'User created successfully',
-    type: SignupResponseDto,
-  })
-  @Public()
-  @Post('/signup')
-  signup(@Body() data: SignupDto, @Res({ passthrough: true }) res: Response) {
-    return this.authService.signup(data, res);
-  }
 
   @ApiTags(SWAGGER_TAGS.AUTH)
   @ApiOperation({
@@ -124,6 +108,7 @@ export class AuthController {
     description: 'Change password successful',
     type: ChangePasswordResponseDto,
   })
+  @Roles(UserRole.ADMIN, UserRole.DEPARTMENT)
   @Post('/change-password')
   changePassword(@CurrentUser() currentUser: ICurrentUser, @Body() data: ChangePasswordDto) {
     return this.authService.changePassword(currentUser.userId, data);
