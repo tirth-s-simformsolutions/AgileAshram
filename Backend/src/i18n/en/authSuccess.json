@@ -1,7 +1,7 @@
 {
   "USER": {
     "CREATED": "User created successfully",
-    "LOGIN": "Login successful",
+    "ADMIN_LOGIN": "Admin login successful",
     "REFRESH_TOKEN": "Refresh token generated successfully",
     "CHANGE_PASSWORD": "Change password successful",
     "LOGOUT": "Logout successful",
