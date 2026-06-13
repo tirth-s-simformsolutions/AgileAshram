@@ -68,23 +68,27 @@ npm run prettier:check    # Check formatting only
 - **Password hashing**: PBKDF2 (100,000 iterations, SHA-512) via `src/common/utils/crypto.util.ts`
 
 ### Module Structure
-All feature code lives under `src/modules/`. Current modules: `auth`, `user`, `ai`, `department`, `complaint` (schema only), `counter` (schema only). Each module follows the pattern:
+All feature code lives under `src/modules/`. Modules: `auth`, `user`, `ai`, `department`, `complaint`, `counter`, `upload`, `sms`. Each module follows the pattern:
 ```
 module.ts → controller.ts → service.ts → repository.ts
 ```
 The repository layer is the only place Mongoose queries are written. Services call repositories; controllers call services.
+
+**Inter-module dependencies in `ComplaintModule`:** imports `AiModule` (validate + suggest), `CounterModule` (ticket IDs), `DepartmentModule` (fallback routing), `SmsModule` (citizen notifications), `UserModule` (role-scoped listing).
 
 ### Global Providers (registered in AppModule)
 These apply to every request automatically:
 - **`ResponseInterceptor`** — wraps all responses in `{ message, data, error }` shape
 - **`HttpExceptionsFilter`** — catches all errors, integrates Sentry, maps DB constraint errors to readable messages
 - **`AuthGuard`** — validates JWT from cookies on all routes; use `@Public()` decorator to exempt a route
+- **`RolesGuard`** — enforces `@Roles()` decorator; looks up user from DB by `userId` set by `AuthGuard`
 - **`CustomThrottlerGuard`** — rate limiting (10 req/sec default)
 - **`TraceMiddleware`** — adds a unique `traceId` to every request via `AsyncLocalStorage`
 
 ### Key Utilities & Decorators
 - `@Public()` — `src/core/decorators/public.decorator.ts` — marks a route as authentication-exempt
-- `@CurrentUser()` — `src/core/decorators/currentUser.decorator.ts` — extracts `userId` and `name` from the JWT payload
+- `@Roles(...roles)` — `src/core/decorators/roles.decorator.ts` — restricts endpoint to specified `UserRole` values; enforced by `RolesGuard`
+- `@CurrentUser()` — `src/core/decorators/currentUser.decorator.ts` — extracts `{ userId, name }` from the JWT payload
 - `handleError()` — `src/common/utils/common.util.ts` — standard error throwing pattern used throughout services
 - `LoggerService` — `src/common/services/logger.service.ts` — structured logging; use instead of `console.log`
 
@@ -94,16 +98,25 @@ Configs use `registerAs` pattern from `@nestjs/config`. Inject via `ConfigServic
 - `database` → `src/config/database.config.ts` (url)
 - `jwt` → `src/config/jwt.config.ts` (access/refresh token secrets & expiry)
 - `ai` → `src/config/ai.config.ts` (googleGenAiApiKey, googleGenAiModel)
+- `cloudflare` → `src/config/cloudflare.config.ts` (R2 credentials for upload)
+- `twilio` → `src/config/twilio.config.ts` (SMS credentials)
+- `setu` → `src/config/setu.config.ts` (DigiLocker OAuth credentials)
 
 Environment variables are validated at startup via `EnvVariablesDto` (`src/common/dtos/envVariables.dto.ts`). See `.env.example` for required variables.
 
 ### NagarVaani Domain Patterns
 
 - **User roles**: `citizen` (DigiLocker login — `digilockerId` + `phone`), `department` (email/password + `departmentId`), `admin` (email/password). All share the `User` collection; the schema is permissive and auth fields differ per role.
-- **Complaint routing**: AI (`AiService.getSuggestedIndustry`) reads each department's `responsibilities` array and picks the best-fit department. There is no hardcoded category map. If confidence is low, `industryId` is `null` — fall back to a default department and set `aiMeta.fallbackUsed = true`.
+- **Auth strategies**: Citizens authenticate via Setu's DigiLocker OAuth (`/auth/digilocker/initiate` → redirect → `/auth/digilocker/complete`). Admin/department staff use email+password (`/auth/admin/login`). Both issue httpOnly cookie pairs (access + refresh). All auth endpoints are `@Public()`.
+- **Complaint routing**: AI (`AiService.getSuggestedIndustry`) reads each department's `responsibilities` array and picks the best-fit department. There is no hardcoded category map. If confidence is low, `industryId` is `null` — fall back to the first department in the DB and set `aiMeta.fallbackUsed = true`.
+- **Complaint creation flow**: `validateComplaint()` (legitimacy gate) → `getSuggestedIndustry()` (AI routing) → `CounterService.nextTicketId()` (atomic ticket) → persist → SMS notification (fire-and-forget, never blocks response).
+- **Complaint list scoping**: The same `GET /complaints` endpoint filters by role — citizen sees only their own, department sees only their department's, admin sees all. Sorting: `dueDate` asc, `severityRank` desc, `createdAt` desc.
+- **Department-scoped mutations**: `PATCH /complaints/:id/status` and `PATCH /complaints/:id/department` are restricted to `DEPARTMENT`/`ADMIN` roles; department staff can only act on complaints assigned to their own department (enforced in the service, not just the guard).
 - **Severity sorting**: The work queue sorts on `severityRank` (1–4), not the `severity` string (which sorts alphabetically). A pre-save hook on `ComplaintSchema` keeps `severityRank` in sync with `severity` automatically — never set one without the other.
 - **Ticket IDs**: Generated via `Counter` collection with atomic `$inc` (`findOneAndUpdate({ key: 'complaint-2026' }, { $inc: { seq: 1 } }, { upsert: true, new: true })`), then formatted as `NV-2026-XXXXXX` (6-digit zero-padded). This prevents duplicate IDs under concurrent load.
 - **AI endpoints** (`/api/v1/ai/*`) are `@Public()` — no JWT required. They are called by the frontend before submission and also internally by the complaint pipeline.
+- **Upload flow**: Frontend calls `UploadService` to get a Cloudflare R2 presigned URL, uploads directly from the browser, then passes the resulting `imageUrl` to the complaint payload.
+- **Work queue index**: Composite index `{ status, severityRank: -1, createdAt: -1 }` on the `complaints` collection enables efficient department dashboard queries.
 
 ### API Conventions
 - All routes are versioned under `/api/v1/` (except `/api/health-check`)

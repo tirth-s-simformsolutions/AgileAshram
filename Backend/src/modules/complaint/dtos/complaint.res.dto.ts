@@ -91,6 +91,9 @@ export class ComplaintResDto {
   @ApiProperty({ enum: ComplaintStatus, example: ComplaintStatus.OPEN })
   status: ComplaintStatus;
 
+  @ApiProperty({ example: '2026-06-16T10:00:00.000Z' })
+  dueDate: string;
+
   @ApiProperty({ type: [StatusHistoryEntryResDto] })
   statusHistory: StatusHistoryEntryResDto[];
 

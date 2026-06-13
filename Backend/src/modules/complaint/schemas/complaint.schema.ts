@@ -144,6 +144,10 @@ export class Complaint {
   @Prop({ type: [StatusHistoryEntrySchema], default: [] })
   statusHistory: StatusHistoryEntry[];
 
+  /** 3 days after creation — shown to citizen via SMS; overdue tickets surface first for admin. */
+  @Prop({ required: true })
+  dueDate: Date;
+
   @Prop({ type: Types.ObjectId, ref: 'User' })
   resolvedBy?: Types.ObjectId;
 

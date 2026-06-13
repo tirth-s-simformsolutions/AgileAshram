@@ -14,12 +14,12 @@ export class ComplaintRepository {
     return this.complaintModel.create(data);
   }
 
-  /** Paginated list, highest severity first, newest first. */
+  /** Paginated list: oldest dueDate first (overdue surfaces naturally), then highest severity, newest. */
   list(filter: FilterQuery<ComplaintDocument>, skip: number, limit: number) {
     return this.complaintModel
       .find(filter)
       .populate('departmentId')
-      .sort({ severityRank: -1, createdAt: -1 })
+      .sort({ dueDate: 1, severityRank: -1, createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .exec();

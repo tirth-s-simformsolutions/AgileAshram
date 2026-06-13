@@ -13,6 +13,7 @@ import { ResponseResult } from '../../core/class';
 import { AiService } from '../ai/ai.service';
 import { CounterService } from '../counter/counter.service';
 import { DepartmentRepository } from '../department/department.repository';
+import { SmsService } from '../sms/sms.service';
 import { UserRole } from '../user/schemas/user.schema';
 import { UserRepository } from '../user/user.repository';
 import { ComplaintRepository } from './complaint.repository';
@@ -39,6 +40,7 @@ export class ComplaintService {
     private readonly aiService: AiService,
     private readonly counterService: CounterService,
     private readonly departmentRepository: DepartmentRepository,
+    private readonly smsService: SmsService,
     private readonly userRepository: UserRepository,
   ) {}
 
@@ -130,6 +132,7 @@ export class ComplaintService {
 
       // 4. Persist (severityRank is derived from severity by the schema pre-save hook).
       const now = new Date();
+      const dueDate = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
       const complaint = await this.complaintRepository.create({
         ticketId,
         citizenId: new Types.ObjectId(citizenId),
@@ -140,6 +143,7 @@ export class ComplaintService {
         gps: { lat: dto.location.lat, lng: dto.location.lng },
         reportedAddress: dto.location.address,
         status: ComplaintStatus.OPEN,
+        dueDate,
         aiMeta: {
           model: 'gemini',
           confidence: 0,
@@ -147,6 +151,17 @@ export class ComplaintService {
           fallbackUsed: false,
         },
         statusHistory: [{ status: ComplaintStatus.OPEN, at: now }],
+      });
+
+      // 5. Notify citizen via SMS (fire-and-forget).
+      void this.userRepository.findUserById(citizenId).then((citizen) => {
+        if (!citizen?.phone) return;
+        const formatted = dueDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+        void this.smsService.send({
+          to: citizen.phone,
+          body: `NagarVaani: Your complaint ${ticketId} has been registered. Expected resolution by ${formatted}.`,
+          metadata: { ticketId, citizenId },
+        });
       });
 
       return new ResponseResult({ message: SUCCESS_MSG.COMPLAINT.CREATED, data: complaint });
