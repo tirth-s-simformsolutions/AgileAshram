@@ -20,7 +20,6 @@ export class UploadController {
     description: 'Presigned URL generated successfully',
     type: PresignedUrlResponseDto,
   })
-  @Roles(UserRole.CITIZEN)
   @Post('presigned-url')
   getPresignedUrl(@Body() body: PresignedUrlRequestDto) {
     return this.uploadService.getPresignedUrl(body.filename, body.contentType);

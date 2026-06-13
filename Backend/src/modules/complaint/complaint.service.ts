@@ -18,7 +18,7 @@ import { SmsService } from '../sms/sms.service';
 import { UserRole } from '../user/schemas/user.schema';
 import { UserRepository } from '../user/user.repository';
 import { ComplaintRepository } from './complaint.repository';
-import { CreateComplaintDto, ReassignDepartmentDto, UpdateStatusDto } from './dtos';
+import { CreateComplaintDto, ReassignDepartmentDto, SubmitFeedbackDto, UpdateStatusDto } from './dtos';
 import { ERROR_MSG, SMS_MSG, SUCCESS_MSG } from './messages';
 import { ComplaintDocument, ComplaintSeverity, ComplaintStatus } from './schemas/complaint.schema';
 
@@ -203,6 +203,10 @@ export class ComplaintService {
         throw new ForbiddenException(ERROR_MSG.COMPLAINT.NOT_YOUR_DEPARTMENT);
       }
 
+      if (dto.status === ComplaintStatus.RESOLVED && !dto.resolutionNote?.comment) {
+        throw new BadRequestException(ERROR_MSG.COMPLAINT.RESOLUTION_NOTE_REQUIRED);
+      }
+
       const now = new Date();
       complaint.status = dto.status;
       complaint.statusHistory.push({
@@ -215,6 +219,10 @@ export class ComplaintService {
       if (dto.status === ComplaintStatus.RESOLVED) {
         complaint.resolvedBy = new Types.ObjectId(currentUserId);
         complaint.resolvedAt = now;
+        complaint.resolutionNote = {
+          comment: dto.resolutionNote.comment,
+          imageUrl: dto.resolutionNote.imageUrl,
+        };
       }
 
       await complaint.save(); // .save() so the severityRank pre-save hook stays consistent
@@ -283,6 +291,34 @@ export class ComplaintService {
   private resolveSeverity(value?: string): ComplaintSeverity {
     const allowed = Object.values(ComplaintSeverity) as string[];
     return allowed.includes(value ?? '') ? (value as ComplaintSeverity) : ComplaintSeverity.MEDIUM;
+  }
+
+  async submitFeedback(id: string, dto: SubmitFeedbackDto, citizenId: string) {
+    try {
+      const complaint = await this.complaintRepository.findDocById(id);
+      if (!complaint) {
+        throw new NotFoundException(ERROR_MSG.COMPLAINT.NOT_FOUND);
+      }
+
+      if (String(complaint.citizenId) !== citizenId) {
+        throw new ForbiddenException(ERROR_MSG.COMPLAINT.NOT_YOUR_COMPLAINT);
+      }
+
+      if (complaint.status !== ComplaintStatus.RESOLVED) {
+        throw new BadRequestException(ERROR_MSG.COMPLAINT.COMPLAINT_NOT_RESOLVED);
+      }
+
+      if (complaint.feedback) {
+        throw new BadRequestException(ERROR_MSG.COMPLAINT.FEEDBACK_ALREADY_SUBMITTED);
+      }
+
+      complaint.feedback = { rating: dto.rating, comment: dto.comment, submittedAt: new Date() };
+      await complaint.save();
+
+      return new ResponseResult({ message: SUCCESS_MSG.COMPLAINT.FEEDBACK_SUBMITTED, data: complaint });
+    } catch (error) {
+      handleError(error);
+    }
   }
 
   async findByTicketId(ticketId: string) {

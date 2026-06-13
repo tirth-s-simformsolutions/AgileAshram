@@ -14,6 +14,8 @@ import {
   ListComplaintsResponseDto,
   ReassignDepartmentDto,
   ReassignDepartmentResponseDto,
+  SubmitFeedbackDto,
+  SubmitFeedbackResponseDto,
   UpdateComplaintStatusResponseDto,
   UpdateStatusDto,
 } from './dtos';
@@ -92,6 +94,22 @@ export class ComplaintController {
     @CurrentUser() currentUser: ICurrentUser,
   ) {
     return this.complaintService.updateStatus(id, data, currentUser.userId);
+  }
+
+  @ApiOperation({
+    summary: 'Submit feedback for a resolved complaint (citizen)',
+    description:
+      'Allows the complaint owner to submit a rating and optional comment once the complaint is resolved. One feedback per complaint.',
+  })
+  @ApiCreatedResponse({ type: SubmitFeedbackResponseDto })
+  @Roles(UserRole.CITIZEN)
+  @Post(':id/feedback')
+  submitFeedback(
+    @Param('id') id: string,
+    @Body() data: SubmitFeedbackDto,
+    @CurrentUser() currentUser: ICurrentUser,
+  ) {
+    return this.complaintService.submitFeedback(id, data, currentUser.userId);
   }
 
   @ApiOperation({
