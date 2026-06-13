@@ -11,11 +11,15 @@ export class DepartmentRepository {
     return this.departmentModel.insertMany(departments);
   }
 
-  findAll() {
-    return this.departmentModel.find().exec();
+  findAll(skip = 0, limit = 0, search = '') {
+    const filter = search ? { name: { $regex: search, $options: 'i' } } : {};
+    const query = this.departmentModel.find(filter).select('_id name').skip(skip);
+    if (limit > 0) query.limit(limit);
+    return query.exec();
   }
 
-  countDocuments() {
-    return this.departmentModel.countDocuments().exec();
+  countDocuments(search = '') {
+    const filter = search ? { name: { $regex: search, $options: 'i' } } : {};
+    return this.departmentModel.countDocuments(filter).exec();
   }
 }

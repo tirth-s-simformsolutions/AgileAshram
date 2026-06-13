@@ -10,43 +10,6 @@ export class DepartmentItemDto {
 
   @ApiProperty({ example: 'Garbage / Waste Management Department' })
   name: string;
-
-  @ApiProperty({
-    example: [
-      'Collection of household waste.',
-      'Street sweeping and cleanliness.',
-    ],
-    description: 'List of responsibilities handled by this department',
-  })
-  responsibilities: string[];
-
-  @ApiProperty({
-    example: ['garbage', 'waste', 'trash', 'sanitation'],
-    description: 'Keywords for improved search and matching',
-  })
-  keywords: string[];
-
-  @ApiProperty({
-    example: 'garbage-dept@city.gov',
-    nullable: true,
-    description: 'Email for verified complaint forwarding',
-  })
-  contactEmail?: string;
-
-  @ApiProperty({ example: true, description: 'Whether the department is active' })
-  isActive: boolean;
-
-  @ApiProperty({
-    example: '2024-01-01T10:30:00.000Z',
-    description: 'Timestamp when department was created',
-  })
-  createdAt: string;
-
-  @ApiProperty({
-    example: '2024-06-13T12:45:00.000Z',
-    description: 'Timestamp when department was last updated',
-  })
-  updatedAt: string;
 }
 
 export class ListDepartmentsDataDto {
@@ -56,11 +19,14 @@ export class ListDepartmentsDataDto {
   })
   departments: DepartmentItemDto[];
 
-  @ApiProperty({
-    example: 5,
-    description: 'Total number of departments',
-  })
+  @ApiProperty({ example: 5, description: 'Total number of departments' })
   total: number;
+
+  @ApiProperty({ example: 0, description: 'Current page (0-indexed)' })
+  page: number;
+
+  @ApiProperty({ example: 10, description: 'Number of items per page' })
+  pageSize: number;
 }
 
 export class ListDepartmentsResponseDto extends PickType(CommonResponseDto, [

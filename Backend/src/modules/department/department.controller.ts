@@ -1,6 +1,7 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags, ApiForbiddenResponse } from '@nestjs/swagger';
 import { SWAGGER_TAGS } from '../../common/constants';
+import { PaginationWithSearchDto } from '../../common/dtos';
 import { Roles } from '../../core/decorators';
 import { UserRole } from '../user/schemas/user.schema';
 import { ListDepartmentsResponseDto } from './dtos';
@@ -24,7 +25,7 @@ export class DepartmentController {
   })
   @Roles(UserRole.ADMIN, UserRole.DEPARTMENT)
   @Get()
-  list() {
-    return this.departmentService.list();
+  list(@Query() pagination: PaginationWithSearchDto) {
+    return this.departmentService.list(pagination);
   }
 }
