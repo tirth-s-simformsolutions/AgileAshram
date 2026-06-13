@@ -169,3 +169,11 @@ export class ReassignDepartmentResponseDto extends PickType(CommonResponseDto, [
   @ApiProperty({ type: ComplaintResDto })
   data: ComplaintResDto;
 }
+
+export class GpsListResponseDto extends PickType(CommonResponseDto, ['error'] as const) {
+  @ApiProperty({ example: 'Complaint GPS coordinates fetched successfully' })
+  message: string;
+
+  @ApiProperty({ example: [[23.0225, 72.5714], [28.6139, 77.209]] })
+  data: [number, number][];
+}

@@ -10,6 +10,7 @@ import {
   CreateComplaintDto,
   CreateComplaintResponseDto,
   GetComplaintResponseDto,
+  GpsListResponseDto,
   ListComplaintsResponseDto,
   ReassignDepartmentDto,
   ReassignDepartmentResponseDto,
@@ -43,6 +44,18 @@ export class ComplaintController {
   @Get()
   list(@Query() query: PaginationDto, @CurrentUser() currentUser: ICurrentUser) {
     return this.complaintService.list(query, currentUser.userId);
+  }
+
+  @ApiOperation({
+    summary: 'Get all complaint GPS coordinates (admin)',
+    description:
+      'Returns an array of {lat, lng} for every complaint that has GPS data — useful for map heatmaps.',
+  })
+  @ApiOkResponse({ type: GpsListResponseDto })
+  @Roles(UserRole.ADMIN)
+  @Get('gps')
+  getAllGps() {
+    return this.complaintService.getAllGps();
   }
 
   @ApiOperation({
