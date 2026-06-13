@@ -19,6 +19,17 @@ export enum ComplaintStatus {
   REJECTED = 'REJECTED',
 }
 
+/** Derived SLA standing of a complaint relative to its dueDate (virtual, not stored). */
+export enum SlaStatus {
+  ON_TRACK = 'ON_TRACK',
+  DUE_SOON = 'DUE_SOON', // within DUE_SOON_DAYS of the due date
+  OVERDUE = 'OVERDUE',
+  CLOSED = 'CLOSED', // resolved/rejected — SLA no longer applies
+}
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const DUE_SOON_DAYS = 2;
+
 /**
  * Numeric rank mirror of `severity`. The work queue MUST sort on this — sorting
  * on the severity string would order Critical < High < Low alphabetically.
@@ -28,6 +39,14 @@ export const SEVERITY_RANK: Record<ComplaintSeverity, number> = {
   [ComplaintSeverity.MEDIUM]: 2,
   [ComplaintSeverity.HIGH]: 3,
   [ComplaintSeverity.CRITICAL]: 4,
+};
+
+/** SLA: days within which a complaint of each severity is expected to be resolved. */
+export const SEVERITY_SLA_DAYS: Record<ComplaintSeverity, number> = {
+  [ComplaintSeverity.LOW]: 14,
+  [ComplaintSeverity.MEDIUM]: 7,
+  [ComplaintSeverity.HIGH]: 3,
+  [ComplaintSeverity.CRITICAL]: 1,
 };
 
 /* ------------------------------------------------------------------ *
@@ -129,7 +148,7 @@ export const StatusHistoryEntrySchema = SchemaFactory.createForClass(StatusHisto
  *  Root document
  * ------------------------------------------------------------------ */
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } })
 export class Complaint {
   /** Human-readable, e.g. NV-2026-000123. Generated via the Counter. */
   @Prop({ required: true, unique: true, index: true })
@@ -180,6 +199,10 @@ export class Complaint {
   @Prop({ enum: ComplaintStatus, default: ComplaintStatus.OPEN, index: true })
   status: ComplaintStatus;
 
+  // SLA target: expected resolution date, derived from severity at intake.
+  @Prop()
+  dueDate?: Date;
+
   @Prop({ type: [StatusHistoryEntrySchema], default: [] })
   statusHistory: StatusHistoryEntry[];
 
@@ -213,4 +236,23 @@ ComplaintSchema.pre('save', function (next) {
     this.severityRank = SEVERITY_RANK[this.severity] ?? SEVERITY_RANK[ComplaintSeverity.LOW];
   }
   next();
+});
+
+// Derived SLA standing relative to dueDate — computed on read, included in
+// every response (toJSON/toObject virtuals enabled above). Not stored.
+ComplaintSchema.virtual('slaStatus').get(function (this: ComplaintDocument): SlaStatus | null {
+  if (this.status === ComplaintStatus.RESOLVED || this.status === ComplaintStatus.REJECTED) {
+    return SlaStatus.CLOSED;
+  }
+  if (!this.dueDate) {
+    return null;
+  }
+  const remainingMs = this.dueDate.getTime() - Date.now();
+  if (remainingMs < 0) {
+    return SlaStatus.OVERDUE;
+  }
+  if (remainingMs <= DUE_SOON_DAYS * MS_PER_DAY) {
+    return SlaStatus.DUE_SOON;
+  }
+  return SlaStatus.ON_TRACK;
 });
