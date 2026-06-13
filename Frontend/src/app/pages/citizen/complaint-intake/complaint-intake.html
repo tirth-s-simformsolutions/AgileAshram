@@ -105,60 +105,32 @@
 
       <!-- Location row — always visible -->
       <div class="mb-2">
-        <div class="flex items-center gap-2 flex-wrap">
-          <!-- Ward dropdown -->
-          <div class="relative flex-1 min-w-[140px]">
-            <select
-              id="ward-select"
-              [(ngModel)]="selectedWard"
-              [disabled]="currentStep() === 'submitting'"
-              aria-label="Select ward or area"
-              class="w-full pl-3 pr-8 py-2.5 rounded-[var(--radius-control)] text-xs border appearance-none outline-none transition-all disabled:opacity-60"
-              style="border-color: var(--color-paper-400); background: white; color: var(--color-ink-900); font-family: var(--font-sans);"
-              onfocus="this.style.borderColor='var(--color-saffron-500)'"
-              onblur="this.style.borderColor='var(--color-paper-400)'">
-              <option value="">Ward / Area</option>
-              @for (ward of wards; track ward.id) {
-                <option [value]="ward.id">{{ ward.name }}</option>
-              }
-            </select>
-            <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 size-3 pointer-events-none"
-                 style="color: var(--color-ink-400)"
-                 viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-              <path d="M3 4.5l3 3 3-3" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-
-          <!-- Pick on Map button -->
-          <button
-            type="button"
-            (click)="showMapModal.set(true)"
-            [disabled]="currentStep() === 'submitting'"
-            class="flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-[var(--radius-control)] text-xs font-semibold border transition-all active:scale-95 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)]"
-            [style.borderColor]="wardMismatch() ? 'var(--color-danger-600)' : 'var(--color-primary-600)'"
-            [style.color]="wardMismatch() ? 'var(--color-danger-600)' : 'var(--color-primary-600)'"
-            style="background: white; font-family: var(--font-sans);">
-            <svg class="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-              <path d="M8 1.5A4.5 4.5 0 0112.5 6c0 3-4.5 7.5-4.5 7.5S3.5 9 3.5 6A4.5 4.5 0 018 1.5z" stroke-linejoin="round"/>
-              <circle cx="8" cy="6" r="1.5" fill="currentColor" stroke="none"/>
-            </svg>
-            @if (pickedLocation() && !wardMismatch()) { Change Location } @else { Pick on Map }
-          </button>
-        </div>
+        <!-- Pick on Map button -->
+        <button
+          type="button"
+          (click)="showMapModal.set(true)"
+          [disabled]="currentStep() === 'submitting'"
+          class="w-full flex items-center justify-center gap-1.5 px-3 py-2 min-h-[44px] rounded-[var(--radius-control)] text-xs font-semibold border transition-all active:scale-95 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)]"
+          style="background: white; border-color: var(--color-primary-600); color: var(--color-primary-600); font-family: var(--font-sans);">
+          <svg class="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M8 1.5A4.5 4.5 0 0112.5 6c0 3-4.5 7.5-4.5 7.5S3.5 9 3.5 6A4.5 4.5 0 018 1.5z" stroke-linejoin="round"/>
+            <circle cx="8" cy="6" r="1.5" fill="currentColor" stroke="none"/>
+          </svg>
+          @if (pickedLocation()) { Change Location } @else { Pick on Map }
+        </button>
 
         <!-- Picked location chip -->
         @if (pickedLocation()) {
           <div
             class="flex items-center gap-1.5 mt-1.5 px-2 py-1 rounded-[var(--radius-control)]"
-            [style.background]="wardMismatch() ? 'rgba(217,45,32,0.06)' : 'rgba(0,0,0,0.04)'">
+            style="background: rgba(0,0,0,0.04)">
             <svg class="size-3 shrink-0"
-                 [style.color]="wardMismatch() ? 'var(--color-danger-600)' : 'var(--color-saffron-500)'"
+                 style="color: var(--color-saffron-500)"
                  viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
               <path fill-rule="evenodd" d="M6 1A3.5 3.5 0 019.5 4.5C9.5 7 6 11 6 11S2.5 7 2.5 4.5A3.5 3.5 0 016 1zm0 2.25a1.25 1.25 0 100 2.5 1.25 1.25 0 000-2.5z" clip-rule="evenodd"/>
             </svg>
             <p class="text-xs flex-1 truncate"
-               [style.color]="wardMismatch() ? 'var(--color-danger-600)' : 'var(--color-ink-600)'"
-               style="font-family: var(--font-sans)">
+               style="color: var(--color-ink-600); font-family: var(--font-sans)">
               {{ pickedLocation()?.address }}
             </p>
             <button
@@ -172,16 +144,6 @@
               ×
             </button>
           </div>
-        }
-
-        <!-- Ward mismatch / location error -->
-        @if (locationError()) {
-          <p class="flex items-center gap-1 text-xs mt-1 font-medium" style="color: var(--color-danger-600); font-family: var(--font-sans)">
-            <svg class="size-3 shrink-0" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-              <path fill-rule="evenodd" d="M6 1a5 5 0 100 10A5 5 0 006 1zm-.75 2.75a.75.75 0 011.5 0v3a.75.75 0 01-1.5 0v-3zm.75 5.5a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd"/>
-            </svg>
-            {{ locationError() }}
-          </p>
         }
       </div>
 
@@ -245,9 +207,6 @@
       @if (!canSend() && currentStep() === 'chat') {
         <div class="flex items-center gap-1.5 mt-2 flex-wrap" aria-label="Required fields">
           <span class="text-[10px] font-medium" style="color: var(--color-ink-400); font-family: var(--font-sans)">Need:</span>
-          @if (!hasWard()) {
-            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full" style="background: rgba(217,45,32,0.08); color: var(--color-danger-600); font-family: var(--font-sans)">Ward</span>
-          }
           @if (!hasLocation()) {
             <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full" style="background: rgba(217,45,32,0.08); color: var(--color-danger-600); font-family: var(--font-sans)">Location</span>
           }

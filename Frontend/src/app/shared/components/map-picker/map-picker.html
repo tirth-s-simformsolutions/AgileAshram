@@ -122,8 +122,66 @@
     <div class="flex-1 relative" style="min-height: 200px">
       <div #mapContainer class="w-full h-full"></div>
 
-      <!-- Hint overlay — shown until first pin placed -->
-      @if (!hasPin()) {
+      <!-- Blocking overlay — requires geolocation before any pin can be dropped -->
+      @if (geoStatus() !== 'granted') {
+        <div
+          class="absolute inset-0 z-20 flex flex-col items-center justify-center text-center px-6"
+          style="background: rgba(15, 23, 42, 0.82); backdrop-filter: blur(2px);"
+          role="alert">
+          <div
+            class="w-full max-w-[320px] flex flex-col items-center gap-4 p-6 rounded-[var(--radius-card)]"
+            style="background: var(--color-paper-50); box-shadow: var(--shadow-raised)">
+            <span
+              class="size-12 flex items-center justify-center rounded-full"
+              style="background: rgba(232,131,12,0.12); color: var(--color-saffron-500)">
+              <svg class="size-6" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="M10 2.5A4.5 4.5 0 0114.5 7c0 3.25-4.5 8.5-4.5 8.5S5.5 10.25 5.5 7A4.5 4.5 0 0110 2.5z" stroke-linejoin="round"/>
+                <circle cx="10" cy="7" r="1.75" fill="currentColor" stroke="none"/>
+              </svg>
+            </span>
+
+            @switch (geoStatus()) {
+              @case ('denied') {
+                <p class="text-sm font-semibold" style="color: var(--color-ink-900); font-family: var(--font-display)">Location permission denied</p>
+                <p class="text-xs leading-relaxed" style="color: var(--color-ink-600); font-family: var(--font-sans)">
+                  Enable location access in your browser settings, then retry.
+                </p>
+              }
+              @case ('unavailable') {
+                <p class="text-sm font-semibold" style="color: var(--color-ink-900); font-family: var(--font-display)">Location unavailable</p>
+                <p class="text-xs leading-relaxed" style="color: var(--color-ink-600); font-family: var(--font-sans)">
+                  We couldn't determine your location. Check your device settings and retry.
+                </p>
+              }
+              @default {
+                <p class="text-sm font-semibold" style="color: var(--color-ink-900); font-family: var(--font-display)">Location required</p>
+                <p class="text-xs leading-relaxed" style="color: var(--color-ink-600); font-family: var(--font-sans)">
+                  We need your location to let you report issues near you.
+                </p>
+              }
+            }
+
+            <button
+              type="button"
+              (click)="requestLocation()"
+              [disabled]="geoStatus() === 'requesting'"
+              class="w-full h-11 flex items-center justify-center gap-2 rounded-[var(--radius-control)] text-sm font-semibold transition-all disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)]"
+              style="background: var(--color-saffron-500); color: var(--color-primary-950); font-family: var(--font-sans)">
+              @if (geoStatus() === 'requesting') {
+                <span class="chakra-spinner size-4" aria-hidden="true"></span>
+                Locating…
+              } @else if (geoStatus() === 'denied' || geoStatus() === 'unavailable') {
+                Retry
+              } @else {
+                Use my location
+              }
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Hint pill — shown once location is granted, before first pin -->
+      @if (geoStatus() === 'granted' && !hasPin()) {
         <div
           class="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-2 rounded-full text-xs font-medium pointer-events-none"
           style="background: rgba(0,0,0,0.65); color: white; font-family: var(--font-sans); white-space: nowrap">
@@ -131,7 +189,20 @@
             <circle cx="7" cy="7" r="5.5"/>
             <path d="M7 4v3l2 2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          Tap to place pin · drag to adjust
+          Tap within the circle to place pin · drag to adjust
+        </div>
+      }
+
+      <!-- Radius error pill -->
+      @if (radiusError()) {
+        <div
+          class="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-2 rounded-full text-xs font-semibold pointer-events-none"
+          style="background: var(--color-danger-600); color: white; font-family: var(--font-sans); white-space: nowrap; box-shadow: var(--shadow-card)"
+          role="alert">
+          <svg class="size-3.5 shrink-0" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M6 1a5 5 0 100 10A5 5 0 006 1zm-.75 2.75a.75.75 0 011.5 0v3a.75.75 0 01-1.5 0v-3zm.75 5.5a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd"/>
+          </svg>
+          {{ radiusError() }}
         </div>
       }
 

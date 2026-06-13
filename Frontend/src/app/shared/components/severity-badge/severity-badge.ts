@@ -1,5 +1,4 @@
 import { Component, computed, input } from '@angular/core';
-import { ComplaintSeverity } from '../../../core/models/complaint.model';
 
 interface BadgeConfig {
   label: string;
@@ -15,10 +14,11 @@ interface BadgeConfig {
   templateUrl: './severity-badge.html',
 })
 export class SeverityBadge {
-  readonly severity = input.required<ComplaintSeverity>();
+  // Accepts FE union ('low'…) and backend casing ('Low', 'High'…) — normalised below.
+  readonly severity = input.required<string>();
 
   readonly config = computed((): BadgeConfig => {
-    switch (this.severity()) {
+    switch ((this.severity() ?? '').toLowerCase()) {
       case 'low':
         return {
           label: 'Low',
@@ -46,6 +46,13 @@ export class SeverityBadge {
           dotClass: 'bg-[color:var(--color-danger-600)] animate-pulse',
           pillStyle: 'background:var(--color-danger-50); color:var(--color-danger-600); border:1px solid rgba(217,45,32,0.35)',
           pulse: true,
+        };
+      default:
+        return {
+          label: this.severity() || 'Unknown',
+          dotClass: 'bg-[color:var(--color-ink-400)]',
+          pillStyle: 'background:var(--color-paper-200); color:var(--color-ink-500); border:1px solid var(--color-paper-400)',
+          pulse: false,
         };
     }
   });
