@@ -18,6 +18,7 @@ export class Login implements OnInit {
   protected readonly isRedirecting = signal(false);
   protected readonly isHandlingCallback = signal(false);
   protected readonly callbackError = signal<string | null>(null);
+  protected readonly currentYear = new Date().getFullYear();
 
   ngOnInit(): void {
     // If already authenticated, redirect
