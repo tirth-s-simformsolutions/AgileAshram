@@ -1,0 +1,5 @@
+export const SUCCESS_MSG = {
+  PRESIGNED_URL_GENERATED: 'uploadSuccess.PRESIGNED_URL_GENERATED',
+  IMAGES_LISTED: 'uploadSuccess.IMAGES_LISTED',
+  IMAGE_DELETED: 'uploadSuccess.IMAGE_DELETED',
+};

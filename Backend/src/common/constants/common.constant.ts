@@ -17,6 +17,7 @@ export const SWAGGER_TAGS = {
   USER: 'User',
   AI: 'AI',
   DEPARTMENT: 'Department',
+  UPLOAD: 'Upload',
 };
 
 export const ENV = {
