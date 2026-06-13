@@ -344,4 +344,17 @@ export class ComplaintService {
       handleError(error);
     }
   }
+
+  async getAllGps() {
+    try {
+      const results = await this.complaintRepository.findAllGps();
+      const coordinates = results.map((r) => {
+        const gps = r.gps as { lat: number; lng: number };
+        return [gps.lat, gps.lng] as [number, number];
+      });
+      return new ResponseResult({ message: SUCCESS_MSG.COMPLAINT.GPS_FETCHED, data: coordinates });
+    } catch (error) {
+      handleError(error);
+    }
+  }
 }

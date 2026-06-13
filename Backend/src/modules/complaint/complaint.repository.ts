@@ -41,4 +41,12 @@ export class ComplaintRepository {
   findDocById(id: string) {
     return this.complaintModel.findById(id).exec();
   }
+
+  /** Returns lat/lng for all complaints that have a GPS point set. */
+  findAllGps() {
+    return this.complaintModel
+      .find({ gps: { $exists: true, $ne: null } }, { 'gps.lat': 1, 'gps.lng': 1, _id: 0 })
+      .lean()
+      .exec();
+  }
 }
