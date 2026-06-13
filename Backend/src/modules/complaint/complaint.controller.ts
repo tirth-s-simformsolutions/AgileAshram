@@ -54,10 +54,10 @@ export class ComplaintController {
       'Returns an array of {lat, lng} for every complaint that has GPS data — useful for map heatmaps.',
   })
   @ApiOkResponse({ type: GpsListResponseDto })
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.DEPARTMENT)
   @Get('gps')
-  getAllGps() {
-    return this.complaintService.getAllGps();
+  getAllGps(@CurrentUser() currentUser: ICurrentUser) {
+    return this.complaintService.getAllGps(currentUser.userId);
   }
 
   @ApiOperation({

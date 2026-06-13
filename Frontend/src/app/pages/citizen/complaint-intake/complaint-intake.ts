@@ -5,14 +5,14 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { timer, switchMap } from 'rxjs';
+import { timer, from, switchMap, throwError } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ComplaintService } from '../../../core/services/complaint';
+import { checkImageGeoTime } from '../../../core/utils/image-geo-check';
 import { ChatMessage, SubmittedComplaint } from '../../../core/models/complaint.model';
 import { ChatBubble } from '../../../shared/components/chat-bubble/chat-bubble';
 import { FileUpload } from '../../../shared/components/file-upload/file-upload';
 import { MapPicker, PickedLocation } from '../../../shared/components/map-picker/map-picker';
-import { isLocationInWard } from '../../../core/utils/ward-boundaries';
 
 type IntakeStep = 'chat' | 'submitting' | 'done';
 
@@ -22,21 +22,6 @@ const QUICK_SUGGESTIONS = [
   'Street light not working',
   'Water leakage',
   'Broken footpath',
-] as const;
-
-export const WARDS = [
-  { id: 'ward-1',  name: 'Ward 1 – Maninagar' },
-  { id: 'ward-2',  name: 'Ward 2 – Navrangpura' },
-  { id: 'ward-3',  name: 'Ward 3 – Satellite' },
-  { id: 'ward-4',  name: 'Ward 4 – Bopal' },
-  { id: 'ward-5',  name: 'Ward 5 – Vastrapur' },
-  { id: 'ward-6',  name: 'Ward 6 – Chandkheda' },
-  { id: 'ward-7',  name: 'Ward 7 – Naranpura' },
-  { id: 'ward-8',  name: 'Ward 8 – Ghatlodia' },
-  { id: 'ward-9',  name: 'Ward 9 – Vastral' },
-  { id: 'ward-10', name: 'Ward 10 – Nikol' },
-  { id: 'ward-11', name: 'Ward 11 – Bapunagar' },
-  { id: 'ward-12', name: 'Ward 12 – Gomtipur' },
 ] as const;
 
 @Component({
@@ -56,7 +41,7 @@ export class ComplaintIntake {
   readonly messages = signal<ChatMessage[]>([
     {
       role: 'bot',
-      text: 'Namaste! Select your ward, pick the location on the map, attach a photo, then describe your civic problem.',
+      text: 'Namaste! Pick the location on the map, attach a photo, then describe your civic problem.',
       timestamp: new Date(),
     },
   ]);
@@ -71,43 +56,24 @@ export class ComplaintIntake {
   readonly ticketId = signal<string | null>(null);
 
   // Location state
-  private readonly _selectedWard = signal('');
-  get selectedWard(): string { return this._selectedWard(); }
-  set selectedWard(v: string) {
-    this._selectedWard.set(v);
-    // Re-validate existing location against new ward, or clear errors
-    const loc = this.pickedLocation();
-    if (loc && v) {
-      this.validateLocation(loc, v);
-    } else {
-      this.wardMismatch.set(false);
-      this.locationError.set(null);
-    }
-  }
-
   readonly pickedLocation = signal<PickedLocation | null>(null);
   readonly showMapModal = signal(false);
-  readonly wardMismatch = signal(false);
-  readonly locationError = signal<string | null>(null);
 
   // Individual readiness signals — used in template for requirement indicators
-  readonly hasWard = computed(() => this._selectedWard() !== '');
-  readonly hasLocation = computed(() => this.pickedLocation() !== null && !this.wardMismatch());
+  readonly hasLocation = computed(() => this.pickedLocation() !== null);
   readonly hasPhoto = computed(() => this.attachedFile() !== null);
   readonly hasText = computed(() => this._inputText().trim().length > 0);
 
-  // All 4 required to send the first message
+  // All required to send the first message
   readonly canSend = computed(
     () =>
       this.hasText() &&
       this.hasPhoto() &&
-      this.hasWard() &&
       this.hasLocation() &&
       !this.isTyping()
   );
 
   protected readonly quickSuggestions = QUICK_SUGGESTIONS;
-  protected readonly wards = WARDS;
 
   protected readonly showSuggestions = computed(
     () => this.messages().length <= 1 && this.currentStep() === 'chat'
@@ -135,26 +101,8 @@ export class ComplaintIntake {
   }
 
   protected onLocationPicked(loc: PickedLocation): void {
-    this.showMapModal.set(false);
-
-    if (!this._selectedWard()) {
-      this.locationError.set('Select a ward first, then pick your location.');
-      this.pickedLocation.set(null);
-      return;
-    }
-
     this.pickedLocation.set(loc);
-    this.validateLocation(loc, this._selectedWard());
-  }
-
-  private validateLocation(loc: PickedLocation, wardId: string): void {
-    if (!isLocationInWard(loc.lat, loc.lng, wardId)) {
-      this.wardMismatch.set(true);
-      this.locationError.set('Location is outside the selected ward — re-pin or change ward.');
-    } else {
-      this.wardMismatch.set(false);
-      this.locationError.set(null);
-    }
+    this.showMapModal.set(false);
   }
 
   protected sendMessage(): void {
@@ -170,8 +118,13 @@ export class ComplaintIntake {
     this.isTyping.set(true);
     this.currentStep.set('submitting');
 
-    // Upload the photo, then file the complaint. Backend AI-routes + grades on submit.
-    this.complaintSvc.getPresignedUrl(file.name, file.type).pipe(
+    // Verify the photo's EXIF location/time matches the reported spot, then
+    // upload + file the complaint. Backend AI-routes + grades on submit.
+    from(checkImageGeoTime(file, { lat: loc.lat, lng: loc.lng })).pipe(
+      switchMap(check => {
+        if (!check.ok) return throwError(() => ({ geoReject: check.reason }));
+        return this.complaintSvc.getPresignedUrl(file.name, file.type);
+      }),
       switchMap(res => {
         const imageUrl = res.data.publicUrl;
         return this.complaintSvc.uploadToStorage(res.data.presignedUrl, file).pipe(
@@ -185,13 +138,19 @@ export class ComplaintIntake {
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: res => this.handleSubmitted(res.data),
-      error: () => {
+      error: (err: { geoReject?: 'location' | 'time' }) => {
         this.isTyping.set(false);
         this.currentStep.set('chat');
         this._inputText.set(text); // restore so the user can retry
+        const botText = err?.geoReject === 'location'
+          ? 'This photo was not taken at the reported location. Please take a fresh photo at the spot and upload it.'
+          : err?.geoReject === 'time'
+            ? 'This photo looks old. Please take a fresh photo at the spot now and upload it.'
+            : 'Could not submit your complaint — please check your connection and send again.';
+        if (err?.geoReject) this.attachedFile.set(null); // force a re-capture on a geo/time reject
         this.messages.update(msgs => [...msgs, {
           role: 'bot',
-          text: 'Could not submit your complaint — please check your connection and send again.',
+          text: botText,
           timestamp: new Date(),
         }]);
       },

@@ -12,7 +12,6 @@ node_modules/
 # Environment files (never commit secrets)
 .env
 .env.*
-src/environments/environment.prod.ts
 
 # IDE
 .idea/

@@ -336,12 +336,15 @@ export class ComplaintService {
         throw new NotFoundException(ERROR_MSG.COMPLAINT.DEPARTMENT_NOT_FOUND);
       }
 
+      const previousDepartmentId = complaint.departmentId;
       complaint.departmentId = new Types.ObjectId(dto.departmentId);
       complaint.statusHistory.push({
         status: complaint.status,
         note: dto.note,
         at: new Date(),
         byUserId: new Types.ObjectId(currentUserId),
+        fromDepartmentId: previousDepartmentId,
+        toDepartmentId: new Types.ObjectId(dto.departmentId),
       });
 
       await complaint.save();
@@ -413,9 +416,19 @@ export class ComplaintService {
     }
   }
 
-  async getAllGps() {
+  async getAllGps(currentUserId: string) {
     try {
-      const results = await this.complaintRepository.findAllGps();
+      const user = await this.userRepository.findUserById(currentUserId);
+      if (!user) {
+        throw new NotFoundException(ERROR_MSG.COMPLAINT.NOT_FOUND);
+      }
+
+      const filter: FilterQuery<ComplaintDocument> = {};
+      if (user.role === UserRole.DEPARTMENT) {
+        filter.departmentId = user.departmentId;
+      }
+
+      const results = await this.complaintRepository.findAllGps(filter);
       const coordinates = results.map(r => {
         const gps = r.gps as { lat: number; lng: number };
         return [gps.lat, gps.lng] as [number, number];

@@ -14,10 +14,10 @@ type FilterStatus = ComplaintStatus | 'all';
 
 const STATUS_FILTERS: Array<{ value: FilterStatus; label: string }> = [
   { value: 'all', label: 'All' },
-  { value: 'in_progress', label: 'In Progress' },
-  { value: 'under_review', label: 'Under Review' },
-  { value: 'resolved', label: 'Resolved' },
-  { value: 'rejected', label: 'Rejected' },
+  { value: 'OPEN', label: 'New' },
+  { value: 'IN_PROGRESS', label: 'In Progress' },
+  { value: 'RESOLVED', label: 'Resolved' },
+  { value: 'REJECTED', label: 'Rejected' },
 ];
 
 @Component({
@@ -35,7 +35,7 @@ export class ComplaintQueue implements OnInit {
   readonly complaints = signal<Complaint[]>([]);
   readonly departments = signal<DepartmentItem[]>([]);
   readonly isLoading = signal(true);
-  readonly activeStatus = signal<FilterStatus>('in_progress');
+  readonly activeStatus = signal<FilterStatus>('all');
   // 'all' or a department name (matched against complaint.department by slug)
   readonly activeDepartment = signal<string>('all');
   readonly currentUser = this.authSvc.currentUser;
@@ -76,9 +76,9 @@ export class ComplaintQueue implements OnInit {
     return {
       total: all.length,
       critical: all.filter(c => c.severity === 'critical').length,
-      inProgress: all.filter(c => c.status === 'in_progress').length,
+      inProgress: all.filter(c => c.status === 'IN_PROGRESS').length,
       resolvedToday: all.filter(c => {
-        if (c.status !== 'resolved' || !c.updatedAt) return false;
+        if (c.status !== 'RESOLVED' || !c.updatedAt) return false;
         return new Date(c.updatedAt) >= today;
       }).length,
     };

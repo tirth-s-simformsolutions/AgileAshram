@@ -115,6 +115,13 @@ export class StatusHistoryEntry {
   // The user who made the change (department staff/admin); null for system.
   @Prop({ type: Types.ObjectId, ref: 'User' })
   byUserId?: Types.ObjectId;
+
+  // Populated only on department-reassignment entries.
+  @Prop({ type: Types.ObjectId, ref: 'Department' })
+  fromDepartmentId?: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Department' })
+  toDepartmentId?: Types.ObjectId;
 }
 export const StatusHistoryEntrySchema = SchemaFactory.createForClass(StatusHistoryEntry);
 

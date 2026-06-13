@@ -1,0 +1,99 @@
+<div class="flex h-screen overflow-hidden bg-[color:var(--color-paper-100)] relative">
+  <app-sidebar></app-sidebar>
+
+  <!-- Main content -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- Top header -->
+    <div class="bg-[color:var(--color-paper-50)] border-b border-[color:var(--color-paper-300)] px-4 sm:px-6 py-4 sm:py-5 shrink-0" style="box-shadow: var(--shadow-card)">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <button
+          type="button"
+          aria-label="Open navigation menu"
+          (click)="openMobileNav()"
+          class="md:hidden flex items-center justify-center size-11 rounded-lg
+                 text-[color:var(--color-ink-500)] hover:bg-[color:var(--color-paper-200)]
+                 transition-colors focus-visible:outline-none
+                 focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)]">
+          <svg class="size-5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+            <path d="M3 5h14M3 10h14M3 15h14" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <div>
+          <h1 class="text-xl font-bold text-[color:var(--color-ink-900)]" style="font-family: var(--font-display)">Complaint hotspots</h1>
+          <p class="text-sm text-[color:var(--color-ink-500)]" style="font-family: var(--font-sans)">Ahmedabad · {{ stats().total }} complaint{{ stats().total === 1 ? '' : 's' }} mapped</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stat strip -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 px-4 sm:px-6 py-4 shrink-0">
+      <div class="bg-[color:var(--color-paper-50)] rounded-[var(--radius-card)] p-4" style="box-shadow: var(--shadow-card)">
+        <p class="text-xs font-semibold text-[color:var(--color-ink-400)] uppercase tracking-wide mb-1" style="font-family: var(--font-sans)">Total complaints</p>
+        <p class="text-2xl font-bold text-[color:var(--color-ink-900)]" style="font-family: var(--font-display)">{{ stats().total }}</p>
+      </div>
+      <div class="bg-[color:var(--color-paper-50)] rounded-[var(--radius-card)] p-4" style="box-shadow: var(--shadow-card)">
+        <p class="text-xs font-semibold text-[color:var(--color-ink-400)] uppercase tracking-wide mb-1" style="font-family: var(--font-sans)">Hotspot zones</p>
+        <p class="text-2xl font-bold text-[color:var(--color-ink-900)]" style="font-family: var(--font-display)">{{ stats().hotspots }}</p>
+      </div>
+      <div class="bg-[color:var(--color-paper-50)] rounded-[var(--radius-card)] p-4" style="box-shadow: var(--shadow-card)">
+        <p class="text-xs font-semibold text-[color:var(--color-ink-400)] uppercase tracking-wide mb-1" style="font-family: var(--font-sans)">Critical zones</p>
+        <p class="text-2xl font-bold" style="font-family: var(--font-display); color: var(--color-danger-600)">{{ stats().critical }}</p>
+      </div>
+      <div class="bg-[color:var(--color-paper-50)] rounded-[var(--radius-card)] p-4" style="box-shadow: var(--shadow-card)">
+        <p class="text-xs font-semibold text-[color:var(--color-ink-400)] uppercase tracking-wide mb-1" style="font-family: var(--font-sans)">Busiest zone</p>
+        <p class="text-2xl font-bold" style="font-family: var(--font-display); color: var(--color-saffron-600)">{{ stats().busiest }}</p>
+      </div>
+    </div>
+
+    <!-- Map area -->
+    <div class="flex-1 relative px-4 sm:px-6 pb-4 sm:pb-6 min-h-0">
+      <div class="relative w-full h-full rounded-[var(--radius-card)] overflow-hidden border border-[color:var(--color-paper-300)]" style="box-shadow: var(--shadow-card)">
+        <div #mapContainer class="w-full h-full" style="min-height: 320px"></div>
+
+        <!-- Loading overlay -->
+        @if (isLoading()) {
+          <div class="absolute inset-0 flex items-center justify-center" style="background: rgba(255,255,255,0.7); z-index: 500">
+            <span class="chakra-spinner size-6" aria-hidden="true"></span>
+          </div>
+        }
+
+        <!-- Error overlay -->
+        @if (loadError()) {
+          <div class="absolute inset-0 flex flex-col items-center justify-center gap-1 text-center px-6" style="background: rgba(255,255,255,0.92); z-index: 500">
+            <p class="text-sm font-semibold text-[color:var(--color-ink-700)]" style="font-family: var(--font-sans)">Could not load hotspot data</p>
+            <p class="text-xs text-[color:var(--color-ink-400)]" style="font-family: var(--font-sans)">Check your connection or sign in again.</p>
+          </div>
+        }
+
+        <!-- Empty state -->
+        @if (!isLoading() && !loadError() && stats().total === 0) {
+          <div class="absolute inset-0 flex flex-col items-center justify-center gap-1 text-center px-6 pointer-events-none" style="z-index: 500">
+            <p class="text-sm font-semibold text-[color:var(--color-ink-600)]" style="font-family: var(--font-sans)">No complaints to map yet</p>
+          </div>
+        }
+
+        <!-- Legend -->
+        @if (!isLoading() && stats().total > 0) {
+          <div class="absolute bottom-3 left-3 rounded-[var(--radius-control)] px-3 py-2.5"
+               style="background: rgba(255,255,255,0.95); box-shadow: var(--shadow-card); z-index: 500">
+            <p class="text-[10px] font-bold uppercase tracking-wide text-[color:var(--color-ink-500)] mb-1.5" style="font-family: var(--font-sans)">Density</p>
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="size-3 rounded-full" style="background:#1A7F4B"></span>
+                <span class="text-[11px] text-[color:var(--color-ink-600)]" style="font-family: var(--font-sans)">Low (1–2)</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="size-3 rounded-full" style="background:#E8830C"></span>
+                <span class="text-[11px] text-[color:var(--color-ink-600)]" style="font-family: var(--font-sans)">Medium (3–5)</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="size-3 rounded-full" style="background:#D92D20"></span>
+                <span class="text-[11px] text-[color:var(--color-ink-600)]" style="font-family: var(--font-sans)">High (6+)</span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

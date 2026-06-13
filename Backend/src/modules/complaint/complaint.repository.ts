@@ -51,14 +51,6 @@ export class ComplaintRepository {
     return this.complaintModel.findById(id).exec();
   }
 
-  /** Returns lat/lng for all complaints that have a GPS point set. */
-  findAllGps() {
-    return this.complaintModel.find(
-      { gps: { $exists: true, $ne: null } },
-      { 'gps.lat': 1, 'gps.lng': 1, _id: 0 },
-    );
-  }
-
   /**
    * Returns unresolved complaints for a department that have GPS coordinates and a
    * classified context (aiMeta.rawLabel set). Used for nearby-duplicate detection.
@@ -72,7 +64,15 @@ export class ComplaintRepository {
         'gps.lng': { $exists: true },
         'aiMeta.rawLabel': { $exists: true, $not: { $in: [null, ''] } },
       })
-      .select('gps ticketId description reportedAddress aiMeta.rawLabel')
+      .select('gps ticketId description reportedAddress aiMeta.rawLabel');
+  }
+
+  findAllGps(filter: FilterQuery<ComplaintDocument> = {}) {
+    return this.complaintModel
+      .find(
+        { ...filter, gps: { $exists: true, $ne: null } },
+        { 'gps.lat': 1, 'gps.lng': 1, _id: 0 },
+      )
       .lean()
       .limit(25)
       .exec();

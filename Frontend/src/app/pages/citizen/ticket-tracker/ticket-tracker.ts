@@ -8,7 +8,7 @@ import { Navbar } from '../../../shared/components/navbar/navbar';
 import { StatusChip } from '../../../shared/components/status-chip/status-chip';
 import { SeverityBadge } from '../../../shared/components/severity-badge/severity-badge';
 
-const STATUS_STEPS: ComplaintStatus[] = ['submitted', 'under_review', 'in_progress', 'resolved'];
+const STATUS_STEPS: ComplaintStatus[] = ['OPEN', 'IN_PROGRESS', 'RESOLVED'];
 
 @Component({
   selector: 'app-ticket-tracker',
@@ -34,11 +34,11 @@ export class TicketTracker {
 
   protected readonly statusSteps = STATUS_STEPS;
 
-  protected readonly isRejected = computed(() => this.complaint()?.status === 'rejected');
+  protected readonly isRejected = computed(() => this.complaint()?.status === 'REJECTED');
 
   protected readonly currentStepIndex = computed(() => {
     const status = this.complaint()?.status;
-    if (!status || status === 'rejected') return -1;
+    if (!status || status === 'REJECTED') return -1;
     return STATUS_STEPS.indexOf(status);
   });
 
@@ -80,11 +80,10 @@ export class TicketTracker {
 
   protected stepLabel(status: ComplaintStatus): string {
     const labels: Record<ComplaintStatus, string> = {
-      submitted: 'Submitted',
-      under_review: 'Under Review',
-      in_progress: 'In Progress',
-      resolved: 'Resolved',
-      rejected: 'Rejected',
+      OPEN: 'Open',
+      IN_PROGRESS: 'In Progress',
+      RESOLVED: 'Resolved',
+      REJECTED: 'Rejected',
     };
     return labels[status];
   }

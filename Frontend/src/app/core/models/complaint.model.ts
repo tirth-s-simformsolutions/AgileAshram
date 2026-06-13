@@ -1,7 +1,7 @@
 export type ComplaintCategory = 'infrastructure' | 'sanitation' | 'water' | 'electricity' | 'road' | 'other';
 export type ComplaintSeverity = 'low' | 'medium' | 'high' | 'critical';
-export type ComplaintStatus = 'submitted' | 'under_review' | 'in_progress' | 'resolved' | 'rejected';
-export type Department = 'infrastructure' | 'sanitation';
+// Matches backend enum exactly (PATCH /complaints/:id/status validates against these).
+export type ComplaintStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'REJECTED';
 
 export interface Location { lat: number; lng: number; address?: string; }
 
@@ -12,7 +12,7 @@ export interface Complaint {
   category: ComplaintCategory;
   severity: ComplaintSeverity;
   status: ComplaintStatus;
-  department: Department;
+  department: string; // department name from the API (e.g. "Garbage / Waste Management Department")
   location: Location;
   imageUrl?: string;
   citizenName?: string;
