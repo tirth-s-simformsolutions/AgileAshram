@@ -47,7 +47,7 @@ npm run prettier:check    # Check formatting only
 - **Password hashing**: PBKDF2 (100,000 iterations, SHA-512) via `src/common/utils/crypto.util.ts`
 
 ### Module Structure
-All feature code lives under `src/modules/`. Currently: `auth` and `user`. Each module follows the pattern:
+All feature code lives under `src/modules/`. Current modules: `auth`, `user`, `ai`, `department`, `complaint` (schema only), `counter` (schema only). Each module follows the pattern:
 ```
 module.ts → controller.ts → service.ts → repository.ts
 ```
@@ -72,8 +72,17 @@ Configs use `registerAs` pattern from `@nestjs/config`. Inject via `ConfigServic
 - `app` → `src/config/app.config.ts` (env, port, sentryDsn)
 - `database` → `src/config/database.config.ts` (url)
 - `jwt` → `src/config/jwt.config.ts` (access/refresh token secrets & expiry)
+- `ai` → `src/config/ai.config.ts` (googleGenAiApiKey, googleGenAiModel)
 
 Environment variables are validated at startup via `EnvVariablesDto` (`src/common/dtos/envVariables.dto.ts`). See `.env.example` for required variables.
+
+### NagarVaani Domain Patterns
+
+- **User roles**: `citizen` (DigiLocker login — `digilockerId` + `phone`), `department` (email/password + `departmentId`), `admin` (email/password). All share the `User` collection; the schema is permissive and auth fields differ per role.
+- **Complaint routing**: AI (`AiService.getSuggestedIndustry`) reads each department's `responsibilities` array and picks the best-fit department. There is no hardcoded category map. If confidence is low, `industryId` is `null` — fall back to a default department and set `aiMeta.fallbackUsed = true`.
+- **Severity sorting**: The work queue sorts on `severityRank` (1–4), not the `severity` string (which sorts alphabetically). A pre-save hook on `ComplaintSchema` keeps `severityRank` in sync with `severity` automatically — never set one without the other.
+- **Ticket IDs**: Generated via `Counter` collection with atomic `$inc` (`findOneAndUpdate({ key: 'complaint-2026' }, { $inc: { seq: 1 } }, { upsert: true, new: true })`), then formatted as `NV-2026-XXXXXX` (6-digit zero-padded). This prevents duplicate IDs under concurrent load.
+- **AI endpoints** (`/api/v1/ai/*`) are `@Public()` — no JWT required. They are called by the frontend before submission and also internally by the complaint pipeline.
 
 ### API Conventions
 - All routes are versioned under `/api/v1/` (except `/api/health-check`)

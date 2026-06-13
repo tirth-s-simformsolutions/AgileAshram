@@ -61,10 +61,13 @@ Each transition appends to `statusHistory` and fires an SMS.
 **User**
 ```
 {
-  _id, digilockerId, name, phone, email?,
-  role: 'citizen' | 'official',
-  department?,
-  createdAt
+  _id, role: 'citizen' | 'department' | 'admin',
+  name?, status: 'active' | 'inactive' | 'blocked',
+  // department + admin login:
+  email?, password?, departmentId?,
+  // citizen (DigiLocker) login:
+  digilockerId?, phone?,
+  createdAt, updatedAt
 }
 ```
 
@@ -72,93 +75,100 @@ Each transition appends to `statusHistory` and fires an SMS.
 ```
 {
   _id,
-  ticketId,           // e.g. NV-2026-000123
+  ticketId,              // e.g. NV-2026-000123 (atomic Counter sequence)
   citizenId,
   description,
   imageUrl?,
-  category: 'Infrastructure' | 'Sanitation',
+  departmentId,          // routing target — set by AI (responsibility-driven), NOT a fixed category map
   severity: 'Low' | 'Medium' | 'High' | 'Critical',
+  severityRank: 1|2|3|4, // numeric mirror; the work queue sorts on this field
   status: 'SUBMITTED' | 'ROUTED' | 'IN_PROGRESS' | 'RESOLVED' | 'REJECTED',
   gps: { lat, lng },
   reportedAddress,
   geoVerified: boolean,
-  aiMeta: { model, confidence, rawLabel },
+  geoDistanceMeters?,
+  aiMeta: { model, confidence, rawLabel?, fallbackUsed },
+  moderation: { passed, provider, score? },
   amcSubmitted: boolean,
-  statusHistory: [{ status, note, at, byUserId }],
-  createdAt,
-  updatedAt
+  statusHistory: [{ status, note?, at, byUserId? }],
+  resolvedBy?, resolvedAt?,
+  createdAt, updatedAt
 }
 ```
 
-**Department** (seed data)
+**Department** (seeded — responsibilities drive AI routing)
 ```
-{ _id, name, category, officials: [userId] }
+{ _id, name, responsibilities: string[], contactEmail?, isActive, createdAt, updatedAt }
+```
+Default seed: `Garbage / Waste Management Department`, `Industry Department`.
+
+**Counter** (internal — atomic ticket ID generation)
+```
+{ key: 'complaint-2026', seq: number }
+// findOneAndUpdate $inc → format NV-2026-000123
 ```
 
 ---
 
 ## API Contracts
 
-| Method | Route | Purpose |
-|---|---|---|
-| `POST` | `/auth/digilocker/start` | Begin (mock) DigiLocker flow → redirect/consent stub |
-| `POST` | `/auth/digilocker/callback` | Exchange code → JWT + verified citizen profile |
-| `POST` | `/complaints/intake/message` | Conversational turn: text → bot reply + extracted fields |
-| `POST` | `/complaints` | Finalize submission (desc, image, gps) → moderation + AI + geo → ticketId |
-| `GET` | `/complaints/:ticketId` | Citizen ticket tracker (status + history) |
-| `GET` | `/admin/complaints?dept=&sort=severity` | Admin queue (official role required) |
-| `PATCH` | `/admin/complaints/:id/status` | Update status → appends history + fires SMS |
+All routes prefixed `/api/v1/`. Swagger at `/docs`.
+
+| Method | Route | Auth | Purpose |
+|---|---|---|---|
+| `POST` | `/auth/digilocker/start` | Public | Begin DigiLocker flow |
+| `POST` | `/auth/digilocker/callback` | Public | Exchange code → JWT + citizen profile |
+| `POST` | `/ai/validate-complaint` | Public ✓ | Gemini: is complaint legit + is image valid? |
+| `POST` | `/ai/suggest-industries` | Public ✓ | Gemini: match complaint to best-fit department |
+| `POST` | `/complaints` | Citizen | Submit → AI route → geo → ticketId |
+| `GET` | `/complaints/:ticketId` | Public | Citizen ticket tracker (status + history) |
+| `GET` | `/admin/complaints?dept=&sort=severityRank` | Department/Admin | Severity-sorted queue |
+| `PATCH` | `/admin/complaints/:id/status` | Department/Admin | Update status → history + SMS |
 
 **Submission pipeline** (inside `POST /complaints`):
-1. Moderate image (NSFW check)
-2. Classify + severity score (Gemini Flash)
-3. Reverse-geocode + cross-check GPS (Nominatim)
-4. Persist to MongoDB
-5. Send SMS confirmation to citizen
-6. *(P1)* Email AMC CCRS
+1. `POST /ai/validate-complaint` — Gemini checks complaint text + image
+2. `POST /ai/suggest-industries` — Gemini returns `departmentId`
+3. Reverse-geocode + cross-check GPS (Nominatim) → `geoVerified`
+4. Persist to MongoDB (Counter `$inc` → ticketId)
+5. SMS confirmation to citizen (Twilio)
+6. *(P1)* Email AMC CCRS (Nodemailer)
 
 ---
 
 ## Task List
 
 ### Setup & Infrastructure
-- [ ] Initialise NestJS backend repo, connect MongoDB Atlas
-- [ ] Initialise Angular frontend repo, configure Tailwind + component library (Angular Material)
-- [ ] Set up shared `.env` template; provision all API keys (Gemini, Twilio, ModerateContent, Cloudinary)
-- [ ] Define and freeze Mongoose schemas: User, Complaint, Department
-- [ ] Write seed script: 2 departments, 1 citizen user, 1 official user
-- [ ] Set up Swagger (`/docs`) on the backend
-- [ ] Deploy hello-world FE → Netlify and BE → Render (done by hour 2 to prove pipeline)
-- [ ] Stand up mock/stubbed API server matching the contract (unblocks frontend from hour 1)
+- [x] NestJS backend scaffolded (auth, user, JWT, guards, interceptors, Swagger)
+- [x] Mongoose schemas defined: User, Complaint, Department, Counter
+- [x] Shared `.env.example` with all required keys
+- [ ] MongoDB Atlas cluster connected (update `DATABASE_URL`)
+- [ ] Angular frontend repo initialised, Tailwind + component library configured
+- [ ] Write seed script: default departments + 1 citizen + 1 department user
+- [ ] Deploy hello-world FE → Netlify and BE → Render (prove pipeline early)
+- [ ] Stand up mock/stubbed API (unblocks frontend from hour 1)
 
 ### Auth Module (Backend)
-- [ ] `POST /auth/digilocker/start` — return mock consent stub; wire real API Setu behind `DIGILOCKER_MODE=sandbox`
-- [ ] `POST /auth/digilocker/callback` — exchange code → issue JWT (access + refresh) with citizen profile
-- [ ] JWT auth guard + `@CurrentUser()` decorator
-- [ ] Role guard: `citizen` vs `official`; admin routes reject citizen tokens
-- [ ] Seed one citizen and one official with department reference
+- [x] JWT auth guard + `@CurrentUser()` decorator (boilerplate)
+- [ ] `POST /auth/digilocker/start` — mock consent stub; real DigiLocker behind flag
+- [ ] `POST /auth/digilocker/callback` — exchange code → issue JWT with citizen profile
+- [ ] Role guard: `citizen` vs `department` vs `admin`; admin routes reject citizen tokens
+- [ ] Seed one citizen user and one department user
 
 ### Complaint Module (Backend)
-- [ ] `POST /complaints` orchestrator: validate → moderate → classify → geo-verify → persist → notify
-- [ ] ticketId generation (format: `NV-YYYY-XXXXXX`, human-readable, unique)
-- [ ] Routing rule: `Infrastructure` → Infrastructure Dept, `Sanitation` → Sanitation Dept
+- [ ] `POST /complaints` orchestrator: validate-complaint → suggest-industries → geo-verify → persist → SMS
+- [ ] ticketId via atomic Counter `$inc` (format: `NV-YYYY-XXXXXX`)
+- [ ] Routing: AI returns `departmentId` (responsibility-driven, no hardcoded category map)
+- [ ] `severityRank` auto-synced from `severity` via pre-save hook (queue sorts on rank, not string)
 - [ ] Status lifecycle: `SUBMITTED → ROUTED → IN_PROGRESS → RESOLVED / REJECTED`
 - [ ] `statusHistory` append on every transition
-- [ ] `GET /complaints/:ticketId` — return status + full history (citizen-accessible, no auth required)
-- [ ] `GET /admin/complaints?dept=&sort=severity` — severity-sorted queue, official role required
+- [ ] `GET /complaints/:ticketId` — status + full history (public, no auth required)
+- [ ] `GET /admin/complaints?dept=&sort=severityRank` — severity-sorted queue, department/admin role required
 - [ ] `PATCH /admin/complaints/:id/status` — update status, append history, trigger SMS
 
 ### AI Module — Gemini Flash (Backend)
-- [ ] Gemini Flash client setup (Google AI Studio key)
-- [ ] Image analysis: send image → detect issue type (structured JSON output)
-- [ ] Text analysis: complaint description → category + severity (strict JSON schema, handle low-confidence)
-- [ ] `POST /complaints/intake/message` — conversational bot turn: receive user message → reply + extract fields (description, category hint)
-- [ ] Fallback: if Gemini fails or confidence is low, default to `Sanitation / Low` and flag for manual review
-
-### Moderation Module (Backend)
-- [ ] ModerateContent.com client setup
-- [ ] NSFW check on every uploaded image before it reaches the AI pipeline
-- [ ] Reject complaint with `400` if image fails moderation; return clear error message
+- [x] `POST /ai/validate-complaint` — Gemini checks complaint legitimacy + image quality (public property, context visible, not extreme close-up). Returns `{ isLegit, reason?, imageAnalysis: { isValid, reason? } }`
+- [x] `POST /ai/suggest-industries` — Gemini matches complaint against all department `responsibilities` arrays. Returns `{ industryId, summary }`. Falls back to `null` industryId on low confidence
+- [ ] Wire fallback: if `industryId` is null, assign to a default "General" department and flag `aiMeta.fallbackUsed = true`
 
 ### Geo Module (Backend)
 - [ ] Nominatim reverse-geocode: `{lat, lng}` → human-readable address
@@ -181,8 +191,8 @@ Each transition appends to `statusHistory` and fires an SMS.
 - [ ] Ticket tracker page: enter ticketId → display current status + status history timeline
 
 ### Frontend — Admin App (Angular)
-- [ ] Official login screen (role: `official`)
-- [ ] Complaint queue table: sorted by severity (Critical → High → Medium → Low), filter by department and status
+- [ ] Department/admin login screen (role: `department` or `admin`)
+- [ ] Complaint queue table: sorted by `severityRank` desc (Critical → High → Medium → Low), filter by department and status
 - [ ] Complaint detail view: image, AI labels (category + severity), geoVerified badge, GPS coordinates
 - [ ] Status update action: dropdown (IN_PROGRESS / RESOLVED / REJECTED) + optional note → `PATCH /admin/complaints/:id/status`
 - [ ] Auto-poll queue every 10s so new complaints appear during demo without refresh
@@ -233,8 +243,8 @@ If any P1 or polish item is not done by hour 9, it is cut.
 
 1. Citizen logs in via DigiLocker (mock) → verified identity shown
 2. Opens chat: *"There's a pothole on my street"*, uploads a photo, grants GPS
-3. Backend moderates image → Gemini classifies → **Infrastructure / High**, Nominatim confirms location → **geoVerified ✓**. Citizen receives **live SMS with ticket ID**
-4. Switch to admin dashboard → complaint appears at top of queue (severity-sorted) with image, AI labels, geo badge. Official sets status → **In Progress** → citizen receives second SMS
+3. Gemini validates the complaint + image → routes to **Garbage / Waste Management** (responsibility-driven). Nominatim confirms location → **geoVerified ✓**. Citizen receives **live SMS with ticket ID**
+4. Switch to admin dashboard → complaint appears at top of queue (severityRank-sorted) with image, AI labels, geo badge. Department user sets status → **In Progress** → citizen receives second SMS
 5. *(P1)* Show the AMC CCRS email generated for `ccrs@ahmedabadcity.gov.in`
 
 ---
@@ -242,8 +252,8 @@ If any P1 or polish item is not done by hour 9, it is cut.
 ## Acceptance Criteria
 
 - **Auth:** mock DigiLocker login issues a JWT; admin routes reject citizen tokens
-- **Intake:** `POST /complaints` with a pothole image + text returns a ticketId; persisted Complaint has non-null `category`, `severity`, `aiMeta`, and `geoVerified`
-- **Moderation:** an NSFW test image is rejected before reaching Gemini
+- **Intake:** `POST /complaints` with a pothole image + text returns a ticketId; persisted Complaint has non-null `departmentId`, `severity`, `severityRank`, `aiMeta`, and `geoVerified`
+- **Validation:** an illegitimate complaint or invalid image is rejected by `POST /ai/validate-complaint` before the submission pipeline runs
 - **SMS:** a real SMS lands on the pre-verified demo phone at submission and at status change
 - **Admin queue:** returns complaints sorted by severity desc; status PATCH appends to `statusHistory` and triggers SMS
 - **Tracker:** `GET /complaints/:ticketId` returns current status + full history
@@ -257,7 +267,7 @@ If any P1 or polish item is not done by hour 9, it is cut.
 - [ ] Register API Setu developer account (sandbox fallback)
 - [ ] Create Google AI Studio key (Gemini Flash, free tier)
 - [ ] Create Twilio trial account + verify demo phone number
-- [ ] Sign up for ModerateContent.com API key
+- [ ] Create Google AI Studio key (`GOOGLE_GENAI_API_KEY`, model: `gemini-2.5-flash`)
 - [ ] Create MongoDB Atlas free cluster
 - [ ] Create Cloudinary free account
 - [ ] Set up Netlify + Render accounts
