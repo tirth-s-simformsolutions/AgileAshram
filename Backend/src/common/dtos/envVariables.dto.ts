@@ -31,13 +31,14 @@ export class EnvVariablesDto {
   @IsString()
   JWT_REFRESH_SECRET_KEY: string;
 
-  // @IsString()
-  // @IsNotEmpty()
-  // GOOGLE_GENAI_API_KEY: string;
+  @IsString()
+  @IsNotEmpty()
+  GOOGLE_GENAI_API_KEY: string;
 
-  // @IsString()
-  // @IsNotEmpty()
-  // GOOGLE_GENAI_MODEL: string;
+  @IsString()
+  @IsNotEmpty()
+  GOOGLE_GENAI_MODEL: string;
+
   @IsString()
   @IsNotEmpty()
   CLOUDFLARE_R2_ACCOUNT_ID: string;
@@ -73,4 +74,28 @@ export class EnvVariablesDto {
   @IsString()
   @IsNotEmpty()
   TWILIO_FROM_NUMBER: string;
+
+  @IsOptional()
+  @IsString()
+  SETU_CLIENT_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  SETU_CLIENT_SECRET?: string;
+
+  @IsOptional()
+  @IsString()
+  SETU_PRODUCT_INSTANCE_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  SETU_BASE_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  SETU_REDIRECT_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  SETU_MOCK_MODE?: string;
 }

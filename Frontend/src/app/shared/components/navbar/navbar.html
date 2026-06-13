@@ -2,21 +2,7 @@
   <nav class="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between" aria-label="Main navigation">
     <!-- Logo + Brand -->
     <a routerLink="/" class="flex items-center gap-3 min-w-0 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)] rounded-lg" aria-label="NagarVaani home">
-      <!-- Chakra Wheel SVG -->
-      <svg class="size-8 shrink-0" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-        <circle cx="16" cy="16" r="14" stroke="var(--color-saffron-500)" stroke-width="2"/>
-        <circle cx="16" cy="16" r="4" fill="var(--color-saffron-500)"/>
-        @for (spoke of spokes; track spoke) {
-          <line
-            [attr.x1]="16 + 5 * spoke.cos"
-            [attr.y1]="16 + 5 * spoke.sin"
-            [attr.x2]="16 + 13 * spoke.cos"
-            [attr.y2]="16 + 13 * spoke.sin"
-            stroke="var(--color-saffron-500)"
-            stroke-width="1.5"
-            stroke-linecap="round"/>
-        }
-      </svg>
+      <img src="/favicon.svg" alt="" class="size-8 shrink-0 rounded-md" aria-hidden="true">
       <div class="flex flex-col leading-tight min-w-0">
         <span class="text-base font-bold text-[color:var(--color-primary-900)] truncate" style="font-family: var(--font-display)">NagarVaani</span>
         <span class="text-xs text-[color:var(--color-ink-500)] hidden md:block truncate" style="font-family: var(--font-sans)">नगरवाणी — आपकी आवाज़, आपका शहर</span>

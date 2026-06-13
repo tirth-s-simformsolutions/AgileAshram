@@ -13,7 +13,8 @@ import cloudflareConfig from '../config/cloudflare.config';
 import databaseConfig from '../config/database.config';
 import jwtConfig from '../config/jwt.config';
 import twilioConfig from '../config/twilio.config';
-import { AuthGuard, CustomThrottlerGuard } from '../core/guards';
+import setuConfig from '../config/setu.config';
+import { AuthGuard, CustomThrottlerGuard, RolesGuard } from '../core/guards';
 import { HttpExceptionsFilter, ResponseInterceptor } from '../core/interceptors';
 import { TraceMiddleware } from '../core/middleware';
 import { AiModule } from '../modules/ai/ai.module';
@@ -28,7 +29,15 @@ import { AppController } from './app.controller';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, jwtConfig, aiConfig, cloudflareConfig, twilioConfig],
+      load: [
+        appConfig,
+        databaseConfig,
+        jwtConfig,
+        aiConfig,
+        cloudflareConfig,
+        twilioConfig,
+        setuConfig,
+      ],
       validate: validateEnvVariables,
     }),
     I18nModule.forRootAsync({
@@ -78,6 +87,10 @@ import { AppController } from './app.controller';
     {
       provide: APP_GUARD,
       useClass: CustomThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
     },
     LoggerService,
   ],

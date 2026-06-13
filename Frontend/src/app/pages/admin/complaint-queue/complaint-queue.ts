@@ -13,9 +13,8 @@ type FilterStatus = ComplaintStatus | 'all';
 
 const STATUS_FILTERS: Array<{ value: FilterStatus; label: string }> = [
   { value: 'all', label: 'All' },
-  { value: 'submitted', label: 'Submitted' },
-  { value: 'under_review', label: 'Under Review' },
   { value: 'in_progress', label: 'In Progress' },
+  { value: 'under_review', label: 'Under Review' },
   { value: 'resolved', label: 'Resolved' },
   { value: 'rejected', label: 'Rejected' },
 ];
@@ -33,7 +32,7 @@ export class ComplaintQueue implements OnInit {
 
   readonly complaints = signal<Complaint[]>([]);
   readonly isLoading = signal(true);
-  readonly activeStatus = signal<FilterStatus>('all');
+  readonly activeStatus = signal<FilterStatus>('in_progress');
   readonly currentUser = this.authSvc.currentUser;
 
   private readonly _searchText = signal('');
