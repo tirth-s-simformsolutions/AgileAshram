@@ -1,1 +1,8 @@
-npx --no-install commitlint --edit "$1"
+# Resolve the commit-msg file to an absolute path before changing directory,
+# since git passes it relative to the repo root.
+COMMIT_MSG_FILE="$1"
+case "$COMMIT_MSG_FILE" in
+  /*) ;;
+  *) COMMIT_MSG_FILE="$PWD/$COMMIT_MSG_FILE" ;;
+esac
+cd "$(dirname "$0")/.." && npx --no-install commitlint --edit "$COMMIT_MSG_FILE"
