@@ -94,6 +94,10 @@ export class SmsService {
       return SmsErrorCode.INVALID_PHONE;
     }
 
+    if ([21212].includes(twilioCode || 0)) {
+      return SmsErrorCode.INVALID_FROM;
+    }
+
     if ([21408, 21610].includes(twilioCode || 0)) {
       return SmsErrorCode.DELIVERY_FAILED;
     }
