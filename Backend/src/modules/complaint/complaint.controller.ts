@@ -6,7 +6,16 @@ import { ICurrentUser } from '../../common/interfaces';
 import { CurrentUser, Roles } from '../../core/decorators';
 import { UserRole } from '../user/schemas/user.schema';
 import { ComplaintService } from './complaint.service';
-import { CreateComplaintDto, UpdateStatusDto } from './dtos';
+import {
+  CreateComplaintDto,
+  CreateComplaintResponseDto,
+  GetComplaintResponseDto,
+  ListComplaintsResponseDto,
+  ReassignDepartmentDto,
+  ReassignDepartmentResponseDto,
+  UpdateComplaintStatusResponseDto,
+  UpdateStatusDto,
+} from './dtos';
 
 @ApiTags(SWAGGER_TAGS.COMPLAINT)
 @Controller('complaints')
@@ -18,7 +27,7 @@ export class ComplaintController {
     description:
       'Validates the complaint via AI, routes it to the responsible department, generates a ticket id and persists it.',
   })
-  @ApiCreatedResponse({ description: 'Complaint registered successfully' })
+  @ApiCreatedResponse({ type: CreateComplaintResponseDto })
   @Post()
   create(@Body() data: CreateComplaintDto, @CurrentUser() currentUser: ICurrentUser) {
     return this.complaintService.create(data, currentUser.userId);
@@ -29,7 +38,7 @@ export class ComplaintController {
     description:
       'Returns paginated complaints scoped to the caller: a citizen sees their own, a department sees its own complaints, an admin sees all. Sorted by severity (desc) then newest.',
   })
-  @ApiOkResponse({ description: 'Complaints fetched successfully' })
+  @ApiOkResponse({ type: ListComplaintsResponseDto })
   @Get()
   list(@Query() query: PaginationDto, @CurrentUser() currentUser: ICurrentUser) {
     return this.complaintService.list(query, currentUser.userId);
@@ -39,7 +48,7 @@ export class ComplaintController {
     summary: 'Track a complaint by ticket id',
     description: 'Returns a complaint (with its department) by its human-readable ticket id.',
   })
-  @ApiOkResponse({ description: 'Complaint fetched successfully' })
+  @ApiOkResponse({ type: GetComplaintResponseDto })
   @Get('ticket/:ticketId')
   getByTicketId(@Param('ticketId') ticketId: string) {
     return this.complaintService.findByTicketId(ticketId);
@@ -49,7 +58,7 @@ export class ComplaintController {
     summary: 'Get a complaint by id',
     description: 'Returns a complaint (with its department) by its MongoDB ObjectId.',
   })
-  @ApiOkResponse({ description: 'Complaint fetched successfully' })
+  @ApiOkResponse({ type: GetComplaintResponseDto })
   @Get(':id')
   getById(@Param('id') id: string) {
     return this.complaintService.findById(id);
@@ -60,7 +69,7 @@ export class ComplaintController {
     description:
       'Updates the status, appends to the status history, and stamps resolved metadata. A department user can only update complaints assigned to its department.',
   })
-  @ApiOkResponse({ description: 'Complaint status updated successfully' })
+  @ApiOkResponse({ type: UpdateComplaintStatusResponseDto })
   @Roles(UserRole.DEPARTMENT, UserRole.ADMIN)
   @Patch(':id/status')
   updateStatus(
@@ -69,5 +78,21 @@ export class ComplaintController {
     @CurrentUser() currentUser: ICurrentUser,
   ) {
     return this.complaintService.updateStatus(id, data, currentUser.userId);
+  }
+
+  @ApiOperation({
+    summary: 'Reassign complaint to a new department (department/admin)',
+    description:
+      'Reassigns a complaint to a different department and appends a history entry. A department user can only reassign complaints currently routed to their own department.',
+  })
+  @ApiOkResponse({ type: ReassignDepartmentResponseDto })
+  @Roles(UserRole.DEPARTMENT, UserRole.ADMIN)
+  @Patch(':id/department')
+  reassignDepartment(
+    @Param('id') id: string,
+    @Body() data: ReassignDepartmentDto,
+    @CurrentUser() currentUser: ICurrentUser,
+  ) {
+    return this.complaintService.reassignDepartment(id, data, currentUser.userId);
   }
 }

@@ -3,5 +3,6 @@ export const SUCCESS_MSG = {
     CREATED: 'complaintSuccess.CREATED',
     FETCHED: 'complaintSuccess.FETCHED',
     STATUS_UPDATED: 'complaintSuccess.STATUS_UPDATED',
+    REASSIGNED: 'complaintSuccess.REASSIGNED',
   },
 };

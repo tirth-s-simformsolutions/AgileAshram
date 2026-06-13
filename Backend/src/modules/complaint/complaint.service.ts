@@ -16,7 +16,7 @@ import { DepartmentRepository } from '../department/department.repository';
 import { UserRole } from '../user/schemas/user.schema';
 import { UserRepository } from '../user/user.repository';
 import { ComplaintRepository } from './complaint.repository';
-import { CreateComplaintDto, UpdateStatusDto } from './dtos';
+import { CreateComplaintDto, ReassignDepartmentDto, UpdateStatusDto } from './dtos';
 import { ERROR_MSG, SUCCESS_MSG } from './messages';
 import { ComplaintDocument, ComplaintSeverity, ComplaintStatus } from './schemas/complaint.schema';
 
@@ -200,6 +200,54 @@ export class ComplaintService {
       await complaint.save(); // .save() so the severityRank pre-save hook stays consistent
 
       return new ResponseResult({ message: SUCCESS_MSG.COMPLAINT.STATUS_UPDATED, data: complaint });
+    } catch (error) {
+      handleError(error);
+    }
+  }
+
+  /**
+   * Reassign a complaint to a different department (department/admin only).
+   * A department user may only reassign complaints currently routed to their own department.
+   */
+  async reassignDepartment(id: string, dto: ReassignDepartmentDto, currentUserId: string) {
+    try {
+      const user = await this.userRepository.findUserById(currentUserId);
+      if (!user) {
+        throw new ForbiddenException(ERROR_MSG.COMPLAINT.NOT_YOUR_DEPARTMENT);
+      }
+
+      const complaint = await this.complaintRepository.findDocById(id);
+      if (!complaint) {
+        throw new NotFoundException(ERROR_MSG.COMPLAINT.NOT_FOUND);
+      }
+
+      if (
+        user.role === UserRole.DEPARTMENT &&
+        String(complaint.departmentId) !== String(user.departmentId)
+      ) {
+        throw new ForbiddenException(ERROR_MSG.COMPLAINT.NOT_YOUR_DEPARTMENT);
+      }
+
+      if (String(complaint.departmentId) === dto.departmentId) {
+        throw new BadRequestException(ERROR_MSG.COMPLAINT.SAME_DEPARTMENT);
+      }
+
+      const targetDepartment = await this.departmentRepository.findById(dto.departmentId);
+      if (!targetDepartment?.isActive) {
+        throw new NotFoundException(ERROR_MSG.COMPLAINT.DEPARTMENT_NOT_FOUND);
+      }
+
+      complaint.departmentId = new Types.ObjectId(dto.departmentId);
+      complaint.statusHistory.push({
+        status: complaint.status,
+        note: dto.note,
+        at: new Date(),
+        byUserId: new Types.ObjectId(currentUserId),
+      });
+
+      await complaint.save();
+
+      return new ResponseResult({ message: SUCCESS_MSG.COMPLAINT.REASSIGNED, data: complaint });
     } catch (error) {
       handleError(error);
     }

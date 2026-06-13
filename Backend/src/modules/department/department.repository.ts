@@ -22,4 +22,8 @@ export class DepartmentRepository {
     const filter = search ? { name: { $regex: search, $options: 'i' } } : {};
     return this.departmentModel.countDocuments(filter).exec();
   }
+
+  findById(id: string) {
+    return this.departmentModel.findById(id).exec();
+  }
 }
