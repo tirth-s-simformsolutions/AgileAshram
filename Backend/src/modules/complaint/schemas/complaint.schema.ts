@@ -141,6 +141,12 @@ export class StatusHistoryEntry {
 
   @Prop({ type: Types.ObjectId, ref: 'Department' })
   toDepartmentId?: Types.ObjectId;
+
+  @Prop()
+  fromDepartmentName?: string;
+
+  @Prop()
+  toDepartmentName?: string;
 }
 export const StatusHistoryEntrySchema = SchemaFactory.createForClass(StatusHistoryEntry);
 

@@ -355,20 +355,26 @@ export class ComplaintService {
         throw new BadRequestException(ERROR_MSG.COMPLAINT.SAME_DEPARTMENT);
       }
 
-      const targetDepartment = await this.departmentRepository.findById(dto.departmentId);
+      const [fromDepartment, targetDepartment] = await Promise.all([
+        this.departmentRepository.findById(String(complaint.departmentId)),
+        this.departmentRepository.findById(dto.departmentId),
+      ]);
       if (!targetDepartment?.isActive) {
         throw new NotFoundException(ERROR_MSG.COMPLAINT.DEPARTMENT_NOT_FOUND);
       }
 
       const previousDepartmentId = complaint.departmentId;
       complaint.departmentId = new Types.ObjectId(dto.departmentId);
+      complaint.status = ComplaintStatus.OPEN;
       complaint.statusHistory.push({
-        status: complaint.status,
+        status: ComplaintStatus.OPEN,
         note: dto.note,
         at: new Date(),
         byUserId: new Types.ObjectId(currentUserId),
         fromDepartmentId: previousDepartmentId,
         toDepartmentId: new Types.ObjectId(dto.departmentId),
+        fromDepartmentName: fromDepartment?.name,
+        toDepartmentName: targetDepartment.name,
       });
 
       await complaint.save();
