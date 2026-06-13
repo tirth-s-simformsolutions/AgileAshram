@@ -52,7 +52,7 @@ export class AiService {
       });
 
       const rawText = response.text.trim();
-      const result: { industryId: string | null; summary: string } = JSON.parse(rawText);
+      const result: { industryId: string | null; summary: string; severity: 'Low' | 'Medium' | 'High' | 'Critical' } = JSON.parse(rawText);
 
       return new ResponseResult({
         message: SUCCESS_MSG.AI.INDUSTRY_SUGGESTED,

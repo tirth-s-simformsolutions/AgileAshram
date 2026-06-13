@@ -7,6 +7,9 @@ class SuggestIndustryDataDto {
 
   @ApiProperty({ example: 'The complainant reports uncollected garbage causing overflow and odour near their street.' })
   summary: string;
+
+  @ApiProperty({ enum: ['Low', 'Medium', 'High', 'Critical'], example: 'High' })
+  severity: 'Low' | 'Medium' | 'High' | 'Critical';
 }
 
 class SuggestIndustryResponseDto extends PickType(CommonResponseDto, ['error'] as const) {

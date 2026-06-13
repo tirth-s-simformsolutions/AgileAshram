@@ -9,9 +9,11 @@ import { HealthService, LoggerService } from '../common/services';
 import { validateEnvVariables } from '../common/utils';
 import aiConfig from '../config/ai.config';
 import appConfig from '../config/app.config';
+import cloudflareConfig from '../config/cloudflare.config';
 import databaseConfig from '../config/database.config';
 import jwtConfig from '../config/jwt.config';
-import { AuthGuard, CustomThrottlerGuard } from '../core/guards';
+import setuConfig from '../config/setu.config';
+import { AuthGuard, CustomThrottlerGuard, RolesGuard } from '../core/guards';
 import { HttpExceptionsFilter, ResponseInterceptor } from '../core/interceptors';
 import { TraceMiddleware } from '../core/middleware';
 import { AiModule } from '../modules/ai/ai.module';
@@ -19,6 +21,7 @@ import { AuthModule } from '../modules/auth/auth.module';
 import { ComplaintModule } from '../modules/complaint/complaint.module';
 import { CounterModule } from '../modules/counter/counter.module';
 import { DepartmentModule } from '../modules/department/department.module';
+import { UploadModule } from '../modules/upload/upload.module';
 import { UserModule } from '../modules/user/user.module';
 import { AppController } from './app.controller';
 
@@ -26,7 +29,7 @@ import { AppController } from './app.controller';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, jwtConfig, aiConfig],
+      load: [appConfig, databaseConfig, jwtConfig, aiConfig, cloudflareConfig, setuConfig],
       validate: validateEnvVariables,
     }),
     I18nModule.forRootAsync({
@@ -57,6 +60,7 @@ import { AppController } from './app.controller';
     CounterModule,
     DepartmentModule,
     UserModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [
@@ -76,6 +80,10 @@ import { AppController } from './app.controller';
     {
       provide: APP_GUARD,
       useClass: CustomThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
     },
     LoggerService,
   ],

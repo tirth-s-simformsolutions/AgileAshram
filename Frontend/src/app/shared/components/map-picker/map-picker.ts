@@ -22,7 +22,15 @@ interface NominatimResult {
 
 const DEFAULT_LAT = 23.0225;
 const DEFAULT_LNG = 72.5714;
-const DEFAULT_ZOOM = 14;
+const DEFAULT_ZOOM = 13;
+
+// AMC (Ahmedabad Municipal Corporation) boundary
+const AMC_BOUNDS = {
+  south: 22.87,
+  north: 23.16,
+  west:  72.43,
+  east:  72.73,
+};
 
 // Saffron pin SVG used as DivIcon
 const PIN_SVG = `
@@ -84,7 +92,7 @@ export class MapPicker {
         this.isSearching.set(true);
         this.searchError.set(null);
         return this.http.get<NominatimResult[]>(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5&countrycodes=in`,
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + ' Ahmedabad')}&limit=5&countrycodes=in&viewbox=${AMC_BOUNDS.west},${AMC_BOUNDS.north},${AMC_BOUNDS.east},${AMC_BOUNDS.south}&bounded=1`,
           { headers: { 'User-Agent': 'NagarVaani/1.0 civic-portal' } }
         ).pipe(
           catchError(() => {
@@ -130,13 +138,22 @@ export class MapPicker {
 
     const L = await import('leaflet');
 
+    const amcLatLngBounds = L.latLngBounds(
+      [AMC_BOUNDS.south, AMC_BOUNDS.west],
+      [AMC_BOUNDS.north, AMC_BOUNDS.east]
+    );
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mapOptions: any = {
       center: [DEFAULT_LAT, DEFAULT_LNG],
       zoom: DEFAULT_ZOOM,
+      minZoom: 11,       // can't zoom out past city level
+      maxZoom: 19,
+      maxBounds: amcLatLngBounds,
+      maxBoundsViscosity: 1.0, // hard stop — can't pan outside AMC
       zoomControl: true,
       doubleClickZoom: false,
-      tap: false, // disable Leaflet mobile tap handler; we handle click ourselves
+      tap: false,
     };
     this.map = L.map(el, mapOptions);
 

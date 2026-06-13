@@ -9,6 +9,7 @@ import { timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GeminiService } from '../../../core/services/gemini';
 import { ComplaintService } from '../../../core/services/complaint';
+import { AuthService } from '../../../core/services/auth';
 import {
   ChatMessage, GeminiClassification, ComplaintCategory,
   ComplaintSeverity, Department
@@ -62,6 +63,7 @@ export class ComplaintIntake {
   private readonly destroyRef = inject(DestroyRef);
   private readonly geminiSvc = inject(GeminiService);
   private readonly complaintSvc = inject(ComplaintService);
+  private readonly authSvc = inject(AuthService);
 
   readonly scrollContainer = viewChild<ElementRef<HTMLDivElement>>('scrollContainer');
 
@@ -82,6 +84,8 @@ export class ComplaintIntake {
   readonly currentStep = signal<IntakeStep>('chat');
   readonly classification = signal<GeminiClassification | null>(null);
   readonly ticketId = signal<string | null>(null);
+  // Saved when user sends first message — _inputText is cleared after send
+  private readonly savedDescription = signal('');
 
   // Location state
   private readonly _selectedWard = signal('');
@@ -182,6 +186,8 @@ export class ComplaintIntake {
 
     const userMsg: ChatMessage = { role: 'user', text, timestamp: new Date() };
     this.messages.update(msgs => [...msgs, userMsg]);
+    // Persist before clearing — needed for FormData at submission time
+    this.savedDescription.set(text);
     this._inputText.set('');
 
     this.isTyping.set(true);
@@ -244,22 +250,49 @@ export class ComplaintIntake {
   }
 
   private confirmAndSubmit(): void {
+    const loc = this.pickedLocation()!;
+    const cls = this.classification()!;
+    const user = this.authSvc.currentUser();
+
+    const fd = new FormData();
+    fd.append('description',       this.savedDescription());
+    fd.append('category',          cls.category);
+    fd.append('severity',          cls.severity);
+    fd.append('department',        cls.department);
+    fd.append('ward',              this._selectedWard());
+    fd.append('location[lat]',     String(loc.lat));
+    fd.append('location[lng]',     String(loc.lng));
+    fd.append('location[address]', loc.address);
+    if (user?.name)  fd.append('citizenName', user.name);
+    if (user?.phone) fd.append('citizenPhone', user.phone);
+    const file = this.attachedFile();
+    if (file) fd.append('image', file, file.name);
+
     this.currentStep.set('submitting');
     this.isTyping.set(true);
 
-    // TODO: Replace with real ComplaintService.submit()
-    setTimeout(() => {
-      const tid = `NV-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 89999)}`;
-      this.ticketId.set(tid);
-      this.isTyping.set(false);
-      this.currentStep.set('done');
-      const doneMsg: ChatMessage = {
-        role: 'bot',
-        text: `Complaint submitted!\n\nTicket ID: ${tid}\nWard: ${this._selectedWard()}\nLocation: ${this.pickedLocation()?.address ?? 'picked on map'}\n\nSave this ID to track your complaint.`,
-        timestamp: new Date(),
-      };
-      this.messages.update(msgs => [...msgs, doneMsg]);
-    }, 1500);
+    this.complaintSvc.submitComplaint(fd).subscribe({
+      next: complaint => {
+        const tid = complaint.ticketId ?? `NV-${new Date().getFullYear()}-XXXXX`;
+        this.ticketId.set(tid);
+        this.isTyping.set(false);
+        this.currentStep.set('done');
+        this.messages.update(msgs => [...msgs, {
+          role: 'bot',
+          text: `Complaint submitted!\n\nTicket ID: ${tid}\nWard: ${this._selectedWard()}\nLocation: ${loc.address}\n\nSave this ID to track your complaint.`,
+          timestamp: new Date(),
+        }]);
+      },
+      error: () => {
+        this.isTyping.set(false);
+        this.currentStep.set('confirming');
+        this.messages.update(msgs => [...msgs, {
+          role: 'bot',
+          text: 'Submission failed — please check your connection and type "yes" to try again.',
+          timestamp: new Date(),
+        }]);
+      },
+    });
   }
 
   protected onSend(): void {

@@ -38,4 +38,51 @@ export class EnvVariablesDto {
   @IsString()
   @IsNotEmpty()
   GOOGLE_GENAI_MODEL: string;
+  @IsString()
+  @IsNotEmpty()
+  CLOUDFLARE_R2_ACCOUNT_ID: string;
+
+  @IsString()
+  @IsNotEmpty()
+  CLOUDFLARE_R2_ACCESS_KEY_ID: string;
+
+  @IsString()
+  @IsNotEmpty()
+  CLOUDFLARE_R2_SECRET_ACCESS_KEY: string;
+
+  @IsString()
+  @IsNotEmpty()
+  CLOUDFLARE_R2_BUCKET_NAME: string;
+
+  @IsString()
+  @IsNotEmpty()
+  CLOUDFLARE_R2_ENDPOINT: string;
+
+  @IsString()
+  @IsNotEmpty()
+  CLOUDFLARE_R2_PUBLIC_URL: string;
+
+  @IsOptional()
+  @IsString()
+  SETU_CLIENT_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  SETU_CLIENT_SECRET?: string;
+
+  @IsOptional()
+  @IsString()
+  SETU_PRODUCT_INSTANCE_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  SETU_BASE_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  SETU_REDIRECT_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  SETU_MOCK_MODE?: string;
 }
