@@ -30,6 +30,27 @@ npm run test:debug -- --testPathPattern=auth.service
 npm run seed          # Seed database with initial data (ts-node src/seeds/seed.ts)
 ```
 
+### MongoDB MCP
+A `.mcp.json` at the project root connects Claude Code to the Atlas cluster (`agile_ashram` database) via `mongodb-mcp-server`. This lets Claude query collections directly without running the app.
+
+Collections: `users`, `complaints`, `counters`, `departments`
+
+`.mcp.json` is gitignored (contains credentials). Create it locally:
+```json
+{
+  "mcpServers": {
+    "mongodb": {
+      "command": "npx",
+      "args": ["-y", "mongodb-mcp-server"],
+      "env": {
+        "MDB_MCP_CONNECTION_STRING": "<your DATABASE_URL from Backend/.env>"
+      }
+    }
+  }
+}
+```
+On first load, Claude Code will prompt to approve the `mongodb` MCP server — select **Yes**.
+
 ### Code Quality
 ```bash
 npm run lint              # ESLint with auto-fix
