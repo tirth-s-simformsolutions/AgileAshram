@@ -28,8 +28,11 @@ Location:
 Time:
 {{time}}
 
+- Assess severity: Low (minor, easily fixable), Medium (moderate impact), High (serious, affects multiple people), or Critical (emergency, public safety risk).
+- Return severity based on the urgency and impact described in the complaint and image.
+
 Return ONLY valid JSON with no markdown, no code fences, no explanation:
-{"industryId":"<industry_id_or_null>","summary":"<concise_complaint_summary>"}`;
+{"industryId":"<industry_id_or_null>","summary":"<concise_complaint_summary>","severity":"<Low|Medium|High|Critical>"}`;
 
 export const IMAGE_ANALYSIS_SECTION = `Image (analyze the attached image and check ALL of the following):
 - The image must be clear and directly related to the complaint described.
