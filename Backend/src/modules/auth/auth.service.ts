@@ -57,7 +57,7 @@ export class AuthService {
     const cookieConfig: Omit<ICookieConfig, 'maxAge'> = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'none',
     };
 
     // Set access token cookie
@@ -383,7 +383,7 @@ export class AuthService {
       }
 
       return {
-        userId: loginUserInfo.id,
+        userId: loginUserInfo._id?.toString(),
         name: loginUserInfo.name,
       };
     } catch (error) {
