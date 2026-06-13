@@ -16,7 +16,7 @@ export class UserRepository {
   }
 
   findUserById(userId: string) {
-    return this.userModel.findById(userId, { _id: 1, name: 1, email: 1, role: 1 }).exec();
+    return this.userModel.findById(userId, { password: 0 }).exec();
   }
 
   updateUserById(id: string, updatePayload: Partial<User>) {

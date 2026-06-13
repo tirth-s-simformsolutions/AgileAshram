@@ -1,6 +1,6 @@
 import { ApiProperty, PickType } from '@nestjs/swagger';
 import { CommonResponseDto } from '../../../common/dtos';
-import { UserAndTokenDataDto } from './login.res.dto';
+import { UserAndTokenDataDto } from './adminLogin.res.dto';
 
 class DigilockerCompleteResponseDto extends PickType(CommonResponseDto, ['error'] as const) {
   @ApiProperty({ example: 'Login successful' })

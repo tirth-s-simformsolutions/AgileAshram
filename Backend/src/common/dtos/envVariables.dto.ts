@@ -61,4 +61,28 @@ export class EnvVariablesDto {
   @IsString()
   @IsNotEmpty()
   CLOUDFLARE_R2_PUBLIC_URL: string;
+
+  @IsOptional()
+  @IsString()
+  SETU_CLIENT_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  SETU_CLIENT_SECRET?: string;
+
+  @IsOptional()
+  @IsString()
+  SETU_PRODUCT_INSTANCE_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  SETU_BASE_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  SETU_REDIRECT_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  SETU_MOCK_MODE?: string;
 }

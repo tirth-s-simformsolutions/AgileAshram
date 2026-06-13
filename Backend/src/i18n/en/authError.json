@@ -12,6 +12,8 @@
   "UNAUTHORIZED": "Unauthorized User",
   "INVALID_CREDENTIALS": "Invalid credentials",
   "TOKEN_EXPIRED": "Token expired!",
-  "DIGILOCKER_FAILED": "DigiLocker login failed",
-  "DIGILOCKER_NOT_AUTHENTICATED": "DigiLocker session is not authenticated yet"
+  "DIGILOCKER": {
+    "FAILED": "DigiLocker login failed",
+    "NOT_AUTHENTICATED": "DigiLocker session is not authenticated yet"
+  }
 }
