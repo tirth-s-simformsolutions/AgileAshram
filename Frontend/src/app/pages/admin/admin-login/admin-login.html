@@ -19,8 +19,8 @@
       <div class="tricolor-rule" aria-hidden="true"></div>
 
       <div class="p-6 sm:p-8">
-        <h1 class="text-xl font-bold text-[color:var(--color-ink-900)] mb-1" style="font-family: var(--font-display)">Department Sign-in</h1>
-        <p class="text-sm text-[color:var(--color-ink-500)] mb-6" style="font-family: var(--font-sans)">Enter your department credentials to access the admin portal.</p>
+        <h1 class="text-xl font-bold text-[color:var(--color-ink-900)] mb-1" style="font-family: var(--font-display)">Portal Sign-in</h1>
+        <p class="text-sm text-[color:var(--color-ink-500)] mb-6" style="font-family: var(--font-sans)">Choose your role and enter your credentials to access the admin portal.</p>
 
         <!-- Error banner -->
         @if (error()) {
@@ -36,6 +36,35 @@
         }
 
         <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+          <!-- Role selector — exactly one of Department / Admin, sent as `role` in the payload -->
+          <div class="mb-5">
+            <span class="block text-sm font-medium text-[color:var(--color-ink-700)] mb-1.5" style="font-family: var(--font-sans)">Sign in as</span>
+            <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Sign in as">
+              @for (opt of [{ value: 'department', label: 'Department' }, { value: 'admin', label: 'Admin' }]; track opt.value) {
+                <button
+                  type="button"
+                  role="radio"
+                  [attr.aria-checked]="form.get('role')?.value === opt.value"
+                  (click)="selectRole($any(opt.value))"
+                  class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-[var(--radius-control)] border text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)]"
+                  [style.borderColor]="form.get('role')?.value === opt.value ? 'var(--color-saffron-500)' : 'var(--color-paper-400)'"
+                  [style.background]="form.get('role')?.value === opt.value ? 'var(--color-saffron-50)' : 'white'"
+                  [style.color]="form.get('role')?.value === opt.value ? 'var(--color-saffron-700)' : 'var(--color-ink-600)'"
+                  style="font-family: var(--font-sans)">
+                  <span
+                    class="size-4 rounded-full border-2 flex items-center justify-center shrink-0"
+                    [style.borderColor]="form.get('role')?.value === opt.value ? 'var(--color-saffron-500)' : 'var(--color-paper-400)'"
+                    aria-hidden="true">
+                    @if (form.get('role')?.value === opt.value) {
+                      <span class="size-2 rounded-full" style="background: var(--color-saffron-500)"></span>
+                    }
+                  </span>
+                  {{ opt.label }}
+                </button>
+              }
+            </div>
+          </div>
+
           <!-- Email -->
           <div class="mb-4">
             <label for="email" class="block text-sm font-medium text-[color:var(--color-ink-700)] mb-1.5" style="font-family: var(--font-sans)">

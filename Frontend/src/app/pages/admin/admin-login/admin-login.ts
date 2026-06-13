@@ -20,9 +20,14 @@ export class AdminLogin {
   protected readonly shakeCard = signal(false);
 
   protected readonly form = this.fb.group({
+    role:     ['department' as 'department' | 'admin', [Validators.required]],
     email:    ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
   });
+
+  protected selectRole(role: 'department' | 'admin'): void {
+    this.form.get('role')?.setValue(role);
+  }
 
   protected togglePassword(): void {
     this.showPassword.update(v => !v);
@@ -32,8 +37,8 @@ export class AdminLogin {
     if (this.form.invalid || this.isLoading()) return;
     this.error.set(null);
     this.isLoading.set(true);
-    const { email, password } = this.form.getRawValue();
-    this.auth.adminLogin(email!, password!).subscribe({
+    const { email, password, role } = this.form.getRawValue();
+    this.auth.adminLogin(email!, password!, role!).subscribe({
       next: () => this.router.navigate(['/admin/queue']),
       error: () => {
         this.isLoading.set(false);
