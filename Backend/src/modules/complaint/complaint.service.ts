@@ -139,17 +139,14 @@ export class ComplaintService {
         severity: this.resolveSeverity(suggestion?.severity), // AI-scored; severityRank derived by hook
         gps: { lat: dto.location.lat, lng: dto.location.lng },
         reportedAddress: dto.location.address,
-        status: ComplaintStatus.ROUTED,
+        status: ComplaintStatus.OPEN,
         aiMeta: {
           model: 'gemini',
           confidence: 0,
           rawLabel: suggestion?.summary,
           fallbackUsed: false,
         },
-        statusHistory: [
-          { status: ComplaintStatus.SUBMITTED, at: now },
-          { status: ComplaintStatus.ROUTED, at: now },
-        ],
+        statusHistory: [{ status: ComplaintStatus.OPEN, at: now }],
       });
 
       return new ResponseResult({ message: SUCCESS_MSG.COMPLAINT.CREATED, data: complaint });
