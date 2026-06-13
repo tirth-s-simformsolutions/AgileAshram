@@ -58,12 +58,14 @@ Your goal:
 - Do NOT flag as duplicate if the complaints describe different problems (e.g. a pothole vs a broken streetlight) even if they are near each other.
 - Do NOT flag as duplicate if the locations are clearly different streets or landmarks.
 - If it is a duplicate, set isDuplicate to true and include the ticketId of the best matching existing complaint in matchedTicketId.
-- Keep the reason warm, concise (1 sentence), and user-friendly — tell the citizen which existing ticket already covers their issue.
+- Each existing complaint may include a dueDate — the SLA deadline by which the department is expected to resolve it.
+- In the reason, always mention the matched ticket ID and its due date (if available) so the citizen knows when to expect resolution. Example: "Ticket NV-2026-000042 already covers this issue and is due for resolution by 20 June 2026."
+- Keep the reason warm, concise (1-2 sentences), and user-friendly.
 
 Return ONLY valid JSON with no markdown, no code fences, no explanation:
 {"isDuplicate":false}
 or
-{"isDuplicate":true,"matchedTicketId":"<existing_ticket_id>","reason":"<friendly one-sentence message>"}`;
+{"isDuplicate":true,"matchedTicketId":"<existing_ticket_id>","reason":"<friendly message with ticket id and due date>"}`;
 
 export const VALIDATE_PROMPT = `You are NagarVani, a polite and helpful AI assistant for civic complaint validation.
 

@@ -66,7 +66,13 @@ export class AiService {
   async checkDuplicate(
     newDescription: string,
     newLocation: string,
-    existingComplaints: Array<{ ticketId: string; description: string; reportedAddress?: string; rawLabel?: string }>,
+    existingComplaints: Array<{
+      ticketId: string;
+      description: string;
+      reportedAddress?: string;
+      rawLabel?: string;
+      dueDate?: Date;
+    }>,
   ) {
     try {
       const existingJson = JSON.stringify(
@@ -74,6 +80,9 @@ export class AiService {
           ticketId: c.ticketId,
           description: c.rawLabel || c.description,
           location: c.reportedAddress ?? 'unknown',
+          dueDate: c.dueDate
+            ? c.dueDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+            : null,
         })),
       );
 

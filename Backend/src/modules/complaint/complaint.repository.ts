@@ -64,7 +64,7 @@ export class ComplaintRepository {
         'gps.lng': { $exists: true },
         'aiMeta.rawLabel': { $exists: true, $not: { $in: [null, ''] } },
       })
-      .select('gps ticketId description reportedAddress aiMeta.rawLabel');
+      .select('gps ticketId description reportedAddress dueDate aiMeta.rawLabel');
   }
 
   findAllGps(filter: FilterQuery<ComplaintDocument> = {}) {

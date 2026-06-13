@@ -197,6 +197,7 @@ export class ComplaintService {
             description: c.description,
             reportedAddress: c.reportedAddress,
             rawLabel: c.aiMeta?.rawLabel,
+            dueDate: c.dueDate,
           })),
         );
         const duplicate = duplicateRes?.data as DuplicateCheckData;
