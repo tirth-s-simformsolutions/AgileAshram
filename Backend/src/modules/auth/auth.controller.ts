@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Post, Req, Res, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { SWAGGER_TAGS } from '../../common/constants';
@@ -8,6 +8,9 @@ import { AuthService } from './auth.service';
 import {
   ChangePasswordDto,
   ChangePasswordResponseDto,
+  DigilockerCompleteDto,
+  DigilockerCompleteResponseDto,
+  DigilockerInitiateResponseDto,
   LoginDto,
   LoginResponseDto,
   LogoutResponseDto,
@@ -78,6 +81,38 @@ export class AuthController {
   @Post('/logout')
   logout(@Res({ passthrough: true }) res: Response) {
     return this.authService.logout(res);
+  }
+
+  @ApiTags(SWAGGER_TAGS.AUTH)
+  @ApiOperation({
+    summary: 'DigiLocker initiate API',
+    description: 'Initiates DigiLocker login for citizens — returns a loginUrl to redirect the user to',
+  })
+  @ApiOkResponse({
+    description: 'DigiLocker login initiated',
+    type: DigilockerInitiateResponseDto,
+  })
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @Post('/digilocker/initiate')
+  digilockerInitiate() {
+    return this.authService.digilockerInitiate();
+  }
+
+  @ApiTags(SWAGGER_TAGS.AUTH)
+  @ApiOperation({
+    summary: 'DigiLocker complete API',
+    description: 'Completes DigiLocker login — exchanges Setu request ID for a session (sets JWT cookies)',
+  })
+  @ApiOkResponse({
+    description: 'Login successful',
+    type: DigilockerCompleteResponseDto,
+  })
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @Post('/digilocker/complete')
+  digilockerComplete(@Body() data: DigilockerCompleteDto, @Res({ passthrough: true }) res: Response) {
+    return this.authService.digilockerComplete(data.id, res);
   }
 
   @ApiTags(SWAGGER_TAGS.AUTH)

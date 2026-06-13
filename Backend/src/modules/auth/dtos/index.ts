@@ -1,4 +1,7 @@
 export * from './changePassword.dto';
+export * from './digilockerComplete.dto';
+export * from './digilockerComplete.res.dto';
+export * from './digilockerInitiate.res.dto';
 export * from './changePassword.res.dto';
 export * from './login.dto';
 export * from './login.res.dto';

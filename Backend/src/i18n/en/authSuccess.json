@@ -4,6 +4,8 @@
     "LOGIN": "Login successful",
     "REFRESH_TOKEN": "Refresh token generated successfully",
     "CHANGE_PASSWORD": "Change password successful",
-    "LOGOUT": "Logout successful"
+    "LOGOUT": "Logout successful",
+    "DIGILOCKER_INITIATE": "DigiLocker login initiated successfully",
+    "DIGILOCKER_LOGIN": "Login successful"
   }
 }

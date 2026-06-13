@@ -9,6 +9,7 @@ export const STATUS_MESSAGES = {
 };
 
 export const IS_PUBLIC = 'isPublic';
+export const ROLES_KEY = 'roles';
 
 export const SWAGGER_TAGS = {
   GENERAL: 'General',
