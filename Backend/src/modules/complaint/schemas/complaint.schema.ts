@@ -138,13 +138,6 @@ export class Complaint {
   @Prop()
   reportedAddress?: string;
 
-  @Prop({ default: false })
-  geoVerified: boolean;
-
-  /** Distance (m) between device GPS and the reverse-geocoded address. */
-  @Prop()
-  geoDistanceMeters?: number;
-
   // --- Lifecycle ---
   @Prop({ enum: ComplaintStatus, default: ComplaintStatus.SUBMITTED, index: true })
   status: ComplaintStatus;

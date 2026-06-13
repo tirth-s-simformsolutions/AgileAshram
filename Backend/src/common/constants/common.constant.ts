@@ -18,6 +18,7 @@ export const SWAGGER_TAGS = {
   USER: 'User',
   AI: 'AI',
   DEPARTMENT: 'Department',
+  COMPLAINT: 'Complaint',
   UPLOAD: 'Upload',
 };
 
