@@ -56,7 +56,7 @@ export class AuthService {
   private setTokenCookies(res: Response, accessToken: string, refreshToken: string): void {
     const cookieConfig: Omit<ICookieConfig, 'maxAge'> = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       sameSite: 'none',
     };
 
