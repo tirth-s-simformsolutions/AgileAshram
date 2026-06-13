@@ -75,7 +75,6 @@ export class ComplaintService {
     private readonly departmentRepository: DepartmentRepository,
     private readonly smsService: SmsService,
     private readonly userRepository: UserRepository,
-    private readonly smsService: SmsService,
     private readonly i18n: I18nService,
     private readonly wardService: WardService,
   ) {}
@@ -230,7 +229,6 @@ export class ComplaintService {
         wardNumber: ward?.number,
         dueDate,
         status: ComplaintStatus.OPEN,
-        dueDate,
         aiMeta: {
           model: 'gemini',
           confidence: 0,

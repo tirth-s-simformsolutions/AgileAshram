@@ -199,16 +199,12 @@ export class Complaint {
   @Prop({ enum: ComplaintStatus, default: ComplaintStatus.OPEN, index: true })
   status: ComplaintStatus;
 
-  // SLA target: expected resolution date, derived from severity at intake.
-  @Prop()
-  dueDate?: Date;
+  /** SLA target: expected resolution date, derived from severity at intake. */
+  @Prop({ required: true })
+  dueDate: Date;
 
   @Prop({ type: [StatusHistoryEntrySchema], default: [] })
   statusHistory: StatusHistoryEntry[];
-
-  /** 3 days after creation — shown to citizen via SMS; overdue tickets surface first for admin. */
-  @Prop({ required: true })
-  dueDate: Date;
 
   @Prop({ type: Types.ObjectId, ref: 'User' })
   resolvedBy?: Types.ObjectId;
