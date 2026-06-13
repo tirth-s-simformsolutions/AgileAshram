@@ -12,12 +12,14 @@ import appConfig from '../config/app.config';
 import cloudflareConfig from '../config/cloudflare.config';
 import databaseConfig from '../config/database.config';
 import jwtConfig from '../config/jwt.config';
+import twilioConfig from '../config/twilio.config';
 import { AuthGuard, CustomThrottlerGuard } from '../core/guards';
 import { HttpExceptionsFilter, ResponseInterceptor } from '../core/interceptors';
 import { TraceMiddleware } from '../core/middleware';
 import { AiModule } from '../modules/ai/ai.module';
 import { AuthModule } from '../modules/auth/auth.module';
 import { DepartmentModule } from '../modules/department/department.module';
+import { SmsModule } from '../modules/sms/sms.module';
 import { UploadModule } from '../modules/upload/upload.module';
 import { UserModule } from '../modules/user/user.module';
 import { AppController } from './app.controller';
@@ -26,7 +28,7 @@ import { AppController } from './app.controller';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, jwtConfig, aiConfig, cloudflareConfig],
+      load: [appConfig, databaseConfig, jwtConfig, aiConfig, cloudflareConfig, twilioConfig],
       validate: validateEnvVariables,
     }),
     I18nModule.forRootAsync({
@@ -56,6 +58,7 @@ import { AppController } from './app.controller';
     DepartmentModule,
     UserModule,
     UploadModule,
+    SmsModule,
   ],
   controllers: [AppController],
   providers: [

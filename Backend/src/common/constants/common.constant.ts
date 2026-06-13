@@ -18,6 +18,7 @@ export const SWAGGER_TAGS = {
   AI: 'AI',
   DEPARTMENT: 'Department',
   UPLOAD: 'Upload',
+  SMS: 'SMS',
 };
 
 export const ENV = {
