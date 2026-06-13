@@ -1,4 +1,5 @@
 {
   "CREATED": "Complaint registered successfully",
-  "FETCHED": "Complaint fetched successfully"
+  "FETCHED": "Complaint fetched successfully",
+  "STATUS_UPDATED": "Complaint status updated successfully"
 }

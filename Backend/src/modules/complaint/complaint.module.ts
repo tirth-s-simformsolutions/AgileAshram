@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AiModule } from '../ai/ai.module';
 import { CounterModule } from '../counter/counter.module';
 import { DepartmentModule } from '../department/department.module';
+import { UserModule } from '../user/user.module';
 import { ComplaintController } from './complaint.controller';
 import { ComplaintRepository } from './complaint.repository';
 import { ComplaintService } from './complaint.service';
@@ -14,6 +15,7 @@ import { Complaint, ComplaintSchema } from './schemas/complaint.schema';
     AiModule, // exports AiService (validate + suggest)
     CounterModule, // exports CounterService (ticket ids)
     DepartmentModule, // exports DepartmentRepository (fallback routing)
+    UserModule, // exports UserRepository (role-scoped listing)
   ],
   controllers: [ComplaintController],
   providers: [ComplaintService, ComplaintRepository],
