@@ -8,12 +8,14 @@ import { join } from 'path';
 import { HealthService, LoggerService } from '../common/services';
 import { validateEnvVariables } from '../common/utils';
 import appConfig from '../config/app.config';
+import cloudflareConfig from '../config/cloudflare.config';
 import databaseConfig from '../config/database.config';
 import jwtConfig from '../config/jwt.config';
 import { AuthGuard, CustomThrottlerGuard } from '../core/guards';
 import { HttpExceptionsFilter, ResponseInterceptor } from '../core/interceptors';
 import { TraceMiddleware } from '../core/middleware';
 import { AuthModule } from '../modules/auth/auth.module';
+import { UploadModule } from '../modules/upload/upload.module';
 import { UserModule } from '../modules/user/user.module';
 import { AppController } from './app.controller';
 
@@ -21,7 +23,7 @@ import { AppController } from './app.controller';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, jwtConfig],
+      load: [appConfig, databaseConfig, jwtConfig, cloudflareConfig],
       validate: validateEnvVariables,
     }),
     I18nModule.forRootAsync({
@@ -48,6 +50,7 @@ import { AppController } from './app.controller';
     }),
     AuthModule,
     UserModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [
