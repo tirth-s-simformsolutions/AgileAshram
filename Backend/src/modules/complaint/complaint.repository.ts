@@ -19,6 +19,7 @@ export class ComplaintRepository {
     return this.complaintModel
       .find(filter)
       .populate('departmentId')
+      .populate({ path: 'wardId', select: 'number name zone' })
       .sort({ severityRank: -1, createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -30,11 +31,19 @@ export class ComplaintRepository {
   }
 
   findByTicketId(ticketId: string) {
-    return this.complaintModel.findOne({ ticketId }).populate('departmentId').exec();
+    return this.complaintModel
+      .findOne({ ticketId })
+      .populate('departmentId')
+      .populate({ path: 'wardId', select: 'number name zone' })
+      .exec();
   }
 
   findById(id: string) {
-    return this.complaintModel.findById(id).populate('departmentId').exec();
+    return this.complaintModel
+      .findById(id)
+      .populate('departmentId')
+      .populate({ path: 'wardId', select: 'number name zone' })
+      .exec();
   }
 
   /** Hydrated (non-populated) doc for mutation — so .save() runs the pre-save hook. */

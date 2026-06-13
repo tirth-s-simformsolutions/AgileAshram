@@ -17,6 +17,7 @@ import { DepartmentRepository } from '../department/department.repository';
 import { SmsService } from '../sms/sms.service';
 import { UserRole } from '../user/schemas/user.schema';
 import { UserRepository } from '../user/user.repository';
+import { WardService } from '../ward/ward.service';
 import { ComplaintRepository } from './complaint.repository';
 import { CreateComplaintDto, ReassignDepartmentDto, SubmitFeedbackDto, UpdateStatusDto } from './dtos';
 import { ERROR_MSG, SMS_MSG, SUCCESS_MSG } from './messages';
@@ -44,6 +45,7 @@ export class ComplaintService {
     private readonly userRepository: UserRepository,
     private readonly smsService: SmsService,
     private readonly i18n: I18nService,
+    private readonly wardService: WardService,
   ) {}
 
   private sendStatusSms(
@@ -55,7 +57,7 @@ export class ComplaintService {
     if (!phone) return;
     const body = this.i18n.t(SMS_MSG.COMPLAINT[status], {
       args: { ticketId, departmentName },
-    }) as string;
+    });
     this.smsService.send({ to: phone, body, metadata: { ticketId, status } }).catch(() => void 0);
   }
 
@@ -142,10 +144,13 @@ export class ComplaintService {
         departmentId = String(departments[0]._id);
       }
 
-      // 3. Human-readable ticket id (atomic).
+      // 3. Resolve the ward from the GPS point (null if outside known wards).
+      const ward = await this.wardService.findByPoint(dto.location.lat, dto.location.lng);
+
+      // 4. Human-readable ticket id (atomic).
       const ticketId = await this.counterService.nextTicketId();
 
-      // 4. Persist (severityRank is derived from severity by the schema pre-save hook).
+      // 5. Persist (severityRank is derived from severity by the schema pre-save hook).
       const now = new Date();
       const complaint = await this.complaintRepository.create({
         ticketId,
@@ -156,6 +161,8 @@ export class ComplaintService {
         severity: this.resolveSeverity(suggestion?.severity), // AI-scored; severityRank derived by hook
         gps: { lat: dto.location.lat, lng: dto.location.lng },
         reportedAddress: dto.location.address,
+        wardId: ward?._id as Types.ObjectId | undefined,
+        wardNumber: ward?.number,
         status: ComplaintStatus.OPEN,
         aiMeta: {
           model: 'gemini',
@@ -171,6 +178,12 @@ export class ComplaintService {
         this.departmentRepository.findById(departmentId),
       ]);
       this.sendStatusSms(citizen?.phone, ComplaintStatus.OPEN, ticketId, department?.name ?? '');
+
+      // Populate department + ward (sans boundary) so the response carries their names.
+      await complaint.populate([
+        { path: 'departmentId' },
+        { path: 'wardId', select: 'number name zone' },
+      ]);
 
       return new ResponseResult({ message: SUCCESS_MSG.COMPLAINT.CREATED, data: complaint });
     } catch (error) {

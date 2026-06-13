@@ -162,6 +162,13 @@ export class Complaint {
   @Prop()
   reportedAddress?: string;
 
+  // Resolved from gps via point-in-polygon at intake (null if outside known wards).
+  @Prop({ type: Types.ObjectId, ref: 'Ward', index: true })
+  wardId?: Types.ObjectId;
+
+  @Prop()
+  wardNumber?: number;
+
   // --- Lifecycle ---
   @Prop({ enum: ComplaintStatus, default: ComplaintStatus.OPEN, index: true })
   status: ComplaintStatus;

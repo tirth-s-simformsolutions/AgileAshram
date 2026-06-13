@@ -25,6 +25,7 @@ import { DepartmentModule } from '../modules/department/department.module';
 import { SmsModule } from '../modules/sms/sms.module';
 import { UploadModule } from '../modules/upload/upload.module';
 import { UserModule } from '../modules/user/user.module';
+import { WardModule } from '../modules/ward/ward.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -72,6 +73,7 @@ import { AppController } from './app.controller';
     UserModule,
     UploadModule,
     SmsModule,
+    WardModule,
   ],
   controllers: [AppController],
   providers: [
