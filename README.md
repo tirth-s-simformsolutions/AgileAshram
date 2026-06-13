@@ -36,22 +36,24 @@ Citizens log in via DigiLocker, then report an issue through a guided conversati
 ```
 Angular + Tailwind (Netlify)
   ├─ Citizen: DigiLocker login → chat intake → image upload → GPS → ticket tracker
-  └─ Admin:   department login → complaint queue (severity-sorted) → status update
+  └─ Admin:   department / admin login → complaint queue (severityRank-sorted) → status update
         │  REST + JWT
         ▼
 NestJS API (Render)
-  ├─ AuthModule        — mock DigiLocker OAuth + JWT; real API Setu behind flag
-  ├─ ComplaintModule   — intake, lifecycle, routing, queue, status history
-  ├─ AiModule          — Gemini Flash: image+text classify, severity, conversational bot
-  ├─ ModerationModule  — ModerateContent.com NSFW gate
+  ├─ AuthModule        — DigiLocker OAuth + JWT; citizen, department, admin roles
+  ├─ AiModule          — Gemini Flash: validate complaint + image, responsibility-driven routing
+  ├─ DepartmentModule  — department CRUD + seeding (responsibilities drive AI routing)
+  ├─ ComplaintModule   — intake, lifecycle, queue, status history
   ├─ GeoModule         — Nominatim reverse-geocode + location cross-check
-  └─ NotifyModule      — Twilio SMS, Nodemailer → AMC CCRS
+  └─ NotifyModule      — Twilio SMS, Nodemailer → AMC CCRS (P1)
         │
         ▼
 MongoDB Atlas (Mongoose)  +  Cloudinary (image storage)
 ```
 
-**Complaint lifecycle:** `SUBMITTED → ROUTED → IN_PROGRESS → RESOLVED` (admin can also set `REJECTED`). Each transition appends to a status-history array and fires an SMS.
+**Complaint lifecycle:** `SUBMITTED → ROUTED → IN_PROGRESS → RESOLVED` (admin can also set `REJECTED`). Each transition appends to `statusHistory` and fires an SMS.
+
+**AI routing:** Gemini reads the complaint text + image and matches it against each department's `responsibilities` array to pick the best-fit department — no hardcoded category map. The same call also validates whether the complaint is a legitimate civic issue and whether the image meets quality rules (public property, context visible, not extreme close-up).
 
 ---
 
@@ -62,8 +64,8 @@ MongoDB Atlas (Mongoose)  +  Cloudinary (image storage)
 | Frontend | Angular 17 + Tailwind CSS |
 | Backend | Node.js + NestJS |
 | Database | MongoDB Atlas (Mongoose) |
-| AI | Google Gemini Flash (Google AI Studio) |
-| Image Moderation | ModerateContent.com |
+| AI | Google Gemini Flash (`gemini-2.5-flash`) via `@google/genai` |
+| Image Moderation | Gemini Flash (complaint validity + image quality check) |
 | Auth | DigiLocker via API Setu sandbox |
 | Location | Browser Geolocation + Nominatim (OpenStreetMap) |
 | SMS | Twilio |
@@ -74,15 +76,18 @@ MongoDB Atlas (Mongoose)  +  Cloudinary (image storage)
 
 ## Key API Endpoints
 
-| Method | Route | Purpose |
-|---|---|---|
-| `POST` | `/auth/digilocker/start` | Begin DigiLocker flow |
-| `POST` | `/auth/digilocker/callback` | Exchange code → JWT + citizen profile |
-| `POST` | `/complaints/intake/message` | Conversational turn → bot reply + extracted fields |
-| `POST` | `/complaints` | Submit complaint → moderation + AI + geo → ticketId |
-| `GET` | `/complaints/:ticketId` | Citizen ticket tracker |
-| `GET` | `/admin/complaints?dept=&sort=severity` | Admin complaint queue |
-| `PATCH` | `/admin/complaints/:id/status` | Update status → history + SMS |
+All routes are prefixed `/api/v1/`. Swagger docs at `/docs`.
+
+| Method | Route | Auth | Purpose |
+|---|---|---|---|
+| `POST` | `/auth/digilocker/start` | Public | Begin DigiLocker flow |
+| `POST` | `/auth/digilocker/callback` | Public | Exchange code → JWT + citizen profile |
+| `POST` | `/ai/validate-complaint` | Public | Gemini validates complaint text + image legitimacy |
+| `POST` | `/ai/suggest-industries` | Public | Gemini matches complaint to best-fit department |
+| `POST` | `/complaints` | Citizen | Submit complaint → AI route → geo → ticketId |
+| `GET` | `/complaints/:ticketId` | Public | Citizen ticket tracker (status + history) |
+| `GET` | `/admin/complaints?dept=&sort=severityRank` | Department/Admin | Severity-sorted complaint queue |
+| `PATCH` | `/admin/complaints/:id/status` | Department/Admin | Update status → history + SMS |
 
 ---
 
@@ -90,27 +95,46 @@ MongoDB Atlas (Mongoose)  +  Cloudinary (image storage)
 
 **User**
 ```
-{ _id, digilockerId, name, phone, email?, role: 'citizen'|'official', department?, createdAt }
+{
+  _id, role: 'citizen' | 'department' | 'admin',
+  name?, status: 'active' | 'inactive' | 'blocked',
+  // department + admin login:
+  email?, password?, departmentId?,
+  // citizen (DigiLocker) login:
+  digilockerId?, phone?,
+  createdAt, updatedAt
+}
 ```
 
 **Complaint**
 ```
 {
-  _id, ticketId,          // e.g. NV-2026-000123
+  _id, ticketId,              // e.g. NV-2026-000123 (atomic Counter sequence)
   citizenId, description, imageUrl?,
-  category: 'Infrastructure'|'Sanitation',
+  departmentId,               // routing target — set by AI, not a fixed category map
   severity: 'Low'|'Medium'|'High'|'Critical',
-  status, gps: { lat, lng }, reportedAddress, geoVerified,
-  aiMeta: { model, confidence, rawLabel },
-  amcSubmitted,
-  statusHistory: [{ status, note, at, byUserId }],
+  severityRank: 1|2|3|4,      // numeric mirror; the queue sorts on this field
+  status: 'SUBMITTED'|'ROUTED'|'IN_PROGRESS'|'RESOLVED'|'REJECTED',
+  gps: { lat, lng }, reportedAddress,
+  geoVerified: boolean, geoDistanceMeters?,
+  aiMeta: { model, confidence, rawLabel?, fallbackUsed },
+  moderation: { passed, provider, score? },
+  amcSubmitted: boolean,
+  statusHistory: [{ status, note?, at, byUserId? }],
+  resolvedBy?, resolvedAt?,
   createdAt, updatedAt
 }
 ```
 
-**Department** (seed data)
+**Department** (seeded — drives AI routing)
 ```
-{ _id, name, category, officials: [userId] }
+{ _id, name, responsibilities: string[], contactEmail?, isActive, createdAt, updatedAt }
+```
+Default seed: `Garbage / Waste Management Department`, `Industry Department`.
+
+**Counter** (internal — atomic ticket sequence)
+```
+{ key: 'complaint-2026', seq: number }  // $inc on each complaint → NV-2026-000123
 ```
 
 ---
@@ -118,13 +142,12 @@ MongoDB Atlas (Mongoose)  +  Cloudinary (image storage)
 ## Scope
 
 ### P0 — Must demo
-- Citizen auth via mock DigiLocker (real API Setu sandbox behind a flag)
+- Citizen auth via DigiLocker (mock default; real API Setu sandbox behind a flag)
 - Conversational complaint intake: text + image upload + GPS capture
-- AI classification + severity scoring (Gemini Flash)
-- NSFW image moderation (ModerateContent.com) before image enters pipeline
+- Gemini validates complaint legitimacy + image quality, then routes to the best-fit department
 - GPS verification (Nominatim cross-check)
 - SMS alerts (Twilio) on submission and on status change
-- Admin dashboard: department login, complaint queue sorted by severity, status update
+- Admin dashboard: department/admin login, complaint queue sorted by `severityRank`, status update
 
 ### P1 — Strongly desired
 - Real AMC CCRS submission via Nodemailer → `ccrs@ahmedabadcity.gov.in`
@@ -135,9 +158,9 @@ MongoDB Atlas (Mongoose)  +  Cloudinary (image storage)
 ## Getting Started
 
 ### Prerequisites
-- Node.js 20+
+- Node.js 22+
 - MongoDB Atlas cluster
-- Accounts/keys: Google AI Studio, Twilio, ModerateContent.com, Cloudinary, API Setu (sandbox)
+- Accounts/keys: Google AI Studio (`GOOGLE_GENAI_API_KEY`), Twilio, Cloudinary, DigiLocker client credentials
 
 ### Backend
 
@@ -170,50 +193,45 @@ docker-compose up
 
 ## Environment Variables
 
+See `Backend/.env.example` for the canonical list. Key variables:
+
 ```env
-# App
-NODE_ENV=local
+DATABASE_URL=mongodb://localhost:27017/nagarvaani
+NODE_ENV=development
 PORT=3000
 
-# MongoDB
-MONGODB_URI=
-
-# JWT
 JWT_ACCESS_SECRET_KEY=
 JWT_REFRESH_SECRET_KEY=
 JWT_ACCESS_TOKEN_EXPIRE=15m
 JWT_REFRESH_TOKEN_EXPIRE=7d
 
-# DigiLocker / API Setu
-DIGILOCKER_MODE=mock          # mock | sandbox
-APISETU_CLIENT_ID=
-APISETU_CLIENT_SECRET=
-APISETU_REDIRECT_URI=
+# DigiLocker
+DIGILOCKER_CLIENT_ID=
+DIGILOCKER_CLIENT_SECRET=
 
-# AI
-GEMINI_API_KEY=
+# Google Gemini
+GOOGLE_GENAI_API_KEY=
+GOOGLE_GENAI_MODEL=gemini-2.5-flash
 
-# Moderation
-MODERATECONTENT_API_KEY=
+# Content moderation (supplementary)
+MODERATE_CONTENT_API_KEY=
 
-# Notifications
+# Twilio (SMS)
 TWILIO_ACCOUNT_SID=
 TWILIO_AUTH_TOKEN=
 TWILIO_PHONE_NUMBER=
 
-# Email (AMC CCRS)
+# Email (AMC CCRS — P1)
 SMTP_HOST=
-SMTP_PORT=
+SMTP_PORT=587
 SMTP_USER=
 SMTP_PASS=
-AMC_CCRS_EMAIL=ccrs@ahmedabadcity.gov.in
 
-# Image storage
+# Cloudinary
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
 
-# Monitoring
 SENTRY_DSN=
 ```
 
@@ -223,7 +241,7 @@ SENTRY_DSN=
 
 1. Citizen logs in via DigiLocker (mock) → verified identity shown
 2. Opens chat: *"There's a pothole on my street"*, uploads a photo, grants GPS
-3. Backend moderates image → Gemini classifies → **Infrastructure / High**, Nominatim confirms location → **geoVerified ✓**. Citizen receives **SMS with ticket ID** live
+3. Gemini validates the complaint + image → routes to **Garbage / Waste Management** (responsibility-driven, no hardcoded map). Nominatim confirms location → **geoVerified ✓**. Citizen receives **SMS with ticket ID** live
 4. Switch to admin dashboard → complaint appears at top (severity-sorted) with image, AI labels, geo badge. Official sets status → **In Progress** → citizen receives second SMS
 5. *(P1)* Show the AMC CCRS email generated for `ccrs@ahmedabadcity.gov.in`
 
@@ -231,11 +249,10 @@ SENTRY_DSN=
 
 ## Pre-Hackathon Checklist
 
-- [ ] Register API Setu developer account
-- [ ] Create Google AI Studio key (Gemini Flash)
+- [ ] Register DigiLocker developer credentials (`DIGILOCKER_CLIENT_ID` / `DIGILOCKER_CLIENT_SECRET`)
+- [ ] Create Google AI Studio key (`GOOGLE_GENAI_API_KEY`, model: `gemini-2.5-flash`)
 - [ ] Create Twilio trial account + verify demo phone number
-- [ ] Sign up for ModerateContent.com API key
 - [ ] Create MongoDB Atlas free cluster
 - [ ] Create Cloudinary free account
 - [ ] Set up Netlify + Render accounts
-- [ ] Share `.env` template across team
+- [ ] Share `Backend/.env.example` → `.env` across team
