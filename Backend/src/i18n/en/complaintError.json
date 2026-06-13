@@ -1,0 +1,5 @@
+{
+  "NOT_FOUND": "Complaint not found",
+  "NO_DEPARTMENT": "Unable to route this complaint — no department is configured",
+  "INVALID": "This does not look like a valid civic complaint"
+}
