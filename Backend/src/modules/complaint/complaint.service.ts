@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { FilterQuery, Types } from 'mongoose';
+import { I18nService } from 'nestjs-i18n';
 import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from '../../common/constants';
 import { PaginationDto } from '../../common/dtos';
 import { handleError } from '../../common/utils';
@@ -16,10 +17,37 @@ import { DepartmentRepository } from '../department/department.repository';
 import { SmsService } from '../sms/sms.service';
 import { UserRole } from '../user/schemas/user.schema';
 import { UserRepository } from '../user/user.repository';
+import { WardService } from '../ward/ward.service';
 import { ComplaintRepository } from './complaint.repository';
-import { CreateComplaintDto, ReassignDepartmentDto, UpdateStatusDto } from './dtos';
-import { ERROR_MSG, SUCCESS_MSG } from './messages';
-import { ComplaintDocument, ComplaintSeverity, ComplaintStatus } from './schemas/complaint.schema';
+import {
+  CreateComplaintDto,
+  ReassignDepartmentDto,
+  SubmitFeedbackDto,
+  UpdateStatusDto,
+} from './dtos';
+import { ERROR_MSG, SMS_MSG, SUCCESS_MSG } from './messages';
+import {
+  ComplaintDocument,
+  ComplaintSeverity,
+  ComplaintStatus,
+  SEVERITY_SLA_DAYS,
+} from './schemas/complaint.schema';
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+const DUPLICATE_CANDIDATE_RADIUS_METERS = 200;
+
+/** Haversine distance in metres between two GPS coordinates. */
+function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6_371_000;
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 /** Shapes returned inside the AiService ResponseResult.data payloads. */
 interface ValidationData {
@@ -32,6 +60,11 @@ interface SuggestionData {
   summary: string;
   severity: ComplaintSeverity;
 }
+interface DuplicateCheckData {
+  isDuplicate: boolean;
+  matchedTicketId?: string;
+  reason?: string;
+}
 
 @Injectable()
 export class ComplaintService {
@@ -42,7 +75,24 @@ export class ComplaintService {
     private readonly departmentRepository: DepartmentRepository,
     private readonly smsService: SmsService,
     private readonly userRepository: UserRepository,
+    private readonly smsService: SmsService,
+    private readonly i18n: I18nService,
+    private readonly wardService: WardService,
   ) {}
+
+  private sendStatusSms(
+    phone: string | undefined,
+    status: ComplaintStatus,
+    ticketId: string,
+    departmentName: string,
+    dueDate?: string,
+  ): void {
+    if (!phone) return;
+    const body = String(
+      this.i18n.t(SMS_MSG.COMPLAINT[status], { args: { ticketId, departmentName, dueDate } }),
+    );
+    this.smsService.send({ to: phone, body, metadata: { ticketId, status } }).catch(() => void 0);
+  }
 
   /**
    * Role-scoped, paginated list (shared endpoint):
@@ -127,21 +177,58 @@ export class ComplaintService {
         departmentId = String(departments[0]._id);
       }
 
-      // 3. Human-readable ticket id (atomic).
+      // 3. Resolve the ward from the GPS point (null if outside known wards).
+      const ward = await this.wardService.findByPoint(dto.location.lat, dto.location.lng);
+
+
+      // 4. Reject if AI determines this is a duplicate of an existing unresolved complaint nearby.
+      const allUnresolved = await this.complaintRepository.findUnresolvedByDepartment(
+        new Types.ObjectId(departmentId),
+      );
+      // Pre-filter to 500 m candidates before sending to AI to keep the payload small.
+      const candidates = allUnresolved.filter(
+        (c) => haversineMeters(dto.location.lat, dto.location.lng, c.gps.lat, c.gps.lng) <= DUPLICATE_CANDIDATE_RADIUS_METERS,
+      );
+      if (candidates.length) {
+        const duplicateRes = await this.aiService.checkDuplicate(
+          dto.description,
+          dto.location.address ?? '',
+          candidates.map((c) => ({
+            ticketId: c.ticketId,
+            description: c.description,
+            reportedAddress: c.reportedAddress,
+            rawLabel: c.aiMeta?.rawLabel,
+            dueDate: c.dueDate,
+          })),
+        );
+        const duplicate = duplicateRes?.data as DuplicateCheckData;
+        if (duplicate?.isDuplicate) {
+          throw new BadRequestException(
+            duplicate.reason ?? ERROR_MSG.COMPLAINT.DUPLICATE_NEARBY,
+          );
+        }
+      }
+
+      // 4. Human-readable ticket id (atomic).
       const ticketId = await this.counterService.nextTicketId();
 
-      // 4. Persist (severityRank is derived from severity by the schema pre-save hook).
+      // 5. Persist (severityRank is derived from severity by the schema pre-save hook).
       const now = new Date();
-      const dueDate = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+      const severity = this.resolveSeverity(suggestion?.severity); // AI-scored
+      // SLA due date derived from severity (Critical 1d -> Low 14d).
+      const dueDate = new Date(now.getTime() + SEVERITY_SLA_DAYS[severity] * MS_PER_DAY);
       const complaint = await this.complaintRepository.create({
         ticketId,
         citizenId: new Types.ObjectId(citizenId),
         description: dto.description,
         imageUrl: dto.imageUrl,
         departmentId: new Types.ObjectId(departmentId),
-        severity: this.resolveSeverity(suggestion?.severity), // AI-scored; severityRank derived by hook
+        severity, // severityRank derived by the schema pre-save hook
         gps: { lat: dto.location.lat, lng: dto.location.lng },
         reportedAddress: dto.location.address,
+        wardId: ward?._id as Types.ObjectId | undefined,
+        wardNumber: ward?.number,
+        dueDate,
         status: ComplaintStatus.OPEN,
         dueDate,
         aiMeta: {
@@ -153,16 +240,28 @@ export class ComplaintService {
         statusHistory: [{ status: ComplaintStatus.OPEN, at: now }],
       });
 
-      // 5. Notify citizen via SMS (fire-and-forget).
-      void this.userRepository.findUserById(citizenId).then((citizen) => {
-        if (!citizen?.phone) return;
-        const formatted = dueDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-        void this.smsService.send({
-          to: citizen.phone,
-          body: `NagarVaani: Your complaint ${ticketId} has been registered. Expected resolution by ${formatted}.`,
-          metadata: { ticketId, citizenId },
-        });
+      const [citizen, department] = await Promise.all([
+        this.userRepository.findUserById(citizenId),
+        this.departmentRepository.findById(departmentId),
+      ]);
+      const dueDateText = dueDate.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
       });
+      this.sendStatusSms(
+        citizen?.phone,
+        ComplaintStatus.OPEN,
+        ticketId,
+        department?.name ?? '',
+        dueDateText,
+      );
+
+      // Populate department + ward (sans boundary) so the response carries their names.
+      await complaint.populate([
+        { path: 'departmentId' },
+        { path: 'wardId', select: 'number name zone' },
+      ]);
 
       return new ResponseResult({ message: SUCCESS_MSG.COMPLAINT.CREATED, data: complaint });
     } catch (error) {
@@ -195,6 +294,10 @@ export class ComplaintService {
         throw new ForbiddenException(ERROR_MSG.COMPLAINT.NOT_YOUR_DEPARTMENT);
       }
 
+      if (dto.status === ComplaintStatus.RESOLVED && !dto.resolutionNote?.comment) {
+        throw new BadRequestException(ERROR_MSG.COMPLAINT.RESOLUTION_NOTE_REQUIRED);
+      }
+
       const now = new Date();
       complaint.status = dto.status;
       complaint.statusHistory.push({
@@ -207,9 +310,19 @@ export class ComplaintService {
       if (dto.status === ComplaintStatus.RESOLVED) {
         complaint.resolvedBy = new Types.ObjectId(currentUserId);
         complaint.resolvedAt = now;
+        complaint.resolutionNote = {
+          comment: dto.resolutionNote.comment,
+          imageUrl: dto.resolutionNote.imageUrl,
+        };
       }
 
       await complaint.save(); // .save() so the severityRank pre-save hook stays consistent
+
+      const [citizen, department] = await Promise.all([
+        this.userRepository.findUserById(String(complaint.citizenId)),
+        this.departmentRepository.findById(String(complaint.departmentId)),
+      ]);
+      this.sendStatusSms(citizen?.phone, dto.status, complaint.ticketId, department?.name ?? '');
 
       return new ResponseResult({ message: SUCCESS_MSG.COMPLAINT.STATUS_UPDATED, data: complaint });
     } catch (error) {
@@ -249,12 +362,15 @@ export class ComplaintService {
         throw new NotFoundException(ERROR_MSG.COMPLAINT.DEPARTMENT_NOT_FOUND);
       }
 
+      const previousDepartmentId = complaint.departmentId;
       complaint.departmentId = new Types.ObjectId(dto.departmentId);
       complaint.statusHistory.push({
         status: complaint.status,
         note: dto.note,
         at: new Date(),
         byUserId: new Types.ObjectId(currentUserId),
+        fromDepartmentId: previousDepartmentId,
+        toDepartmentId: new Types.ObjectId(dto.departmentId),
       });
 
       await complaint.save();
@@ -269,6 +385,37 @@ export class ComplaintService {
   private resolveSeverity(value?: string): ComplaintSeverity {
     const allowed = Object.values(ComplaintSeverity) as string[];
     return allowed.includes(value ?? '') ? (value as ComplaintSeverity) : ComplaintSeverity.MEDIUM;
+  }
+
+  async submitFeedback(id: string, dto: SubmitFeedbackDto, citizenId: string) {
+    try {
+      const complaint = await this.complaintRepository.findDocById(id);
+      if (!complaint) {
+        throw new NotFoundException(ERROR_MSG.COMPLAINT.NOT_FOUND);
+      }
+
+      if (String(complaint.citizenId) !== citizenId) {
+        throw new ForbiddenException(ERROR_MSG.COMPLAINT.NOT_YOUR_COMPLAINT);
+      }
+
+      if (complaint.status !== ComplaintStatus.RESOLVED) {
+        throw new BadRequestException(ERROR_MSG.COMPLAINT.COMPLAINT_NOT_RESOLVED);
+      }
+
+      if (complaint.feedback) {
+        throw new BadRequestException(ERROR_MSG.COMPLAINT.FEEDBACK_ALREADY_SUBMITTED);
+      }
+
+      complaint.feedback = { rating: dto.rating, comment: dto.comment, submittedAt: new Date() };
+      await complaint.save();
+
+      return new ResponseResult({
+        message: SUCCESS_MSG.COMPLAINT.FEEDBACK_SUBMITTED,
+        data: complaint,
+      });
+    } catch (error) {
+      handleError(error);
+    }
   }
 
   async findByTicketId(ticketId: string) {
@@ -290,6 +437,29 @@ export class ComplaintService {
         throw new NotFoundException(ERROR_MSG.COMPLAINT.NOT_FOUND);
       }
       return new ResponseResult({ message: SUCCESS_MSG.COMPLAINT.FETCHED, data: complaint });
+    } catch (error) {
+      handleError(error);
+    }
+  }
+
+  async getAllGps(currentUserId: string) {
+    try {
+      const user = await this.userRepository.findUserById(currentUserId);
+      if (!user) {
+        throw new NotFoundException(ERROR_MSG.COMPLAINT.NOT_FOUND);
+      }
+
+      const filter: FilterQuery<ComplaintDocument> = {};
+      if (user.role === UserRole.DEPARTMENT) {
+        filter.departmentId = user.departmentId;
+      }
+
+      const results = await this.complaintRepository.findAllGps(filter);
+      const coordinates = results.map(r => {
+        const gps = r.gps as { lat: number; lng: number };
+        return [gps.lat, gps.lng] as [number, number];
+      });
+      return new ResponseResult({ message: SUCCESS_MSG.COMPLAINT.GPS_FETCHED, data: coordinates });
     } catch (error) {
       handleError(error);
     }

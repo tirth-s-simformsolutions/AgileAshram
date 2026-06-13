@@ -1,10 +1,13 @@
 import { HttpInterceptorFn } from '@angular/common/http';
-import { inject } from '@angular/core';
-import { AuthService } from '../services/auth';
+import { environment } from '../../../environments/environment';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const auth = inject(AuthService);
-  const token = auth.getToken();
-  if (!token) return next(req);
-  return next(req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }));
+  // Prepend base URL for all relative /api/ calls
+  const apiReq = req.url.startsWith('/api/')
+    ? req.clone({
+        url: `${environment.apiBaseUrl}${req.url}`,
+        withCredentials: true,
+      })
+    : req;
+  return next(apiReq);
 };

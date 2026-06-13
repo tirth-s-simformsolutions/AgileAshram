@@ -3,8 +3,9 @@ import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { ComplaintService } from '../../../core/services/complaint';
+import { DepartmentService } from '../../../core/services/department';
 import { AuthService } from '../../../core/services/auth';
-import { Complaint, ComplaintStatus } from '../../../core/models/complaint.model';
+import { Complaint, ComplaintStatus, DepartmentItem } from '../../../core/models/complaint.model';
 import { Sidebar } from '../../../shared/components/sidebar/sidebar';
 import { SeverityBadge } from '../../../shared/components/severity-badge/severity-badge';
 import { StatusChip } from '../../../shared/components/status-chip/status-chip';
@@ -13,10 +14,10 @@ type FilterStatus = ComplaintStatus | 'all';
 
 const STATUS_FILTERS: Array<{ value: FilterStatus; label: string }> = [
   { value: 'all', label: 'All' },
-  { value: 'in_progress', label: 'In Progress' },
-  { value: 'under_review', label: 'Under Review' },
-  { value: 'resolved', label: 'Resolved' },
-  { value: 'rejected', label: 'Rejected' },
+  { value: 'OPEN', label: 'New' },
+  { value: 'IN_PROGRESS', label: 'In Progress' },
+  { value: 'RESOLVED', label: 'Resolved' },
+  { value: 'REJECTED', label: 'Rejected' },
 ];
 
 @Component({
@@ -27,12 +28,16 @@ const STATUS_FILTERS: Array<{ value: FilterStatus; label: string }> = [
 })
 export class ComplaintQueue implements OnInit {
   private readonly complaintSvc = inject(ComplaintService);
+  private readonly departmentSvc = inject(DepartmentService);
   private readonly authSvc = inject(AuthService);
   private readonly router = inject(Router);
 
   readonly complaints = signal<Complaint[]>([]);
+  readonly departments = signal<DepartmentItem[]>([]);
   readonly isLoading = signal(true);
-  readonly activeStatus = signal<FilterStatus>('in_progress');
+  readonly activeStatus = signal<FilterStatus>('all');
+  // 'all' or a department name (matched against complaint.department by slug)
+  readonly activeDepartment = signal<string>('all');
   readonly currentUser = this.authSvc.currentUser;
 
   private readonly _searchText = signal('');
@@ -47,8 +52,13 @@ export class ComplaintQueue implements OnInit {
   readonly visibleComplaints = computed(() => {
     let list = this.complaints();
     const status = this.activeStatus();
+    const dept = this.activeDepartment();
     const search = this._searchText().toLowerCase().trim();
     if (status !== 'all') list = list.filter(c => c.status === status);
+    if (dept !== 'all') {
+      const target = this.normalizeDept(dept);
+      list = list.filter(c => this.normalizeDept(c.department) === target);
+    }
     if (search) {
       list = list.filter(c =>
         (c.ticketId ?? '').toLowerCase().includes(search) ||
@@ -66,9 +76,9 @@ export class ComplaintQueue implements OnInit {
     return {
       total: all.length,
       critical: all.filter(c => c.severity === 'critical').length,
-      inProgress: all.filter(c => c.status === 'in_progress').length,
+      inProgress: all.filter(c => c.status === 'IN_PROGRESS').length,
       resolvedToday: all.filter(c => {
-        if (c.status !== 'resolved' || !c.updatedAt) return false;
+        if (c.status !== 'RESOLVED' || !c.updatedAt) return false;
         return new Date(c.updatedAt) >= today;
       }).length,
     };
@@ -87,10 +97,24 @@ export class ComplaintQueue implements OnInit {
       next: res => { this.complaints.set(res.complaints); this.isLoading.set(false); },
       error: () => { this.isLoading.set(false); },
     });
+    // Populate the department filter — non-blocking; dropdown stays hidden on failure
+    this.departmentSvc.getDepartments().subscribe({
+      next: depts => this.departments.set(depts),
+      error: () => {},
+    });
   }
 
   protected setFilter(status: FilterStatus): void {
     this.activeStatus.set(status);
+  }
+
+  protected setDepartment(name: string): void {
+    this.activeDepartment.set(name);
+  }
+
+  /** Normalise a department name/slug for cross-source matching (name ⇄ slug). */
+  private normalizeDept(value: string): string {
+    return (value ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
   }
 
   protected navigateToDetail(id: string | undefined): void {

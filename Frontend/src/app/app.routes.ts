@@ -20,6 +20,7 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'queue', pathMatch: 'full' },
       { path: 'queue', loadComponent: () => import('./pages/admin/complaint-queue/complaint-queue').then(m => m.ComplaintQueue) },
+      { path: 'hotspots', loadComponent: () => import('./pages/admin/hotspot-map/hotspot-map').then(m => m.HotspotMap) },
       { path: 'complaint/:id', loadComponent: () => import('./pages/admin/complaint-detail/complaint-detail').then(m => m.ComplaintDetail) },
     ],
   },

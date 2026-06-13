@@ -19,6 +19,17 @@ export enum ComplaintStatus {
   REJECTED = 'REJECTED',
 }
 
+/** Derived SLA standing of a complaint relative to its dueDate (virtual, not stored). */
+export enum SlaStatus {
+  ON_TRACK = 'ON_TRACK',
+  DUE_SOON = 'DUE_SOON', // within DUE_SOON_DAYS of the due date
+  OVERDUE = 'OVERDUE',
+  CLOSED = 'CLOSED', // resolved/rejected — SLA no longer applies
+}
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const DUE_SOON_DAYS = 2;
+
 /**
  * Numeric rank mirror of `severity`. The work queue MUST sort on this — sorting
  * on the severity string would order Critical < High < Low alphabetically.
@@ -28,6 +39,14 @@ export const SEVERITY_RANK: Record<ComplaintSeverity, number> = {
   [ComplaintSeverity.MEDIUM]: 2,
   [ComplaintSeverity.HIGH]: 3,
   [ComplaintSeverity.CRITICAL]: 4,
+};
+
+/** SLA: days within which a complaint of each severity is expected to be resolved. */
+export const SEVERITY_SLA_DAYS: Record<ComplaintSeverity, number> = {
+  [ComplaintSeverity.LOW]: 14,
+  [ComplaintSeverity.MEDIUM]: 7,
+  [ComplaintSeverity.HIGH]: 3,
+  [ComplaintSeverity.CRITICAL]: 1,
 };
 
 /* ------------------------------------------------------------------ *
@@ -75,6 +94,31 @@ export class ModerationMeta {
 }
 export const ModerationMetaSchema = SchemaFactory.createForClass(ModerationMeta);
 
+/** Final resolution note added by admin/department when closing a complaint. */
+@Schema({ _id: false })
+export class ResolutionNote {
+  @Prop({ required: true })
+  comment: string;
+
+  @Prop()
+  imageUrl?: string;
+}
+export const ResolutionNoteSchema = SchemaFactory.createForClass(ResolutionNote);
+
+/** Citizen feedback submitted after a complaint is resolved. */
+@Schema({ _id: false })
+export class ComplaintFeedback {
+  @Prop({ required: true, min: 1, max: 5 })
+  rating: number;
+
+  @Prop()
+  comment?: string;
+
+  @Prop({ required: true })
+  submittedAt: Date;
+}
+export const ComplaintFeedbackSchema = SchemaFactory.createForClass(ComplaintFeedback);
+
 /** One entry in the complaint's lifecycle timeline. */
 @Schema({ _id: false })
 export class StatusHistoryEntry {
@@ -90,6 +134,13 @@ export class StatusHistoryEntry {
   // The user who made the change (department staff/admin); null for system.
   @Prop({ type: Types.ObjectId, ref: 'User' })
   byUserId?: Types.ObjectId;
+
+  // Populated only on department-reassignment entries.
+  @Prop({ type: Types.ObjectId, ref: 'Department' })
+  fromDepartmentId?: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Department' })
+  toDepartmentId?: Types.ObjectId;
 }
 export const StatusHistoryEntrySchema = SchemaFactory.createForClass(StatusHistoryEntry);
 
@@ -97,7 +148,7 @@ export const StatusHistoryEntrySchema = SchemaFactory.createForClass(StatusHisto
  *  Root document
  * ------------------------------------------------------------------ */
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } })
 export class Complaint {
   /** Human-readable, e.g. NV-2026-000123. Generated via the Counter. */
   @Prop({ required: true, unique: true, index: true })
@@ -137,9 +188,20 @@ export class Complaint {
   @Prop()
   reportedAddress?: string;
 
+  // Resolved from gps via point-in-polygon at intake (null if outside known wards).
+  @Prop({ type: Types.ObjectId, ref: 'Ward', index: true })
+  wardId?: Types.ObjectId;
+
+  @Prop()
+  wardNumber?: number;
+
   // --- Lifecycle ---
   @Prop({ enum: ComplaintStatus, default: ComplaintStatus.OPEN, index: true })
   status: ComplaintStatus;
+
+  // SLA target: expected resolution date, derived from severity at intake.
+  @Prop()
+  dueDate?: Date;
 
   @Prop({ type: [StatusHistoryEntrySchema], default: [] })
   statusHistory: StatusHistoryEntry[];
@@ -154,9 +216,15 @@ export class Complaint {
   @Prop()
   resolvedAt?: Date;
 
+  @Prop({ type: ResolutionNoteSchema })
+  resolutionNote?: ResolutionNote;
+
   // --- External government submission (P1) ---
   @Prop({ default: false })
   amcSubmitted: boolean;
+
+  @Prop({ type: ComplaintFeedbackSchema })
+  feedback?: ComplaintFeedback;
 }
 
 export type ComplaintDocument = Complaint & Document;
@@ -172,4 +240,23 @@ ComplaintSchema.pre('save', function (next) {
     this.severityRank = SEVERITY_RANK[this.severity] ?? SEVERITY_RANK[ComplaintSeverity.LOW];
   }
   next();
+});
+
+// Derived SLA standing relative to dueDate — computed on read, included in
+// every response (toJSON/toObject virtuals enabled above). Not stored.
+ComplaintSchema.virtual('slaStatus').get(function (this: ComplaintDocument): SlaStatus | null {
+  if (this.status === ComplaintStatus.RESOLVED || this.status === ComplaintStatus.REJECTED) {
+    return SlaStatus.CLOSED;
+  }
+  if (!this.dueDate) {
+    return null;
+  }
+  const remainingMs = this.dueDate.getTime() - Date.now();
+  if (remainingMs < 0) {
+    return SlaStatus.OVERDUE;
+  }
+  if (remainingMs <= DUE_SOON_DAYS * MS_PER_DAY) {
+    return SlaStatus.DUE_SOON;
+  }
+  return SlaStatus.ON_TRACK;
 });

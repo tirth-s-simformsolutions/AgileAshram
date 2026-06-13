@@ -20,7 +20,7 @@ export class AdminLogin {
   protected readonly shakeCard = signal(false);
 
   protected readonly form = this.fb.group({
-    username: ['', [Validators.required, Validators.minLength(3)]],
+    email:    ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
   });
 
@@ -32,12 +32,12 @@ export class AdminLogin {
     if (this.form.invalid || this.isLoading()) return;
     this.error.set(null);
     this.isLoading.set(true);
-    const { username, password } = this.form.getRawValue();
-    this.auth.adminLogin(username!, password!).subscribe({
+    const { email, password } = this.form.getRawValue();
+    this.auth.adminLogin(email!, password!).subscribe({
       next: () => this.router.navigate(['/admin/queue']),
-      error: (err: Error) => {
+      error: () => {
         this.isLoading.set(false);
-        this.error.set(err.message ?? 'Invalid username or password. Please try again.');
+        this.error.set('Invalid email or password. Please try again.');
         this.triggerShake();
       },
     });

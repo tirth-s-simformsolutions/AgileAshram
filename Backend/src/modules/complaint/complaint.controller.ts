@@ -10,9 +10,12 @@ import {
   CreateComplaintDto,
   CreateComplaintResponseDto,
   GetComplaintResponseDto,
+  GpsListResponseDto,
   ListComplaintsResponseDto,
   ReassignDepartmentDto,
   ReassignDepartmentResponseDto,
+  SubmitFeedbackDto,
+  SubmitFeedbackResponseDto,
   UpdateComplaintStatusResponseDto,
   UpdateStatusDto,
 } from './dtos';
@@ -43,6 +46,18 @@ export class ComplaintController {
   @Get()
   list(@Query() query: PaginationDto, @CurrentUser() currentUser: ICurrentUser) {
     return this.complaintService.list(query, currentUser.userId);
+  }
+
+  @ApiOperation({
+    summary: 'Get all complaint GPS coordinates (admin)',
+    description:
+      'Returns an array of {lat, lng} for every complaint that has GPS data — useful for map heatmaps.',
+  })
+  @ApiOkResponse({ type: GpsListResponseDto })
+  @Roles(UserRole.ADMIN, UserRole.DEPARTMENT)
+  @Get('gps')
+  getAllGps(@CurrentUser() currentUser: ICurrentUser) {
+    return this.complaintService.getAllGps(currentUser.userId);
   }
 
   @ApiOperation({
@@ -79,6 +94,22 @@ export class ComplaintController {
     @CurrentUser() currentUser: ICurrentUser,
   ) {
     return this.complaintService.updateStatus(id, data, currentUser.userId);
+  }
+
+  @ApiOperation({
+    summary: 'Submit feedback for a resolved complaint (citizen)',
+    description:
+      'Allows the complaint owner to submit a rating and optional comment once the complaint is resolved. One feedback per complaint.',
+  })
+  @ApiCreatedResponse({ type: SubmitFeedbackResponseDto })
+  @Roles(UserRole.CITIZEN)
+  @Post(':id/feedback')
+  submitFeedback(
+    @Param('id') id: string,
+    @Body() data: SubmitFeedbackDto,
+    @CurrentUser() currentUser: ICurrentUser,
+  ) {
+    return this.complaintService.submitFeedback(id, data, currentUser.userId);
   }
 
   @ApiOperation({

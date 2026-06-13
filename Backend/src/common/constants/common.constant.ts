@@ -21,6 +21,7 @@ export const SWAGGER_TAGS = {
   COMPLAINT: 'Complaint',
   UPLOAD: 'Upload',
   SMS: 'SMS',
+  WARD: 'Ward',
 };
 
 export const ENV = {

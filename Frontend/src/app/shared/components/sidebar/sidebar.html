@@ -102,23 +102,24 @@
       }
     </a>
 
-    <!-- Analytics — disabled -->
-    <div
-      class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-not-allowed opacity-50"
-      style="color: var(--color-primary-400);"
-      role="menuitem"
-      aria-disabled="true"
-      [attr.title]="isCollapsed() ? 'Analytics — coming soon' : null">
+    <!-- Hotspots -->
+    <a
+      routerLink="/admin/hotspots"
+      routerLinkActive="bg-[color:var(--color-primary-800)] border-l-2 border-[color:var(--color-saffron-500)]"
+      class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 group relative"
+      style="color: var(--color-primary-300);"
+      onmouseenter="this.style.background='rgba(255,255,255,0.06)'"
+      onmouseleave="this.style.background=''"
+      [attr.title]="isCollapsed() ? 'Hotspot Map' : null">
+      <!-- Map pin icon -->
       <svg class="size-5 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
-        <polyline points="3,14 7,8 11,11 15,5 17,7" stroke-linecap="round" stroke-linejoin="round"/>
-        <line x1="3" y1="17" x2="17" y2="17" stroke-linecap="round"/>
+        <path d="M10 2.5a5 5 0 015 5c0 3.5-5 10-5 10s-5-6.5-5-10a5 5 0 015-5z" stroke-linejoin="round"/>
+        <circle cx="10" cy="7.5" r="1.75" fill="currentColor" stroke="none"/>
       </svg>
       @if (!isCollapsed()) {
-        <span class="text-sm font-medium" style="font-family: var(--font-sans)">Analytics
-          <span class="text-xs ml-1.5 opacity-70">— soon</span>
-        </span>
+        <span class="text-sm font-medium" style="font-family: var(--font-sans)">Hotspot Map</span>
       }
-    </div>
+    </a>
   </nav>
 
   <!-- Logout at bottom -->

@@ -1,6 +1,8 @@
 {
   "CREATED": "Complaint registered successfully",
   "FETCHED": "Complaint fetched successfully",
+  "GPS_FETCHED": "Complaint GPS coordinates fetched successfully",
   "STATUS_UPDATED": "Complaint status updated successfully",
-  "REASSIGNED": "Complaint reassigned to new department successfully"
+  "REASSIGNED": "Complaint reassigned to new department successfully",
+  "FEEDBACK_SUBMITTED": "Feedback submitted successfully"
 }
