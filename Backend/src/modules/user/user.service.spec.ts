@@ -48,11 +48,7 @@ describe('User Service', () => {
       mockUserRepository.findUserById.mockRejectedValue(mockError);
 
       await expect(service.getProfile(userId)).rejects.toThrow(mockError);
-      expect(userRepository.findUserById).toHaveBeenCalledWith(userId, {
-        id: true,
-        name: true,
-        email: true,
-      });
+      expect(userRepository.findUserById).toHaveBeenCalledWith(userId);
     });
 
     it('should return user profile with correct message and status code', async () => {
@@ -67,11 +63,7 @@ describe('User Service', () => {
 
       const result = await service.getProfile(userId);
 
-      expect(userRepository.findUserById).toHaveBeenCalledWith(userId, {
-        id: true,
-        name: true,
-        email: true,
-      });
+      expect(userRepository.findUserById).toHaveBeenCalledWith(userId);
       expect(result.message).toBe(SUCCESS_MSG.GET_PROFILE);
       expect(result.data).toEqual(mockUser);
     });
@@ -83,11 +75,7 @@ describe('User Service', () => {
 
       const result = await service.getProfile(userId);
 
-      expect(userRepository.findUserById).toHaveBeenCalledWith(userId, {
-        id: true,
-        name: true,
-        email: true,
-      });
+      expect(userRepository.findUserById).toHaveBeenCalledWith(userId);
       expect(result.data).toBeNull();
       expect(result.message).toBe(SUCCESS_MSG.GET_PROFILE);
     });

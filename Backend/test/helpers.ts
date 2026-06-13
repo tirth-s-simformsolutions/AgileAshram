@@ -19,24 +19,6 @@ export const createTestingModule = async (options: {
 };
 
 /**
- * Mock factory for Prisma Service
- */
-export const createMockPrismaService = () => ({
-  $queryRaw: jest.fn(),
-  $transaction: jest.fn(),
-  user: {
-    create: jest.fn(),
-    findUnique: jest.fn(),
-    findFirst: jest.fn(),
-    findMany: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
-    count: jest.fn(),
-  },
-  // Add other model mocks as needed
-});
-
-/**
  * Mock factory for ConfigService
  */
 export const createMockConfigService = (config: Record<string, unknown> = {}) => ({

@@ -1,10 +1,10 @@
 import { MiddlewareConsumer, Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { MongooseModule } from '@nestjs/mongoose';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AcceptLanguageResolver, I18nModule } from 'nestjs-i18n';
 import { join } from 'path';
-import { PrismaService } from 'src/database/prisma.service';
 import { HealthService, LoggerService } from '../common/services';
 import { validateEnvVariables } from '../common/utils';
 import appConfig from '../config/app.config';
@@ -39,13 +39,19 @@ import { AppController } from './app.controller';
         },
       ],
     }),
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: configService => ({
+        uri: configService.get('DATABASE_URL'),
+      }),
+      inject: [ConfigService],
+    }),
     AuthModule,
     UserModule,
   ],
   controllers: [AppController],
   providers: [
     HealthService,
-    PrismaService,
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseInterceptor,

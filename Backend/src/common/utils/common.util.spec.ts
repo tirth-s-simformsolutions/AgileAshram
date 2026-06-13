@@ -97,7 +97,7 @@ describe('Common Utility', () => {
     const mockConfig = {
       NODE_ENV: 'development',
       PORT: 3000,
-      DATABASE_URL: 'postgresql://localhost:5432/test',
+      DATABASE_URL: 'mongodb://localhost:27017/nestjs_boilerplate',
       JWT_ACCESS_TOKEN_EXPIRE: '15m',
       JWT_REFRESH_TOKEN_EXPIRE: '7d',
       JWT_ACCESS_SECRET_KEY: 'access-secret',

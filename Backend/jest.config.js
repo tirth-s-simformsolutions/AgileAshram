@@ -19,6 +19,7 @@ module.exports = {
     '!**/*.config.ts',
     '!database/seed.ts',
     '!database/migrations/**',
+    '!seeds/seed.ts',
     '!**/messages/**',
   ],
   coverageDirectory: '../coverage',

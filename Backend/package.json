@@ -3,11 +3,11 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "build": "npm run prisma:generate && nest build",
+    "build": "nest build",
     "prettier:check": "prettier --check \"{src,apps,test}/**/*.{ts,json,js}\"",
     "prettier": "prettier --write \"{src,apps,test}/**/*.{ts,json,js}\"",
-    "start": "npm run prisma:deploy && node dist/main",
-    "dev": "npm run prisma:migrate && nest start --watch",
+    "start:prod": "node dist/main",
+    "dev": "nest start --watch",
     "lint:check": "eslint \"{src,apps,test}/**/*.{ts,js}\"",
     "lint": "eslint \"{src,apps,test}/**/*.{ts,js}\" --fix",
     "prepare": "husky install",
@@ -18,22 +18,17 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "test:e2e:watch": "jest --config ./test/jest-e2e.json --watch",
     "test:e2e:cov": "jest --config ./test/jest-e2e.json --coverage",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:deploy": "prisma migrate deploy",
-    "prisma:studio": "prisma studio",
-    "prisma:seed": "ts-node src/database/seed.ts",
-    "db:reset": "prisma migrate reset --force"
+    "seed": "ts-node src/seeds/seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.2.3",
     "@nestjs/core": "^10.0.0",
     "@nestjs/jwt": "^11.0.0",
+    "@nestjs/mongoose": "^11.0.3",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/swagger": "^7.3.1",
     "@nestjs/throttler": "^6.4.0",
-    "@prisma/client": "^6.7.0",
     "@sentry/nestjs": "^10.4.0",
     "axios": "^1.7.2",
     "class-transformer": "^0.5.1",
@@ -41,8 +36,8 @@
     "cookie-parser": "^1.4.7",
     "dayjs": "^1.11.13",
     "helmet": "^7.1.0",
+    "mongoose": "^8.18.1",
     "nestjs-i18n": "^10.4.5",
-    "pg": "^8.12.0",
     "rxjs": "^7.8.1"
   },
   "devDependencies": {
@@ -56,8 +51,8 @@
     "@types/jest": "^29.5.2",
     "@types/node": "^24.1.0",
     "@types/supertest": "^6.0.0",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.43.0",
+    "@typescript-eslint/parser": "^8.43.0",
     "dotenv": "^17.2.0",
     "eslint": "^8.42.0",
     "eslint-config-prettier": "^9.0.0",
@@ -66,7 +61,6 @@
     "jest": "^29.5.0",
     "lint-staged": "^16.1.2",
     "prettier": "^3.0.0",
-    "prisma": "^6.7.0",
     "supertest": "^7.1.4",
     "ts-jest": "^29.1.0",
     "ts-node": "^10.9.2",
@@ -80,9 +74,6 @@
   "volta": {
     "node": "22.15.0",
     "npm": "10.9.2"
-  },
-  "prisma": {
-    "schema": "src/database/schema.prisma"
   },
   "lint-staged": {
     "{src,apps,test}/**/*.{ts,json,js}": [

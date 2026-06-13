@@ -2,11 +2,11 @@
 
 [![NestJS](https://img.shields.io/badge/nestjs-%23E0234E.svg?style=for-the-badge&logo=nestjs&logoColor=white)](https://nestjs.com/)
 [![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Prisma](https://img.shields.io/badge/Prisma-3982CE?style=for-the-badge&logo=Prisma&logoColor=white)](https://www.prisma.io/)
-[![PostgreSQL](https://img.shields.io/badge/postgresql-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![MongoDB](https://img.shields.io/badge/mongodb-%2347A248.svg?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Mongoose](https://img.shields.io/badge/mongoose-%2340A9E8.svg?style=for-the-badge&logo=mongoose&logoColor=white)](https://mongoosejs.com/)
 [![Swagger](https://img.shields.io/badge/-Swagger-%23Clojure?style=for-the-badge&logo=swagger&logoColor=white)](https://swagger.io/)
 
-A **production-ready**, **enterprise-grade** NestJS boilerplate with PostgreSQL, Prisma ORM, JWT authentication, and comprehensive API documentation. This project provides a **solid foundation** for building modern, scalable backend applications with TypeScript.
+A **production-ready**, **enterprise-grade** NestJS boilerplate with MongoDB (Mongoose), JWT authentication, and comprehensive API documentation. This project provides a **solid foundation** for building modern, scalable backend applications with TypeScript.
 
 ## Table of Contents
 
@@ -28,11 +28,11 @@ A **production-ready**, **enterprise-grade** NestJS boilerplate with PostgreSQL,
 
 Ensure you have these installed:
 
-| Tool           | Minimum Version | Download Link                                               |
-| -------------- | --------------- | ----------------------------------------------------------- |
-| **Node.js**    | `v22+`          | [Download Node.js](https://nodejs.org/)                     |
-| **PostgreSQL** | `v15+`          | [Download PostgreSQL](https://www.postgresql.org/download/) |
-| **npm**        | `v10.9.2+`      | Comes with Node.js                                          |
+| Tool        | Minimum Version | Download Link                                                      |
+| ----------- | --------------- | ------------------------------------------------------------------ |
+| **Node.js** | `v22+`          | [Download Node.js](https://nodejs.org/)                            |
+| **MongoDB** | `v6+`           | [Download MongoDB](https://www.mongodb.com/try/download/community) |
+| **npm**     | `v10.9.2+`      | Comes with Node.js                                                 |
 
 > **💡 Pro Tip**: Use [Volta](https://volta.sh/) for Node.js version management to automatically switch between Node versions in different projects.
 
@@ -56,15 +56,17 @@ Update `.env` with your database credentials and JWT secrets.
 ### 3. Database Setup 🗄️
 
 ```bash
-# Generate Prisma client
-npm run prisma:generate
-
-# Run database migrations
-npm run prisma:migrate
-
-# Optional: Seed with test data
-npm run db:seed
+# Start MongoDB with Docker
+docker-compose up -d mongo
 ```
+
+### 4. Seed Initial Data (Optional)
+
+```bash
+npm run seed
+```
+
+This will create an admin user in your database if it does not exist.
 
 ### 4. Start Development 🚀
 
@@ -76,12 +78,11 @@ npm run dev
 
 Your application is now running! Here are the key endpoints:
 
-| Service             | URL                                 | Description            |
-| ------------------- | ----------------------------------- | ---------------------- |
-| **API Server**      | http://localhost:3000               | Main application       |
-| **API Docs**        | http://localhost:3000/docs          | Interactive Swagger UI |
-| **Health Check**    | http://localhost:3000/api/v1/health | System status          |
-| **Database Studio** | `npm run prisma:studio`             | Visual DB explorer     |
+| Service          | URL                                 | Description            |
+| ---------------- | ----------------------------------- | ---------------------- |
+| **API Server**   | http://localhost:3000               | Main application       |
+| **API Docs**     | http://localhost:3000/docs          | Interactive Swagger UI |
+| **Health Check** | http://localhost:3000/api/v1/health | System status          |
 
 ---
 
@@ -89,11 +90,11 @@ Your application is now running! Here are the key endpoints:
 
 **Essential Requirements:**
 
-| Tool                                          | Version   | Purpose            | Installation                                     |
-| --------------------------------------------- | --------- | ------------------ | ------------------------------------------------ |
-| **[Node.js](https://nodejs.org/)**            | v22.15.0+ | JavaScript runtime | [Download](https://nodejs.org/en/download)       |
-| **[PostgreSQL](https://www.postgresql.org/)** | v15+      | Database           | [Download](https://www.postgresql.org/download/) |
-| **[npm](https://www.npmjs.com/)**             | v10.9.2+  | Package manager    | Comes with Node.js                               |
+| Tool                                    | Version   | Purpose            | Installation                                               |
+| --------------------------------------- | --------- | ------------------ | ---------------------------------------------------------- |
+| **[Node.js](https://nodejs.org/)**      | v22.15.0+ | JavaScript runtime | [Download](https://nodejs.org/en/download)                 |
+| **[MongoDB](https://www.mongodb.com/)** | v6+       | Database           | [Download](https://www.mongodb.com/try/download/community) |
+| **[npm](https://www.npmjs.com/)**       | v10.9.2+  | Package manager    | Comes with Node.js                                         |
 
 **Recommended Tools:**
 
@@ -111,11 +112,10 @@ Your application is now running! Here are the key endpoints:
 - **TypeScript** - Type-safe development experience
 - **Internationalization** - Multi-language support with i18n
 
-### 🗄️ **Database & ORM**
+### 🗄️ **Database & ODM**
 
-- **PostgreSQL** - Robust relational database
-- **Prisma ORM** - Type-safe database client with migrations
-- **Database Seeding** - Pre-populated test data for development
+- **MongoDB** - Modern NoSQL database
+- **Mongoose ODM** - Elegant MongoDB object modeling for Node.js
 
 ### 🔐 **Authentication & Security**
 
@@ -188,27 +188,25 @@ nestjs-boilerplate/
 │   │   ├── 📂 interfaces/                # Core interfaces
 │   │   └── 📂 middleware/                # Custom middleware (TraceMiddleware)
 │   │
-│   ├── 📂 database/                      # 🗄️ Database configuration
-│   │   ├── 📂 migrations/                # Prisma migration files
-│   │   ├── schema.prisma                 # Database schema definition
-│   │   ├── prisma.service.ts             # Prisma service provider
-│   │   └── seed.ts                       # Database seeding script
+│   ├── 📂 seeds/                         # MongoDB seeding scripts
+│   │   ├── seed.ts                       # MongoDB seeder script
 │   │
 │   ├── 📂 i18n/                          # 🌐 Internationalization
 │   │   └── 📂 en/                        # English translations
 │   │       ├── error.json                # error messages
 │   │
 │   ├── 📂 modules/                             # 🧩 Feature modules
-│   │   └── 📂 feature/                         # Feature module
+│   │   └── 📂 feature/                         # Example feature module
 │   │       ├── 📂 dtos/                        # Feature-specific DTOs
 │   │       ├── 📂 interfaces/                  # Feature interfaces
 │   │       ├── 📂 messages/                    # Feature messages
+│   │       ├── 📂 schemas/                     # Mongoose schemas (e.g., feature.schema.ts)
 │   │       ├── feature.controller.ts           # Feature endpoints
 │   │       ├── feature.controller.spec.ts      # Feature endpoints tests
 │   │       ├── feature.service.ts              # Feature business logic
 │   │       ├── feature.service.spec.ts         # Feature business logic tests
-│   │       ├── feature.repository.ts           # Feature specifice repository
-│   │       ├── feature.repository.spec.ts      # Feature specifice repository tests
+│   │       ├── feature.repository.ts           # Feature repository (Mongoose ODM)
+│   │       ├── feature.repository.spec.ts      # Feature repository tests
 │   │       ├── feature.module.ts               # Feature module
 │   │       └── feature.constant.ts             # Feature-specific constants
 │   │
@@ -234,63 +232,47 @@ nestjs-boilerplate/
 
 ## Database Setup
 
-### Prisma Commands 🔧
+### MongoDB/Mongoose Commands 🔧
 
 ```bash
-# Generate Prisma client from schema
-npm run prisma:generate
+# Start MongoDB (if not running)
+docker-compose up -d mongo
 
-# Run database migrations (creates tables)
-npm run prisma:migrate
-
-# Optional: Seed database with test data
-npm run db:seed
-
-# Open Prisma Studio (visual database browser)
-npm run prisma:studio
+# Optional: Seed database with initial data
+npm run seed
 ```
 
-### Verify Setup ✅
+This will create an admin user in your database if it does not exist.
 
-Check if the application is running correctly by visiting the health endpoint at `/api/v1/health`.
+## Database Setup
 
-### Available Database Commands 📊
+### 1. Start MongoDB
 
-| Command                   | Description                          | Use Case              |
-| ------------------------- | ------------------------------------ | --------------------- |
-| `npm run prisma:generate` | Generate Prisma client               | After schema changes  |
-| `npm run prisma:migrate`  | Create and apply migration           | Schema updates        |
-| `npm run prisma:deploy`   | Deploy migrations (production)       | Production deployment |
-| `npm run prisma:studio`   | Open database GUI                    | Data exploration      |
-| `npm run db:reset`        | ⚠️ Reset database (deletes all data) | Development reset     |
-| `npm run db:seed`         | Seed with test data                  | Development setup     |
+You can use Docker or install MongoDB locally.
 
-### Working with Migrations 🔄
-
-<details>
-<summary><strong>Creating New Migrations</strong></summary>
-
-1. **Update schema**: Edit `src/database/schema.prisma`
-2. **Generate migration**:
-   ```bash
-   npm run prisma:migrate
-   # Follow the prompts to name your migration
-   ```
-3. **Review migration**: Check the generated SQL in `src/database/migrations/`
-
-</details>
-
-### Production Database 🚀
-
-For production deployments:
+#### Using Docker
 
 ```bash
-# Deploy migrations without prompts
-npm run prisma:deploy
-
-# Generate client for production
-npm run prisma:generate
+docker-compose up -d mongo
 ```
+
+#### Local Installation
+
+Install [MongoDB](https://www.mongodb.com/try/download/community) and start the service.
+
+### 2. Set Environment Variables
+
+Update `.env`:
+
+```
+DATABASE_URL=mongodb://localhost:27017/nestjs_boilerplate
+```
+
+**What's included:**
+
+- ✅ **MongoDB database** (with persistent volume)
+- ✅ **NestJS application** (with hot reload)
+- ✅ **Network configuration** (services can communicate)
 
 ## Development
 
@@ -309,11 +291,13 @@ The application will start on `http://localhost:3000` (or your configured PORT).
 | ------------------------ | ---------------------------------- | ----------------- |
 | `npm run dev`            | 🔥 **Development** with hot reload | Daily development |
 | `npm run build`          | 🏗️ **Build** for production        | Pre-deployment    |
-| `npm run start`          | 🚀 **Start** production server     | Production        |
+| `npm run start:prod`     | 🚀 **Start** production server     | Production        |
 | `npm run lint`           | 🧹 **Fix** ESLint issues           | Code cleanup      |
 | `npm run lint:check`     | 👀 **Check** lint issues           | CI/CD             |
 | `npm run prettier`       | 💅 **Format** code with Prettier   | Code formatting   |
 | `npm run prettier:check` | 👀 **Check** code formatting       | CI/CD             |
+
+> **Note**: Before running the production server, build the project using `npm run build`. This compiles TypeScript to JavaScript in the `dist/` folder.
 
 > **Tip**: For database commands, see the [Database Setup](#database-setup) section above.
 
@@ -353,13 +337,11 @@ The project uses Jest with TypeScript support and comprehensive coverage thresho
 For unit tests, the project uses mocked database services to ensure tests run quickly and don't require a real database connection.
 
 ```typescript
-// Example: Mocking Prisma service in unit tests
-const mockPrismaService = {
-  user: {
-    create: jest.fn(),
-    findUnique: jest.fn(),
-    findMany: jest.fn(),
-  },
+// Example: Mocking Mongoose model in unit tests
+const mockUserModel = {
+  create: jest.fn(),
+  findOne: jest.fn(),
+  find: jest.fn(),
 };
 ```
 
@@ -382,7 +364,7 @@ docker-compose down
 
 **What's included:**
 
-- ✅ **PostgreSQL database** (with persistent volume)
+- ✅ **MongoDB database** (with persistent volume)
 - ✅ **NestJS application** (with hot reload)
 - ✅ **Network configuration** (services can communicate)
 
@@ -403,14 +385,14 @@ docker run -p 3000:3000 \
 
 ### Docker Commands 🐳
 
-| Command                                         | Description                  |
-| ----------------------------------------------- | ---------------------------- |
-| `docker-compose up`                             | Start all services           |
-| `docker-compose up -d`                          | Start services in background |
-| `docker-compose down`                           | Stop and remove containers   |
-| `docker-compose logs backend`                   | View app logs                |
-| `docker-compose exec backend bash`              | Access app container         |
-| `docker-compose exec postgres psql -U postgres` | Access database              |
+| Command                            | Description                  |
+| ---------------------------------- | ---------------------------- |
+| `docker-compose up`                | Start all services           |
+| `docker-compose up -d`             | Start services in background |
+| `docker-compose down`              | Stop and remove containers   |
+| `docker-compose logs backend`      | View app logs                |
+| `docker-compose exec backend bash` | Access app container         |
+| `docker-compose exec mongo mongo`  | Access MongoDB               |
 
 ## License
 

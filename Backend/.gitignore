@@ -37,9 +37,6 @@ npm-cache/
 !.vscode/launch.json
 !.vscode/extensions.json
 
-# Prisma
-src/generated
-
 .env
 .env.*
 !.env.example

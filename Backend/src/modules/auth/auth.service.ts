@@ -8,10 +8,10 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { UserStatus } from '@prisma/client';
 import { Response } from 'express';
 import { compareHash, createHash, handleError } from '../../common/utils';
 import { ResponseResult } from '../../core/class/';
+import { UserStatus } from '../user/schemas/user.schema';
 import { UserRepository } from '../user/user.repository';
 import { ChangePasswordDto, LoginDto, SignupDto } from './dtos';
 import { ICookieConfig, ITokenPayload, IUserValidationResult } from './interfaces';
@@ -84,7 +84,7 @@ export class AuthService {
         email,
         password: await createHash(password),
         name,
-        status: UserStatus.active,
+        status: UserStatus.ACTIVE,
       };
 
       const createdUserInfo = await this.userRepository.createUser(createUserPayload);
@@ -109,11 +109,7 @@ export class AuthService {
         },
       );
 
-      const userInfo = await this.userRepository.findUserById(createdUserInfo.id, {
-        id: true,
-        email: true,
-        name: true,
-      });
+      const userInfo = await this.userRepository.findUserById(createdUserInfo.id);
 
       // Set tokens in cookies
       this.setTokenCookies(res, accessToken, refreshToken);
@@ -155,7 +151,7 @@ export class AuthService {
         throw new BadRequestException(ERROR_MSG.INVALID_CREDENTIALS);
       }
 
-      if (isUserFound.status !== UserStatus.active) {
+      if (isUserFound.status !== UserStatus.ACTIVE) {
         throw new UnprocessableEntityException(ERROR_MSG.USER.ACCOUNT_NOT_ACTIVE);
       }
 
@@ -179,11 +175,7 @@ export class AuthService {
         },
       );
 
-      const userInfo = await this.userRepository.findUserById(isUserFound.id, {
-        id: true,
-        email: true,
-        name: true,
-      });
+      const userInfo = await this.userRepository.findUserById(isUserFound.id);
 
       // Set tokens in cookies
       this.setTokenCookies(res, accessToken, refreshToken);
@@ -215,7 +207,7 @@ export class AuthService {
 
       const userInfo = await this.userRepository.findUserById(tokenData.userId);
 
-      if (userInfo?.status !== UserStatus.active) {
+      if (userInfo?.status !== UserStatus.ACTIVE) {
         throw new UnauthorizedException(ERROR_MSG.USER.ACCOUNT_NOT_ACTIVE);
       }
 
@@ -276,9 +268,7 @@ export class AuthService {
     try {
       const { newPassword, oldPassword } = data;
 
-      const userInfo = await this.userRepository.findUserById(userId, {
-        password: true,
-      });
+      const userInfo = await this.userRepository.findUserById(userId);
 
       if (newPassword === oldPassword) {
         throw new BadRequestException(ERROR_MSG.PASSWORD.SAME_PASSWORD);
@@ -324,7 +314,7 @@ export class AuthService {
         throw new UnauthorizedException(ERROR_MSG.UNAUTHORIZED);
       }
 
-      if (loginUserInfo.status !== UserStatus.active) {
+      if (loginUserInfo.status !== UserStatus.ACTIVE) {
         throw new UnauthorizedException(ERROR_MSG.USER.ACCOUNT_NOT_ACTIVE);
       }
 

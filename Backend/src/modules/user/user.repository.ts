@@ -1,34 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
-import { PrismaService } from '../../database/prisma.service';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { User, UserDocument } from './schemas/user.schema';
 
 @Injectable()
 export class UserRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@InjectModel(User.name) private readonly userModel: Model<UserDocument>) {}
 
-  createUser(userData: Omit<Prisma.UserCreateInput, 'id'>) {
-    return this.prisma.user.create({
-      data: userData,
-    });
+  createUser(userData: Partial<User>) {
+    return this.userModel.create(userData);
   }
 
-  findOneByCondition(condition: Prisma.UserWhereInput) {
-    return this.prisma.user.findFirst({
-      where: condition,
-    });
+  findOneByCondition(condition: Partial<User>) {
+    return this.userModel.findOne(condition).exec();
   }
 
-  findUserById(userId: string, select?: Prisma.UserSelect) {
-    return this.prisma.user.findUnique({
-      where: { id: userId },
-      ...(select && { select }),
-    });
+  findUserById(userId: string) {
+    return this.userModel.findById(userId).exec();
   }
 
-  updateUserById(id: string, updatePayload: Prisma.UserUpdateInput) {
-    return this.prisma.user.update({
-      where: { id },
-      data: updatePayload,
-    });
+  updateUserById(id: string, updatePayload: Partial<User>) {
+    return this.userModel.findByIdAndUpdate(id, updatePayload, { new: true }).exec();
   }
 }

@@ -7,13 +7,14 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserStatus } from '@prisma/client';
 import { Response } from 'express';
 import * as utils from '../../common/utils';
 import { UserRepository } from '../user/user.repository';
 import { AuthService } from './auth.service';
 import { ChangePasswordDto, LoginDto, SignupDto } from './dtos';
 import { SUCCESS_MSG } from './messages';
+
+import { UserStatus } from '../user/schemas/user.schema';
 
 // Mock the utils module
 jest.mock('../../common/utils', () => ({
@@ -125,7 +126,7 @@ describe('AuthService', () => {
         email: signupDto.email,
         password: hashedPassword,
         name: signupDto.name,
-        status: UserStatus.active,
+        status: UserStatus.ACTIVE,
       });
       expect(mockResponse.cookie).toHaveBeenCalledTimes(2);
       expect(result.data).toEqual({
@@ -159,7 +160,7 @@ describe('AuthService', () => {
         id: 1,
         email: loginDto.email,
         password: 'hashed_password',
-        status: UserStatus.active,
+        status: UserStatus.ACTIVE,
       };
       const accessToken = 'access_token_123';
       const refreshToken = 'refresh_token_123';
@@ -199,7 +200,7 @@ describe('AuthService', () => {
         id: 1,
         email: loginDto.email,
         password: 'hashed_password',
-        status: UserStatus.active,
+        status: UserStatus.ACTIVE,
       };
 
       mockUserRepository.findOneByCondition.mockResolvedValue(user);
@@ -215,7 +216,7 @@ describe('AuthService', () => {
         id: 1,
         email: loginDto.email,
         password: 'hashed_password',
-        status: UserStatus.deactive,
+        status: 'deactive',
       };
 
       mockUserRepository.findOneByCondition.mockResolvedValue(user);
@@ -282,7 +283,7 @@ describe('AuthService', () => {
         id: '1',
         email: 'test@example.com',
         name: 'Test User',
-        status: UserStatus.active,
+        status: UserStatus.ACTIVE,
       };
       const newAccessToken = 'new_access_token';
       const newRefreshToken = 'new_refresh_token';
@@ -350,7 +351,7 @@ describe('AuthService', () => {
       const tokenData = { userId: '1' };
       const userInfo = {
         id: '1',
-        status: UserStatus.deactive,
+        status: 'deactive',
       };
 
       mockJwtService.verifyAsync.mockResolvedValue(tokenData);
@@ -406,9 +407,7 @@ describe('AuthService', () => {
 
       const result = await service.changePassword(userId, changePasswordDto);
 
-      expect(mockUserRepository.findUserById).toHaveBeenCalledWith(userId, {
-        password: true,
-      });
+      expect(mockUserRepository.findUserById).toHaveBeenCalledWith(userId);
       expect(utils.compareHash).toHaveBeenCalledWith(
         changePasswordDto.oldPassword,
         userInfo.password,
@@ -451,7 +450,7 @@ describe('AuthService', () => {
       const userInfo = {
         id: '1',
         name: 'Test User',
-        status: UserStatus.active,
+        status: UserStatus.ACTIVE,
       };
 
       mockJwtService.verifyAsync.mockResolvedValue(tokenData);
@@ -515,7 +514,7 @@ describe('AuthService', () => {
       const userInfo = {
         id: '1',
         name: 'Test User',
-        status: UserStatus.deactive,
+        status: 'deactive',
       };
 
       mockJwtService.verifyAsync.mockResolvedValue(tokenData);

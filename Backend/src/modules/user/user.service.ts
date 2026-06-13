@@ -11,11 +11,7 @@ export class UserService {
 
   async getProfile(userId: string) {
     try {
-      const userInfo = await this.userRepository.findUserById(userId, {
-        id: true,
-        name: true,
-        email: true,
-      });
+      const userInfo = await this.userRepository.findUserById(userId);
 
       return new ResponseResult({
         message: SUCCESS_MSG.GET_PROFILE,
