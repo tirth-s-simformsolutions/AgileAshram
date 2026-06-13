@@ -19,7 +19,12 @@ import { UserRole } from '../user/schemas/user.schema';
 import { UserRepository } from '../user/user.repository';
 import { WardService } from '../ward/ward.service';
 import { ComplaintRepository } from './complaint.repository';
-import { CreateComplaintDto, ReassignDepartmentDto, SubmitFeedbackDto, UpdateStatusDto } from './dtos';
+import {
+  CreateComplaintDto,
+  ReassignDepartmentDto,
+  SubmitFeedbackDto,
+  UpdateStatusDto,
+} from './dtos';
 import { ERROR_MSG, SMS_MSG, SUCCESS_MSG } from './messages';
 import { ComplaintDocument, ComplaintSeverity, ComplaintStatus } from './schemas/complaint.schema';
 
@@ -55,9 +60,9 @@ export class ComplaintService {
     departmentName: string,
   ): void {
     if (!phone) return;
-    const body = this.i18n.t(SMS_MSG.COMPLAINT[status], {
-      args: { ticketId, departmentName },
-    });
+    const body = String(
+      this.i18n.t(SMS_MSG.COMPLAINT[status], { args: { ticketId, departmentName } }),
+    );
     this.smsService.send({ to: phone, body, metadata: { ticketId, status } }).catch(() => void 0);
   }
 
@@ -328,7 +333,10 @@ export class ComplaintService {
       complaint.feedback = { rating: dto.rating, comment: dto.comment, submittedAt: new Date() };
       await complaint.save();
 
-      return new ResponseResult({ message: SUCCESS_MSG.COMPLAINT.FEEDBACK_SUBMITTED, data: complaint });
+      return new ResponseResult({
+        message: SUCCESS_MSG.COMPLAINT.FEEDBACK_SUBMITTED,
+        data: complaint,
+      });
     } catch (error) {
       handleError(error);
     }
@@ -361,7 +369,7 @@ export class ComplaintService {
   async getAllGps() {
     try {
       const results = await this.complaintRepository.findAllGps();
-      const coordinates = results.map((r) => {
+      const coordinates = results.map(r => {
         const gps = r.gps as { lat: number; lng: number };
         return [gps.lat, gps.lng] as [number, number];
       });
