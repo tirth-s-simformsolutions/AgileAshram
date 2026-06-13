@@ -30,4 +30,12 @@ export class EnvVariablesDto {
 
   @IsString()
   JWT_REFRESH_SECRET_KEY: string;
+
+  @IsString()
+  @IsNotEmpty()
+  GOOGLE_GENAI_API_KEY: string;
+
+  @IsString()
+  @IsNotEmpty()
+  GOOGLE_GENAI_MODEL: string;
 }
