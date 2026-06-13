@@ -3,6 +3,8 @@ import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SWAGGER_TAGS } from '../../common/constants';
 import { ListImagesResponseDto, PresignedUrlRequestDto, PresignedUrlResponseDto } from './dtos';
 import { UploadService } from './upload.service';
+import { Roles } from '../../core/decorators';
+import { UserRole } from '../user/schemas/user.schema';
 
 @Controller('upload')
 export class UploadController {
@@ -18,6 +20,7 @@ export class UploadController {
     description: 'Presigned URL generated successfully',
     type: PresignedUrlResponseDto,
   })
+  @Roles(UserRole.CITIZEN)
   @Post('presigned-url')
   getPresignedUrl(@Body() body: PresignedUrlRequestDto) {
     return this.uploadService.getPresignedUrl(body.filename, body.contentType);
@@ -29,6 +32,7 @@ export class UploadController {
     description: 'Returns up to 20 images from R2. Pass nextContinuationToken to paginate.',
   })
   @ApiOkResponse({ description: 'Images listed successfully', type: ListImagesResponseDto })
+  @Roles(UserRole.ADMIN)
   @Get('images')
   listImages(@Query('page') page: number = 1, @Query('limit') limit: number = 20) {
     return this.uploadService.listImages(Number(page), Number(limit));
@@ -40,6 +44,7 @@ export class UploadController {
     description: 'Deletes an image from R2 by its key (e.g. images/uuid-photo.jpg).',
   })
   @ApiOkResponse({ description: 'Image deleted successfully' })
+  @Roles(UserRole.ADMIN)
   @Delete('images/:key(*)')
   deleteImage(@Param('key') key: string) {
     return this.uploadService.deleteImage(key);
