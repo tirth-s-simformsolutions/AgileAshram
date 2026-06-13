@@ -29,7 +29,7 @@ class AiMetaResDto {
 }
 
 class StatusHistoryEntryResDto {
-  @ApiProperty({ enum: ComplaintStatus, example: ComplaintStatus.ROUTED })
+  @ApiProperty({ enum: ComplaintStatus, example: ComplaintStatus.OPEN })
   status: ComplaintStatus;
 
   @ApiPropertyOptional({ example: 'Field team dispatched to the site.' })
@@ -88,7 +88,7 @@ export class ComplaintResDto {
   @ApiPropertyOptional({ example: 'Sector 12, Gandhinagar, Gujarat' })
   reportedAddress?: string;
 
-  @ApiProperty({ enum: ComplaintStatus, example: ComplaintStatus.ROUTED })
+  @ApiProperty({ enum: ComplaintStatus, example: ComplaintStatus.OPEN })
   status: ComplaintStatus;
 
   @ApiProperty({ type: [StatusHistoryEntryResDto] })

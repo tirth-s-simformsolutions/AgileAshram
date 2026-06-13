@@ -28,6 +28,7 @@ export class ComplaintController {
       'Validates the complaint via AI, routes it to the responsible department, generates a ticket id and persists it.',
   })
   @ApiCreatedResponse({ type: CreateComplaintResponseDto })
+  @Roles(UserRole.CITIZEN)
   @Post()
   create(@Body() data: CreateComplaintDto, @CurrentUser() currentUser: ICurrentUser) {
     return this.complaintService.create(data, currentUser.userId);
