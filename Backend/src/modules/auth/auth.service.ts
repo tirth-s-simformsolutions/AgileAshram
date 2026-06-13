@@ -378,7 +378,7 @@ export class AuthService {
       }
 
       return {
-        userId: loginUserInfo.id,
+        userId: loginUserInfo._id?.toString(),
         name: loginUserInfo.name,
       };
     } catch (error) {
