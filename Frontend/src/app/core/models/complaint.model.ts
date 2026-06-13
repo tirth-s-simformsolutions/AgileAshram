@@ -2,8 +2,21 @@ export type ComplaintCategory = 'infrastructure' | 'sanitation' | 'water' | 'ele
 export type ComplaintSeverity = 'low' | 'medium' | 'high' | 'critical';
 // Matches backend enum exactly (PATCH /complaints/:id/status validates against these).
 export type ComplaintStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'REJECTED';
+// Derived SLA standing (backend virtual). null when no dueDate.
+export type SlaStatus = 'ON_TRACK' | 'DUE_SOON' | 'OVERDUE' | 'CLOSED';
 
 export interface Location { lat: number; lng: number; address?: string; }
+
+export interface ComplaintFeedback {
+  rating: number; // 1..5
+  comment?: string;
+  submittedAt?: Date;
+}
+
+export interface ResolutionNote {
+  comment: string;
+  imageUrl?: string;
+}
 
 export interface Complaint {
   id?: string;
@@ -19,6 +32,12 @@ export interface Complaint {
   citizenPhone?: string;
   createdAt?: Date;
   updatedAt?: Date;
+  // SLA + lifecycle
+  dueDate?: Date;
+  slaStatus?: SlaStatus | null;
+  resolvedAt?: Date;
+  resolutionNote?: ResolutionNote;
+  feedback?: ComplaintFeedback;
 }
 
 export interface CreateComplaintDto {

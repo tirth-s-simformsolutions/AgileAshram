@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import {
   Complaint, ComplaintCategory, ComplaintSeverity, ComplaintStatus,
-  CreateComplaintDto, PresignedUrlResponse, SubmittedComplaint
+  CreateComplaintDto, PresignedUrlResponse, SlaStatus, SubmittedComplaint
 } from '../models/complaint.model';
 
 // ---------------------------------------------------------------------------
@@ -25,6 +25,11 @@ interface RawComplaint {
   citizenPhone?: string;
   createdAt?: string;
   updatedAt?: string;
+  dueDate?: string;
+  slaStatus?: SlaStatus | null;
+  resolvedAt?: string;
+  resolutionNote?: { comment: string; imageUrl?: string };
+  feedback?: { rating: number; comment?: string; submittedAt?: string };
 }
 
 interface RawListData {
@@ -71,6 +76,17 @@ export class ComplaintService {
       citizenPhone: raw.citizenPhone,
       createdAt: raw.createdAt ? new Date(raw.createdAt) : undefined,
       updatedAt: raw.updatedAt ? new Date(raw.updatedAt) : undefined,
+      dueDate: raw.dueDate ? new Date(raw.dueDate) : undefined,
+      slaStatus: raw.slaStatus ?? null,
+      resolvedAt: raw.resolvedAt ? new Date(raw.resolvedAt) : undefined,
+      resolutionNote: raw.resolutionNote,
+      feedback: raw.feedback
+        ? {
+            rating: raw.feedback.rating,
+            comment: raw.feedback.comment,
+            submittedAt: raw.feedback.submittedAt ? new Date(raw.feedback.submittedAt) : undefined,
+          }
+        : undefined,
     };
   }
 
@@ -125,6 +141,15 @@ export class ComplaintService {
     const body: { status: ComplaintStatus; note?: string } = { status };
     if (note?.trim()) body.note = note.trim();
     return this.http.patch<StatusUpdateResponse>(`/api/v1/complaints/${id}/status`, body);
+  }
+
+  // Citizen feedback on a resolved complaint (rating 1–5 + optional comment). One per complaint.
+  submitFeedback(id: string, rating: number, comment?: string): Observable<Complaint> {
+    const body: { rating: number; comment?: string } = { rating };
+    if (comment?.trim()) body.comment = comment.trim();
+    return this.http
+      .post<{ data: RawComplaint }>(`/api/v1/complaints/${id}/feedback`, body)
+      .pipe(map(res => this.mapComplaint(res.data)));
   }
 
   // All complaint GPS coords for the hotspot map — API returns data: [[lat, lng], …].
