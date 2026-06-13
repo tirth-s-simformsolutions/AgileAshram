@@ -1,5 +1,5 @@
 import { ApiProperty, PickType } from '@nestjs/swagger';
-import { UserAndTokenDataDto } from './login.res.dto';
+import { UserAndTokenDataDto } from './adminLogin.res.dto';
 import { CommonResponseDto } from '../../../common/dtos';
 
 export class SignupResponseDto extends PickType(CommonResponseDto, ['error'] as const) {

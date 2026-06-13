@@ -11,7 +11,7 @@ import { Response } from 'express';
 import * as utils from '../../common/utils';
 import { UserRepository } from '../user/user.repository';
 import { AuthService } from './auth.service';
-import { ChangePasswordDto, LoginDto, SignupDto } from './dtos';
+import { AdminLoginDto, ChangePasswordDto, SignupDto } from './dtos';
 import { SUCCESS_MSG } from './messages';
 
 import { UserStatus } from '../user/schemas/user.schema';
@@ -149,22 +149,23 @@ describe('AuthService', () => {
     });
   });
 
-  describe('login', () => {
-    const loginDto: LoginDto = {
-      email: 'test@example.com',
-      password: 'password123',
+  describe('adminLogin', () => {
+    const adminLoginDto: AdminLoginDto = {
+      email: 'admin@example.com',
+      password: 'Admin@123',
+      role: 'admin' as any,
     };
 
-    it('should login user successfully', async () => {
+    it('should login admin successfully', async () => {
       const user = {
         id: 1,
-        email: loginDto.email,
+        email: adminLoginDto.email,
         password: 'hashed_password',
         status: UserStatus.ACTIVE,
       };
       const accessToken = 'access_token_123';
       const refreshToken = 'refresh_token_123';
-      const userInfo = { id: 1, email: loginDto.email, name: 'Test User' };
+      const userInfo = { id: 1, email: adminLoginDto.email, name: 'Admin' };
 
       mockUserRepository.findOneByCondition.mockResolvedValue(user);
       (utils.compareHash as jest.Mock).mockResolvedValue(true);
@@ -173,24 +174,23 @@ describe('AuthService', () => {
         .mockResolvedValueOnce(refreshToken);
       mockUserRepository.findUserById.mockResolvedValue(userInfo);
 
-      const result = await service.login(loginDto, mockResponse as Response);
+      const result = await service.adminLogin(adminLoginDto, mockResponse as Response);
 
       expect(userRepository.findOneByCondition).toHaveBeenCalledWith({
-        email: loginDto.email,
+        email: adminLoginDto.email,
+        role: adminLoginDto.role,
       });
-      expect(utils.compareHash).toHaveBeenCalledWith(loginDto.password, user.password);
+      expect(utils.compareHash).toHaveBeenCalledWith(adminLoginDto.password, user.password);
       expect(jwtService.signAsync).toHaveBeenCalledTimes(2);
       expect(mockResponse.cookie).toHaveBeenCalledTimes(2);
-      expect(result.data).toEqual({
-        userInfo,
-      });
-      expect(result.message).toBe(SUCCESS_MSG.USER.LOGIN);
+      expect(result.data).toEqual({ userInfo });
+      expect(result.message).toBe(SUCCESS_MSG.USER.ADMIN_LOGIN);
     });
 
     it('should throw BadRequestException for invalid credentials', async () => {
       mockUserRepository.findOneByCondition.mockResolvedValue(null);
 
-      await expect(service.login(loginDto, mockResponse as Response)).rejects.toThrow(
+      await expect(service.adminLogin(adminLoginDto, mockResponse as Response)).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -198,7 +198,7 @@ describe('AuthService', () => {
     it('should throw BadRequestException for wrong password', async () => {
       const user = {
         id: 1,
-        email: loginDto.email,
+        email: adminLoginDto.email,
         password: 'hashed_password',
         status: UserStatus.ACTIVE,
       };
@@ -206,7 +206,7 @@ describe('AuthService', () => {
       mockUserRepository.findOneByCondition.mockResolvedValue(user);
       (utils.compareHash as jest.Mock).mockResolvedValue(false);
 
-      await expect(service.login(loginDto, mockResponse as Response)).rejects.toThrow(
+      await expect(service.adminLogin(adminLoginDto, mockResponse as Response)).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -214,7 +214,7 @@ describe('AuthService', () => {
     it('should throw UnprocessableEntityException for inactive user', async () => {
       const user = {
         id: 1,
-        email: loginDto.email,
+        email: adminLoginDto.email,
         password: 'hashed_password',
         status: 'deactive',
       };
@@ -222,7 +222,7 @@ describe('AuthService', () => {
       mockUserRepository.findOneByCondition.mockResolvedValue(user);
       (utils.compareHash as jest.Mock).mockResolvedValue(true);
 
-      await expect(service.login(loginDto, mockResponse as Response)).rejects.toThrow(
+      await expect(service.adminLogin(adminLoginDto, mockResponse as Response)).rejects.toThrow(
         UnprocessableEntityException,
       );
     });

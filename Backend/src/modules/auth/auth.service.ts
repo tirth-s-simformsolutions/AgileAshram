@@ -13,7 +13,7 @@ import { compareHash, createHash, handleError } from '../../common/utils';
 import { ResponseResult } from '../../core/class/';
 import { UserStatus } from '../user/schemas/user.schema';
 import { UserRepository } from '../user/user.repository';
-import { ChangePasswordDto, LoginDto, SignupDto } from './dtos';
+import { AdminLoginDto, ChangePasswordDto, SignupDto } from './dtos';
 import { ICookieConfig, ITokenPayload, IUserValidationResult } from './interfaces';
 import { ERROR_MSG, SUCCESS_MSG } from './messages';
 
@@ -136,12 +136,13 @@ export class AuthService {
     }
   }
 
-  async login(data: LoginDto, res: Response) {
+  async adminLogin(data: AdminLoginDto, res: Response) {
     try {
-      const { email, password } = data;
+      const { email, password, role } = data;
 
       const isUserFound = await this.userRepository.findOneByCondition({
         email,
+        role,
       });
 
       // check user exists or not
@@ -181,7 +182,7 @@ export class AuthService {
       this.setTokenCookies(res, accessToken, refreshToken);
 
       return new ResponseResult({
-        message: SUCCESS_MSG.USER.LOGIN,
+        message: SUCCESS_MSG.USER.ADMIN_LOGIN,
         data: {
           userInfo,
         },
@@ -312,10 +313,6 @@ export class AuthService {
 
       if (!loginUserInfo) {
         throw new UnauthorizedException(ERROR_MSG.UNAUTHORIZED);
-      }
-
-      if (loginUserInfo.status !== UserStatus.ACTIVE) {
-        throw new UnauthorizedException(ERROR_MSG.USER.ACCOUNT_NOT_ACTIVE);
       }
 
       return {

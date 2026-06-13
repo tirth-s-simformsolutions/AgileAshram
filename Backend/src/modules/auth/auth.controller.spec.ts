@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import { ICurrentUser } from '../../common/interfaces';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { ChangePasswordDto, LoginDto, SignupDto } from './dtos';
+import { AdminLoginDto, ChangePasswordDto, SignupDto } from './dtos';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -14,7 +14,7 @@ describe('AuthController', () => {
   // Mock AuthService with all required methods
   const mockAuthService = {
     signup: jest.fn(),
-    login: jest.fn(),
+    adminLogin: jest.fn(),
     refreshToken: jest.fn(),
     logout: jest.fn(),
     changePassword: jest.fn(),
@@ -94,47 +94,48 @@ describe('AuthController', () => {
     });
   });
 
-  describe('login', () => {
-    const loginDto: LoginDto = {
-      email: 'test@example.com',
-      password: 'password123',
+  describe('adminLogin', () => {
+    const adminLoginDto: AdminLoginDto = {
+      email: 'admin@example.com',
+      password: 'Admin@123',
+      role: 'admin' as any,
     };
 
-    const mockLoginResponse = {
+    const mockAdminLoginResponse = {
       statusCode: 200,
-      message: 'Login successful',
+      message: 'Admin login successful',
       data: {
         userInfo: {
           id: 1,
-          email: 'test@example.com',
-          name: 'Test User',
+          email: 'admin@example.com',
+          name: 'Admin',
         },
       },
     };
 
-    it('should login user successfully', async () => {
+    it('should login admin successfully', async () => {
       // Arrange
-      mockAuthService.login.mockResolvedValue(mockLoginResponse);
+      mockAuthService.adminLogin.mockResolvedValue(mockAdminLoginResponse);
 
       // Act
-      const result = await controller.login(loginDto, mockResponse as Response);
+      const result = await controller.adminLogin(adminLoginDto, mockResponse as Response);
 
       // Assert
-      expect(authService.login).toHaveBeenCalledWith(loginDto, mockResponse);
-      expect(authService.login).toHaveBeenCalledTimes(1);
-      expect(result).toEqual(mockLoginResponse);
+      expect(authService.adminLogin).toHaveBeenCalledWith(adminLoginDto, mockResponse);
+      expect(authService.adminLogin).toHaveBeenCalledTimes(1);
+      expect(result).toEqual(mockAdminLoginResponse);
     });
 
-    it('should handle login service errors', async () => {
+    it('should handle adminLogin service errors', async () => {
       // Arrange
       const error = new Error('Invalid credentials');
-      mockAuthService.login.mockRejectedValue(error);
+      mockAuthService.adminLogin.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(controller.login(loginDto, mockResponse as Response)).rejects.toThrow(
+      await expect(controller.adminLogin(adminLoginDto, mockResponse as Response)).rejects.toThrow(
         'Invalid credentials',
       );
-      expect(authService.login).toHaveBeenCalledWith(loginDto, mockResponse);
+      expect(authService.adminLogin).toHaveBeenCalledWith(adminLoginDto, mockResponse);
     });
   });
 

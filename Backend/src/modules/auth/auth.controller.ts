@@ -6,10 +6,10 @@ import { ICurrentUser } from '../../common/interfaces';
 import { CurrentUser, Public } from '../../core/decorators';
 import { AuthService } from './auth.service';
 import {
+  AdminLoginDto,
+  AdminLoginResponseDto,
   ChangePasswordDto,
   ChangePasswordResponseDto,
-  LoginDto,
-  LoginResponseDto,
   LogoutResponseDto,
   RefreshTokenResponseDto,
   SignupDto,
@@ -37,17 +37,17 @@ export class AuthController {
 
   @ApiTags(SWAGGER_TAGS.AUTH)
   @ApiOperation({
-    summary: 'Login API',
-    description: 'This API is used to login',
+    summary: 'Admin / Department login API',
+    description: 'This API is used to login as admin or department user',
   })
   @ApiOkResponse({
-    description: 'Login successful',
-    type: LoginResponseDto,
+    description: 'Admin login successful',
+    type: AdminLoginResponseDto,
   })
   @Public()
-  @Post('/login')
-  login(@Body() data: LoginDto, @Res({ passthrough: true }) res: Response) {
-    return this.authService.login(data, res);
+  @Post('/admin/login')
+  adminLogin(@Body() data: AdminLoginDto, @Res({ passthrough: true }) res: Response) {
+    return this.authService.adminLogin(data, res);
   }
 
   @ApiTags(SWAGGER_TAGS.AUTH)
