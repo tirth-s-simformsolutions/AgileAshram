@@ -52,9 +52,9 @@ export class ComplaintRepository {
   }
 
   /** Returns lat/lng for all complaints that have a GPS point set. */
-  findAllGps() {
+  findAllGps(filter: FilterQuery<ComplaintDocument> = {}) {
     return this.complaintModel
-      .find({ gps: { $exists: true, $ne: null } }, { 'gps.lat': 1, 'gps.lng': 1, _id: 0 })
+      .find({ ...filter, gps: { $exists: true, $ne: null } }, { 'gps.lat': 1, 'gps.lng': 1, _id: 0 })
       .lean()
       .exec();
   }

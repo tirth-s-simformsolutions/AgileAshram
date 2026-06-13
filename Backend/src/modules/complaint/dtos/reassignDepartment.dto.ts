@@ -1,5 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsMongoId, IsOptional, IsString, MaxLength } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsMongoId, IsNotEmpty, IsString, MaxLength } from 'class-validator';
 import { DEFAULT_MAX_LENGTH } from '../../../common/constants';
 
 export class ReassignDepartmentDto {
@@ -10,9 +10,9 @@ export class ReassignDepartmentDto {
   @IsMongoId()
   departmentId: string;
 
-  @ApiPropertyOptional({ example: 'Rerouted — better handled by Sanitation department.' })
+  @ApiProperty({ example: 'Rerouted — better handled by Sanitation department.' })
   @IsString()
-  @IsOptional()
+  @IsNotEmpty()
   @MaxLength(DEFAULT_MAX_LENGTH)
-  note?: string;
+  note: string;
 }
