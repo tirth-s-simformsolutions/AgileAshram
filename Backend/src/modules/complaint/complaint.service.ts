@@ -26,7 +26,14 @@ import {
   UpdateStatusDto,
 } from './dtos';
 import { ERROR_MSG, SMS_MSG, SUCCESS_MSG } from './messages';
-import { ComplaintDocument, ComplaintSeverity, ComplaintStatus } from './schemas/complaint.schema';
+import {
+  ComplaintDocument,
+  ComplaintSeverity,
+  ComplaintStatus,
+  SEVERITY_SLA_DAYS,
+} from './schemas/complaint.schema';
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 /** Shapes returned inside the AiService ResponseResult.data payloads. */
 interface ValidationData {
@@ -58,10 +65,11 @@ export class ComplaintService {
     status: ComplaintStatus,
     ticketId: string,
     departmentName: string,
+    dueDate?: string,
   ): void {
     if (!phone) return;
     const body = String(
-      this.i18n.t(SMS_MSG.COMPLAINT[status], { args: { ticketId, departmentName } }),
+      this.i18n.t(SMS_MSG.COMPLAINT[status], { args: { ticketId, departmentName, dueDate } }),
     );
     this.smsService.send({ to: phone, body, metadata: { ticketId, status } }).catch(() => void 0);
   }
@@ -157,17 +165,21 @@ export class ComplaintService {
 
       // 5. Persist (severityRank is derived from severity by the schema pre-save hook).
       const now = new Date();
+      const severity = this.resolveSeverity(suggestion?.severity); // AI-scored
+      // SLA due date derived from severity (Critical 1d -> Low 14d).
+      const dueDate = new Date(now.getTime() + SEVERITY_SLA_DAYS[severity] * MS_PER_DAY);
       const complaint = await this.complaintRepository.create({
         ticketId,
         citizenId: new Types.ObjectId(citizenId),
         description: dto.description,
         imageUrl: dto.imageUrl,
         departmentId: new Types.ObjectId(departmentId),
-        severity: this.resolveSeverity(suggestion?.severity), // AI-scored; severityRank derived by hook
+        severity, // severityRank derived by the schema pre-save hook
         gps: { lat: dto.location.lat, lng: dto.location.lng },
         reportedAddress: dto.location.address,
         wardId: ward?._id as Types.ObjectId | undefined,
         wardNumber: ward?.number,
+        dueDate,
         status: ComplaintStatus.OPEN,
         aiMeta: {
           model: 'gemini',
@@ -182,7 +194,18 @@ export class ComplaintService {
         this.userRepository.findUserById(citizenId),
         this.departmentRepository.findById(departmentId),
       ]);
-      this.sendStatusSms(citizen?.phone, ComplaintStatus.OPEN, ticketId, department?.name ?? '');
+      const dueDateText = dueDate.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+      this.sendStatusSms(
+        citizen?.phone,
+        ComplaintStatus.OPEN,
+        ticketId,
+        department?.name ?? '',
+        dueDateText,
+      );
 
       // Populate department + ward (sans boundary) so the response carries their names.
       await complaint.populate([
