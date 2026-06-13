@@ -193,7 +193,7 @@ export class ComplaintDetail implements OnInit {
   private submitUpdate(id: string, status: ComplaintStatus, note?: string): void {
     this.isUpdating.set(true);
     this.updateSuccess.set(false);
-    this.complaintSvc.updateStatus(id, status, note).subscribe({
+    this.complaintSvc.updateStatus(id, status, { note }).subscribe({
       next: () => {
         this.isUpdating.set(false);
         this.updateSuccess.set(true);
@@ -205,8 +205,7 @@ export class ComplaintDetail implements OnInit {
     });
   }
 
-  // RESOLVED requires proof: upload the photo, then PATCH with the comment as the note
-  // (the photo URL is folded into the note since the status endpoint has no image field).
+  // RESOLVED requires proof: upload the photo, then PATCH with resolutionNote { comment, imageUrl }.
   private submitResolve(id: string): void {
     const comment = this._comment().trim();
     const file = this.resolveFile();
@@ -216,10 +215,11 @@ export class ComplaintDetail implements OnInit {
     this.updateSuccess.set(false);
     this.complaintSvc.getPresignedUrl(file.name, file.type).pipe(
       switchMap(res => {
-        const photoUrl = res.data.publicUrl;
-        const note = `${comment}\n\n[Resolution photo] ${photoUrl}`;
+        const imageUrl = res.data.publicUrl;
         return this.complaintSvc.uploadToStorage(res.data.presignedUrl, file).pipe(
-          switchMap(() => this.complaintSvc.updateStatus(id, 'RESOLVED', note)),
+          switchMap(() => this.complaintSvc.updateStatus(id, 'RESOLVED', {
+            resolutionNote: { comment, imageUrl },
+          })),
         );
       }),
       takeUntilDestroyed(this.destroyRef),
