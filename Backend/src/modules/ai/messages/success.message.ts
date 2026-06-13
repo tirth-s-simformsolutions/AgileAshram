@@ -1,0 +1,6 @@
+export const SUCCESS_MSG = {
+  AI: {
+    INDUSTRY_SUGGESTED: 'aiSuccess.INDUSTRY_SUGGESTED',
+    COMPLAINT_VALIDATED: 'aiSuccess.COMPLAINT_VALIDATED',
+  },
+};

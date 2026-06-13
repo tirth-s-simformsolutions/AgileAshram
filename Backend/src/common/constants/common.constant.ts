@@ -15,6 +15,8 @@ export const SWAGGER_TAGS = {
   AUTH: 'Authentication',
   CHAT: 'Chat',
   USER: 'User',
+  AI: 'AI',
+  DEPARTMENT: 'Department',
 };
 
 export const ENV = {

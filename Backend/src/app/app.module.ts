@@ -7,13 +7,16 @@ import { AcceptLanguageResolver, I18nModule } from 'nestjs-i18n';
 import { join } from 'path';
 import { HealthService, LoggerService } from '../common/services';
 import { validateEnvVariables } from '../common/utils';
+import aiConfig from '../config/ai.config';
 import appConfig from '../config/app.config';
 import databaseConfig from '../config/database.config';
 import jwtConfig from '../config/jwt.config';
 import { AuthGuard, CustomThrottlerGuard } from '../core/guards';
 import { HttpExceptionsFilter, ResponseInterceptor } from '../core/interceptors';
 import { TraceMiddleware } from '../core/middleware';
+import { AiModule } from '../modules/ai/ai.module';
 import { AuthModule } from '../modules/auth/auth.module';
+import { DepartmentModule } from '../modules/department/department.module';
 import { UserModule } from '../modules/user/user.module';
 import { AppController } from './app.controller';
 
@@ -21,7 +24,7 @@ import { AppController } from './app.controller';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, jwtConfig],
+      load: [appConfig, databaseConfig, jwtConfig, aiConfig],
       validate: validateEnvVariables,
     }),
     I18nModule.forRootAsync({
@@ -46,7 +49,9 @@ import { AppController } from './app.controller';
       }),
       inject: [ConfigService],
     }),
+    AiModule,
     AuthModule,
+    DepartmentModule,
     UserModule,
   ],
   controllers: [AppController],
