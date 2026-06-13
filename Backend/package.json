@@ -77,10 +77,10 @@
   },
   "lint-staged": {
     "{src,apps,test}/**/*.{ts,json,js}": [
-      "npm run prettier"
+      "prettier --write"
     ],
     "{src,apps,test}/**/*.{ts,js}": [
-      "npm run lint:check"
+      "eslint --fix"
     ]
   }
 }
