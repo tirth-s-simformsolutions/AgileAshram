@@ -66,6 +66,7 @@ export class ComplaintService {
       severity: (raw.severity ?? '').toLowerCase() as ComplaintSeverity,
       status: (raw.status as ComplaintStatus) ?? 'OPEN',
       department: raw.departmentId?.name ?? '',
+      departmentId: raw.departmentId?._id,
       location: {
         lat: raw.gps?.lat ?? 0,
         lng: raw.gps?.lng ?? 0,
@@ -141,6 +142,13 @@ export class ComplaintService {
     const body: { status: ComplaintStatus; note?: string } = { status };
     if (note?.trim()) body.note = note.trim();
     return this.http.patch<StatusUpdateResponse>(`/api/v1/complaints/${id}/status`, body);
+  }
+
+  // Reassign a complaint to a different department (admin/department). Note is required by the API.
+  reassignDepartment(id: string, departmentId: string, note: string): Observable<Complaint> {
+    return this.http
+      .patch<{ data: RawComplaint }>(`/api/v1/complaints/${id}/department`, { departmentId, note })
+      .pipe(map(res => this.mapComplaint(res.data)));
   }
 
   // Citizen feedback on a resolved complaint (rating 1–5 + optional comment). One per complaint.

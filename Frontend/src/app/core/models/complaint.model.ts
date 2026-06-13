@@ -26,6 +26,7 @@ export interface Complaint {
   severity: ComplaintSeverity;
   status: ComplaintStatus;
   department: string; // department name from the API (e.g. "Garbage / Waste Management Department")
+  departmentId?: string; // current department's ObjectId — used to reassign/exclude
   location: Location;
   imageUrl?: string;
   citizenName?: string;
