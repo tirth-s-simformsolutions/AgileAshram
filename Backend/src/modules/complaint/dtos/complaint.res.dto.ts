@@ -50,6 +50,25 @@ class DepartmentRefResDto {
   name: string;
 }
 
+class ResolutionNoteResDto {
+  @ApiProperty({ example: 'Pothole has been filled and the road surface repaired.' })
+  comment: string;
+
+  @ApiPropertyOptional({ example: 'https://res.cloudinary.com/demo/image/upload/resolved.jpg' })
+  imageUrl?: string;
+}
+
+class FeedbackResDto {
+  @ApiProperty({ example: 4 })
+  rating: number;
+
+  @ApiPropertyOptional({ example: 'The team resolved the issue quickly and professionally.' })
+  comment?: string;
+
+  @ApiProperty({ example: '2026-06-13T12:00:00.000Z' })
+  submittedAt: string;
+}
+
 /* ------------------------------------------------------------------ *
  *  Root complaint DTO
  * ------------------------------------------------------------------ */
@@ -100,8 +119,14 @@ export class ComplaintResDto {
   @ApiPropertyOptional({ example: '2026-06-13T12:00:00.000Z' })
   resolvedAt?: string;
 
+  @ApiPropertyOptional({ type: ResolutionNoteResDto })
+  resolutionNote?: ResolutionNoteResDto;
+
   @ApiProperty({ example: false })
   amcSubmitted: boolean;
+
+  @ApiPropertyOptional({ type: FeedbackResDto })
+  feedback?: FeedbackResDto;
 
   @ApiProperty({ example: '2026-06-13T10:00:00.000Z' })
   createdAt: string;
@@ -164,6 +189,14 @@ export class UpdateComplaintStatusResponseDto extends PickType(CommonResponseDto
 
 export class ReassignDepartmentResponseDto extends PickType(CommonResponseDto, ['error'] as const) {
   @ApiProperty({ example: 'Complaint reassigned to new department successfully' })
+  message: string;
+
+  @ApiProperty({ type: ComplaintResDto })
+  data: ComplaintResDto;
+}
+
+export class SubmitFeedbackResponseDto extends PickType(CommonResponseDto, ['error'] as const) {
+  @ApiProperty({ example: 'Feedback submitted successfully' })
   message: string;
 
   @ApiProperty({ type: ComplaintResDto })

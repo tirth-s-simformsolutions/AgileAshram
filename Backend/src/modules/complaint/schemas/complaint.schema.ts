@@ -75,6 +75,31 @@ export class ModerationMeta {
 }
 export const ModerationMetaSchema = SchemaFactory.createForClass(ModerationMeta);
 
+/** Final resolution note added by admin/department when closing a complaint. */
+@Schema({ _id: false })
+export class ResolutionNote {
+  @Prop({ required: true })
+  comment: string;
+
+  @Prop()
+  imageUrl?: string;
+}
+export const ResolutionNoteSchema = SchemaFactory.createForClass(ResolutionNote);
+
+/** Citizen feedback submitted after a complaint is resolved. */
+@Schema({ _id: false })
+export class ComplaintFeedback {
+  @Prop({ required: true, min: 1, max: 5 })
+  rating: number;
+
+  @Prop()
+  comment?: string;
+
+  @Prop({ required: true })
+  submittedAt: Date;
+}
+export const ComplaintFeedbackSchema = SchemaFactory.createForClass(ComplaintFeedback);
+
 /** One entry in the complaint's lifecycle timeline. */
 @Schema({ _id: false })
 export class StatusHistoryEntry {
@@ -150,9 +175,15 @@ export class Complaint {
   @Prop()
   resolvedAt?: Date;
 
+  @Prop({ type: ResolutionNoteSchema })
+  resolutionNote?: ResolutionNote;
+
   // --- External government submission (P1) ---
   @Prop({ default: false })
   amcSubmitted: boolean;
+
+  @Prop({ type: ComplaintFeedbackSchema })
+  feedback?: ComplaintFeedback;
 }
 
 export type ComplaintDocument = Complaint & Document;

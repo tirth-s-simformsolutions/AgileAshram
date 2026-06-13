@@ -4,5 +4,9 @@
   "INVALID": "This does not look like a valid civic complaint",
   "NOT_YOUR_DEPARTMENT": "You can only update complaints assigned to your department",
   "DEPARTMENT_NOT_FOUND": "Target department not found or is inactive",
-  "SAME_DEPARTMENT": "Complaint is already assigned to this department"
+  "SAME_DEPARTMENT": "Complaint is already assigned to this department",
+  "NOT_YOUR_COMPLAINT": "You can only submit feedback for your own complaints",
+  "COMPLAINT_NOT_RESOLVED": "Feedback can only be submitted for resolved complaints",
+  "FEEDBACK_ALREADY_SUBMITTED": "Feedback has already been submitted for this complaint",
+  "RESOLUTION_NOTE_REQUIRED": "A resolution comment is required when marking a complaint as resolved"
 }
