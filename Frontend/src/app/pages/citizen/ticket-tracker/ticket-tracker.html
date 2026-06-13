@@ -16,7 +16,7 @@
           placeholder="e.g. NV-2024-00123"
           (keydown.enter)="search()"
           class="w-full px-4 py-3 rounded-[var(--radius-control)] text-sm border outline-none transition-all"
-          style="border-color: var(--color-paper-400); background: white; color: var(--color-ink-900); font-family: var(--font-mono);"
+          style="border-color: var(--color-paper-400); background: white; color: var(--color-ink-900); font-family: var(--font-mono); font-size: 16px;"
           [style.borderColor]="error() ? 'var(--color-danger-600)' : ''"
           onfocus="this.style.borderColor='var(--color-saffron-500)'; this.style.boxShadow='0 0 0 3px rgba(232,131,12,0.15)'"
           onblur="this.style.boxShadow='none'"
@@ -31,7 +31,12 @@
         style="background: var(--color-primary-600); font-family: var(--font-sans);"
         onmouseover="if(!this.disabled) this.style.background='var(--color-primary-700)'"
         onmouseout="this.style.background='var(--color-primary-600)'">
-        Track
+        <span class="flex items-center gap-1.5">
+          Track
+          <svg class="size-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+            <path d="M3 8h10M9 4l4 4-4 4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
       </button>
     </div>
 

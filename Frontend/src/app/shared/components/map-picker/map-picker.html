@@ -1,0 +1,169 @@
+<div
+  class="fixed inset-0 z-50 flex flex-col sm:items-center sm:justify-center"
+  style="background: rgba(0,0,0,0.75)"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="map-modal-title">
+
+  <!-- Modal panel -->
+  <div
+    class="w-full sm:max-w-[640px] flex flex-col sm:rounded-[var(--radius-card)] sm:shadow-[var(--shadow-raised)]"
+    style="height: 100dvh; max-height: 100dvh; background: var(--color-paper-50);"
+    (click)="$event.stopPropagation()">
+
+    <!-- Sticky top bar -->
+    <div
+      class="flex items-center gap-2 px-3 shrink-0 border-b"
+      style="height: 56px; background: var(--color-primary-950); border-color: rgba(255,255,255,0.1)">
+      <button
+        type="button"
+        (click)="close()"
+        aria-label="Close map picker"
+        class="size-10 flex items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+        style="color: rgba(255,255,255,0.7)"
+        onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.color='white'"
+        onmouseout="this.style.background='transparent'; this.style.color='rgba(255,255,255,0.7)'">
+        <svg class="size-5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+          <path d="M5 5l10 10M15 5L5 15" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <h2
+        id="map-modal-title"
+        class="flex-1 text-sm font-bold text-white text-center"
+        style="font-family: var(--font-display)">
+        Pick a Location
+      </h2>
+      <button
+        type="button"
+        (click)="confirm()"
+        [disabled]="!hasPin()"
+        class="px-4 h-11 min-w-[80px] rounded-[var(--radius-control)] text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)]"
+        style="background: var(--color-saffron-500); color: var(--color-primary-950)">
+        Confirm
+      </button>
+    </div>
+
+    <!-- Search bar -->
+    <div
+      class="relative px-3 py-2 shrink-0 border-b"
+      style="border-color: var(--color-paper-300); background: var(--color-paper-100)">
+      <div class="flex items-center gap-2">
+        <div class="flex-1 relative">
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            placeholder="Search address or landmark…"
+            autocomplete="off"
+            aria-label="Search address"
+            aria-autocomplete="list"
+            [attr.aria-expanded]="searchResults().length > 0"
+            class="w-full pl-9 pr-8 py-2.5 rounded-[var(--radius-control)] text-sm border outline-none transition-all"
+            style="font-size: 16px; border-color: var(--color-paper-400); background: white; color: var(--color-ink-900); font-family: var(--font-sans);"
+            onfocus="this.style.borderColor='var(--color-saffron-500)'; this.style.boxShadow='0 0 0 3px rgba(232,131,12,0.15)'"
+            onblur="this.style.borderColor='var(--color-paper-400)'; this.style.boxShadow='none'">
+          <!-- Search icon -->
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 size-4 pointer-events-none"
+               style="color: var(--color-ink-400)"
+               viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <circle cx="6.5" cy="6.5" r="4.5"/>
+            <path d="M10.5 10.5l3 3" stroke-linecap="round"/>
+          </svg>
+          <!-- Clear button -->
+          @if (searchQuery.length > 0 && !isSearching()) {
+            <button
+              type="button"
+              (click)="clearSearch()"
+              aria-label="Clear search"
+              class="absolute right-2 top-1/2 -translate-y-1/2 size-5 flex items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--color-saffron-500)]"
+              style="color: var(--color-ink-400)"
+              onmouseover="this.style.color='var(--color-ink-700)'"
+              onmouseout="this.style.color='var(--color-ink-400)'">
+              <svg class="size-3.5" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M2 2l8 8M10 2L2 10" stroke-linecap="round"/>
+              </svg>
+            </button>
+          }
+          @if (isSearching()) {
+            <span class="absolute right-2 top-1/2 -translate-y-1/2 chakra-spinner size-4" aria-hidden="true"></span>
+          }
+        </div>
+      </div>
+
+      @if (searchError()) {
+        <p class="text-xs mt-1.5" style="color: var(--color-danger-600); font-family: var(--font-sans)">{{ searchError() }}</p>
+      }
+
+      <!-- Search results dropdown -->
+      @if (searchResults().length > 0) {
+        <div
+          class="absolute left-3 right-3 top-full mt-1 rounded-[var(--radius-control)] border overflow-hidden z-10"
+          role="listbox"
+          aria-label="Search results"
+          style="background: white; border-color: var(--color-paper-400); box-shadow: var(--shadow-raised)">
+          @for (result of searchResults(); track result.display_name) {
+            <button
+              type="button"
+              (click)="selectResult(result)"
+              role="option"
+              class="w-full text-left px-3 py-3 text-xs border-b last:border-b-0 transition-colors focus-visible:outline-none"
+              style="border-color: var(--color-paper-200); color: var(--color-ink-700); font-family: var(--font-sans);"
+              onfocus="this.style.background='var(--color-paper-100)'"
+              onblur="this.style.background='white'"
+              onmouseover="this.style.background='var(--color-paper-100)'"
+              onmouseout="this.style.background='white'">
+              <span class="line-clamp-2">{{ result.display_name }}</span>
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Map container -->
+    <div class="flex-1 relative" style="min-height: 200px">
+      <div #mapContainer class="w-full h-full"></div>
+
+      <!-- Hint overlay — shown until first pin placed -->
+      @if (!hasPin()) {
+        <div
+          class="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-2 rounded-full text-xs font-medium pointer-events-none"
+          style="background: rgba(0,0,0,0.65); color: white; font-family: var(--font-sans); white-space: nowrap">
+          <svg class="size-3.5" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <circle cx="7" cy="7" r="5.5"/>
+            <path d="M7 4v3l2 2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Tap to place pin · drag to adjust
+        </div>
+      }
+
+      <!-- Geocoding spinner -->
+      @if (isGeocoding()) {
+        <div
+          class="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium"
+          style="background: rgba(255,255,255,0.92); color: var(--color-ink-600); box-shadow: var(--shadow-card); font-family: var(--font-sans)">
+          <span class="chakra-spinner size-3" aria-hidden="true"></span>
+          Detecting address…
+        </div>
+      }
+    </div>
+
+    <!-- Resolved address bar -->
+    <div
+      class="shrink-0 px-4 py-3 border-t flex items-start gap-2"
+      style="border-color: var(--color-paper-300); background: var(--color-paper-50); padding-bottom: max(0.75rem, env(safe-area-inset-bottom))">
+      <svg
+        class="size-4 shrink-0 mt-0.5"
+        style="color: var(--color-saffron-500)"
+        viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path fill-rule="evenodd"
+          d="M8 1.5A4.5 4.5 0 0112.5 6c0 3-4.5 7.5-4.5 7.5S3.5 9 3.5 6A4.5 4.5 0 018 1.5zm0 3a1.5 1.5 0 100 3 1.5 1.5 0 000-3z"
+          clip-rule="evenodd"/>
+      </svg>
+      <p
+        class="text-xs leading-relaxed flex-1"
+        style="color: var(--color-ink-600); font-family: var(--font-sans)">
+        {{ resolvedAddress() }}
+      </p>
+    </div>
+
+  </div>
+</div>

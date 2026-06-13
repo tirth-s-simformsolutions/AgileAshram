@@ -1,16 +1,24 @@
 import {
-  Component, inject, signal, computed, viewChild, ElementRef, afterNextRender
+  Component, inject, signal, computed, viewChild, ElementRef,
+  afterNextRender, effect, PLATFORM_ID, DestroyRef
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { timer } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GeminiService } from '../../../core/services/gemini';
 import { ComplaintService } from '../../../core/services/complaint';
-import { LocationService } from '../../../core/services/location';
-import { ChatMessage, GeminiClassification, ComplaintCategory, ComplaintSeverity, Department } from '../../../core/models/complaint.model';
+import {
+  ChatMessage, GeminiClassification, ComplaintCategory,
+  ComplaintSeverity, Department
+} from '../../../core/models/complaint.model';
 import { ChatBubble } from '../../../shared/components/chat-bubble/chat-bubble';
 import { FileUpload } from '../../../shared/components/file-upload/file-upload';
+import { MapPicker, PickedLocation } from '../../../shared/components/map-picker/map-picker';
+import { isLocationInWard } from '../../../core/utils/ward-boundaries';
 
-type IntakeStep = 'chat' | 'confirming' | 'locating' | 'submitting' | 'done';
+type IntakeStep = 'chat' | 'confirming' | 'submitting' | 'done';
 
 const QUICK_SUGGESTIONS = [
   'Pothole on my street',
@@ -27,46 +35,112 @@ const MOCK_CLASSIFICATION: GeminiClassification = {
   summary: 'Road damage or infrastructure issue reported by citizen.',
 };
 
+export const WARDS = [
+  { id: 'ward-1',  name: 'Ward 1 – Maninagar' },
+  { id: 'ward-2',  name: 'Ward 2 – Navrangpura' },
+  { id: 'ward-3',  name: 'Ward 3 – Satellite' },
+  { id: 'ward-4',  name: 'Ward 4 – Bopal' },
+  { id: 'ward-5',  name: 'Ward 5 – Vastrapur' },
+  { id: 'ward-6',  name: 'Ward 6 – Chandkheda' },
+  { id: 'ward-7',  name: 'Ward 7 – Naranpura' },
+  { id: 'ward-8',  name: 'Ward 8 – Ghatlodia' },
+  { id: 'ward-9',  name: 'Ward 9 – Vastral' },
+  { id: 'ward-10', name: 'Ward 10 – Nikol' },
+  { id: 'ward-11', name: 'Ward 11 – Bapunagar' },
+  { id: 'ward-12', name: 'Ward 12 – Gomtipur' },
+] as const;
+
 @Component({
   selector: 'app-complaint-intake',
   standalone: true,
-  imports: [RouterLink, FormsModule, ChatBubble, FileUpload],
+  imports: [RouterLink, FormsModule, ChatBubble, FileUpload, MapPicker],
   templateUrl: './complaint-intake.html',
 })
 export class ComplaintIntake {
   private readonly router = inject(Router);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly geminiSvc = inject(GeminiService);
   private readonly complaintSvc = inject(ComplaintService);
-  private readonly locationSvc = inject(LocationService);
 
   readonly scrollContainer = viewChild<ElementRef<HTMLDivElement>>('scrollContainer');
 
   readonly messages = signal<ChatMessage[]>([
-    { role: 'bot', text: 'Namaste! Describe your civic problem below — add a photo if you can.', timestamp: new Date() },
+    {
+      role: 'bot',
+      text: 'Namaste! Select your ward, pick the location on the map, attach a photo, then describe your civic problem.',
+      timestamp: new Date(),
+    },
   ]);
   readonly isTyping = signal(false);
   readonly attachedFile = signal<File | null>(null);
 
-  // Plain property for two-way ngModel binding; mirrors a signal for computed()
   private readonly _inputText = signal('');
   get inputText(): string { return this._inputText(); }
   set inputText(v: string) { this._inputText.set(v); }
+
   readonly currentStep = signal<IntakeStep>('chat');
   readonly classification = signal<GeminiClassification | null>(null);
   readonly ticketId = signal<string | null>(null);
 
+  // Location state
+  private readonly _selectedWard = signal('');
+  get selectedWard(): string { return this._selectedWard(); }
+  set selectedWard(v: string) {
+    this._selectedWard.set(v);
+    // Re-validate existing location against new ward, or clear errors
+    const loc = this.pickedLocation();
+    if (loc && v) {
+      this.validateLocation(loc, v);
+    } else {
+      this.wardMismatch.set(false);
+      this.locationError.set(null);
+    }
+  }
+
+  readonly pickedLocation = signal<PickedLocation | null>(null);
+  readonly showMapModal = signal(false);
+  readonly wardMismatch = signal(false);
+  readonly locationError = signal<string | null>(null);
+
+  // Individual readiness signals — used in template for requirement indicators
+  readonly hasWard = computed(() => this._selectedWard() !== '');
+  readonly hasLocation = computed(() => this.pickedLocation() !== null && !this.wardMismatch());
+  readonly hasPhoto = computed(() => this.attachedFile() !== null);
+  readonly hasText = computed(() => this._inputText().trim().length > 0);
+
+  // All 4 required to send the first message
+  readonly canSend = computed(
+    () =>
+      this.hasText() &&
+      this.hasPhoto() &&
+      this.hasWard() &&
+      this.hasLocation() &&
+      !this.isTyping()
+  );
+
+  // Ward + location sufficient for final submission (description already captured)
+  readonly canSubmit = computed(
+    () => this.hasWard() && this.hasLocation()
+  );
+
   protected readonly quickSuggestions = QUICK_SUGGESTIONS;
+  protected readonly wards = WARDS;
 
-  protected readonly showSuggestions = computed(() => this.messages().length <= 1 && this.currentStep() === 'chat');
-
-  protected readonly canSend = computed(
-    () => (this._inputText().trim().length > 0 || this.attachedFile() !== null) && !this.isTyping()
+  protected readonly showSuggestions = computed(
+    () => this.messages().length <= 1 && this.currentStep() === 'chat'
   );
 
   constructor() {
-    afterNextRender(() => {
-      const el = this.scrollContainer()?.nativeElement;
-      if (el) el.scrollTop = el.scrollHeight;
+    effect(() => {
+      this.messages();
+      this.currentStep();
+      timer(0).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+        if (isPlatformBrowser(this.platformId)) {
+          const el = this.scrollContainer()?.nativeElement;
+          if (el) el.scrollTop = el.scrollHeight;
+        }
+      });
     });
   }
 
@@ -78,29 +152,49 @@ export class ComplaintIntake {
     this._inputText.set(suggestion);
   }
 
+  protected onLocationPicked(loc: PickedLocation): void {
+    this.showMapModal.set(false);
+
+    if (!this._selectedWard()) {
+      this.locationError.set('Select a ward first, then pick your location.');
+      this.pickedLocation.set(null);
+      return;
+    }
+
+    this.pickedLocation.set(loc);
+    this.validateLocation(loc, this._selectedWard());
+  }
+
+  private validateLocation(loc: PickedLocation, wardId: string): void {
+    if (!isLocationInWard(loc.lat, loc.lng, wardId)) {
+      this.wardMismatch.set(true);
+      this.locationError.set('Location is outside the selected ward — re-pin or change ward.');
+    } else {
+      this.wardMismatch.set(false);
+      this.locationError.set(null);
+    }
+  }
+
   protected sendMessage(): void {
     const text = this._inputText().trim();
     const file = this.attachedFile();
-    if (!text && !file) return;
+    if (!text || !file) return;
 
-    // Build user message
-    const userMsg: ChatMessage = { role: 'user', text: text || '(Photo attached)', timestamp: new Date() };
+    const userMsg: ChatMessage = { role: 'user', text, timestamp: new Date() };
     this.messages.update(msgs => [...msgs, userMsg]);
     this._inputText.set('');
-    this.attachedFile.set(null);
 
-    // Show typing indicator
     this.isTyping.set(true);
     this.currentStep.set('confirming');
 
-    // TODO: Replace setTimeout mock with real GeminiService.classify() call
-    // this.geminiSvc.classify(text, imageBase64).subscribe(c => this.handleClassification(c));
+    // TODO: Replace with real GeminiService.classify() call
     setTimeout(() => {
-      const result: GeminiClassification = text.toLowerCase().includes('garbage') || text.toLowerCase().includes('sanitation')
-        ? { category: 'sanitation' as ComplaintCategory, severity: 'medium' as ComplaintSeverity, department: 'sanitation' as Department, summary: 'Sanitation or garbage collection issue.' }
-        : text.toLowerCase().includes('water')
-        ? { category: 'water' as ComplaintCategory, severity: 'high' as ComplaintSeverity, department: 'infrastructure' as Department, summary: 'Water supply or leakage issue.' }
-        : MOCK_CLASSIFICATION;
+      const result: GeminiClassification =
+        text.toLowerCase().includes('garbage') || text.toLowerCase().includes('sanitation')
+          ? { category: 'sanitation' as ComplaintCategory, severity: 'medium' as ComplaintSeverity, department: 'sanitation' as Department, summary: 'Sanitation or garbage collection issue.' }
+          : text.toLowerCase().includes('water')
+          ? { category: 'water' as ComplaintCategory, severity: 'high' as ComplaintSeverity, department: 'infrastructure' as Department, summary: 'Water supply or leakage issue.' }
+          : MOCK_CLASSIFICATION;
       this.handleClassification(result);
     }, 1500);
   }
@@ -119,39 +213,53 @@ export class ComplaintIntake {
   protected handleConfirmation(): void {
     if (this.currentStep() !== 'confirming') return;
     const text = this._inputText().trim().toLowerCase();
-    const isConfirm = text === 'yes' || text === 'y' || text === 'confirm' || text === 'ok' || text === 'haan';
+    const isConfirm = ['yes', 'y', 'confirm', 'ok', 'haan'].includes(text);
 
     const userMsg: ChatMessage = { role: 'user', text: this._inputText().trim() || 'Yes', timestamp: new Date() };
     this.messages.update(msgs => [...msgs, userMsg]);
     this._inputText.set('');
 
     if (!isConfirm) {
-      // Re-classify
       this.currentStep.set('chat');
-      const botMsg: ChatMessage = { role: 'bot', text: 'No problem! Please describe the issue again and I\'ll re-classify it.', timestamp: new Date() };
+      const botMsg: ChatMessage = {
+        role: 'bot',
+        text: "No problem! Please describe the issue again and I'll re-classify it.",
+        timestamp: new Date(),
+      };
       this.messages.update(msgs => [...msgs, botMsg]);
       return;
     }
 
-    this.currentStep.set('locating');
-    this.isTyping.set(true);
-    const locMsg: ChatMessage = { role: 'bot', text: 'Confirmed! Getting your location…', timestamp: new Date() };
-    this.messages.update(msgs => [...msgs, locMsg]);
+    if (!this.canSubmit()) {
+      const nudge: ChatMessage = {
+        role: 'bot',
+        text: 'Please ensure your ward and map location are correctly set (see bottom bar), then type "yes" again.',
+        timestamp: new Date(),
+      };
+      this.messages.update(msgs => [...msgs, nudge]);
+      return;
+    }
 
-    // TODO: Replace with real location + submitComplaint flow
+    this.confirmAndSubmit();
+  }
+
+  private confirmAndSubmit(): void {
+    this.currentStep.set('submitting');
+    this.isTyping.set(true);
+
+    // TODO: Replace with real ComplaintService.submit()
     setTimeout(() => {
-      this.currentStep.set('submitting');
       const tid = `NV-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 89999)}`;
       this.ticketId.set(tid);
       this.isTyping.set(false);
       this.currentStep.set('done');
       const doneMsg: ChatMessage = {
         role: 'bot',
-        text: `Your complaint has been submitted successfully!\n\nYour ticket ID is: ${tid}\n\nSave this ID to track the status of your complaint.`,
+        text: `Complaint submitted!\n\nTicket ID: ${tid}\nWard: ${this._selectedWard()}\nLocation: ${this.pickedLocation()?.address ?? 'picked on map'}\n\nSave this ID to track your complaint.`,
         timestamp: new Date(),
       };
       this.messages.update(msgs => [...msgs, doneMsg]);
-    }, 2000);
+    }, 1500);
   }
 
   protected onSend(): void {
