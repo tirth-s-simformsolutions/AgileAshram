@@ -1,0 +1,138 @@
+<div class="min-h-screen bg-[color:var(--color-primary-950)] dot-grid flex items-center justify-center px-4 py-12">
+  <div class="w-full max-w-md">
+
+    <!-- Logo -->
+    <div class="flex items-center justify-center gap-3 mb-8">
+      <svg class="size-9" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <circle cx="16" cy="16" r="14" stroke="var(--color-saffron-500)" stroke-width="2"/>
+        <circle cx="16" cy="16" r="4" fill="var(--color-saffron-500)"/>
+        <line x1="16" y1="2" x2="16" y2="8" stroke="var(--color-saffron-500)" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="16" y1="24" x2="16" y2="30" stroke="var(--color-saffron-500)" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="2" y1="16" x2="8" y2="16" stroke="var(--color-saffron-500)" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="24" y1="16" x2="30" y2="16" stroke="var(--color-saffron-500)" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="6.4" y1="6.4" x2="10.8" y2="10.8" stroke="var(--color-saffron-500)" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="21.2" y1="21.2" x2="25.6" y2="25.6" stroke="var(--color-saffron-500)" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="25.6" y1="6.4" x2="21.2" y2="10.8" stroke="var(--color-saffron-500)" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="10.8" y1="21.2" x2="6.4" y2="25.6" stroke="var(--color-saffron-500)" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <p class="text-xl font-bold text-white" style="font-family: var(--font-display)">NagarVaani</p>
+        <p class="text-xs" style="color: var(--color-primary-400); font-family: var(--font-sans)">नगरवाणी — आपकी आवाज़, आपका शहर</p>
+      </div>
+    </div>
+
+    <!-- Login card -->
+    <div
+      class="bg-[color:var(--color-paper-50)] rounded-[var(--radius-card)] shadow-[var(--shadow-raised)] overflow-hidden"
+      [style.animation]="shakeCard() ? 'shake 0.5s ease' : 'none'">
+
+      <!-- Tricolor rule at top -->
+      <div class="tricolor-rule" aria-hidden="true"></div>
+
+      <div class="p-8">
+        <h1 class="text-xl font-bold text-[color:var(--color-ink-900)] mb-1" style="font-family: var(--font-display)">Department Sign-in</h1>
+        <p class="text-sm text-[color:var(--color-ink-500)] mb-6" style="font-family: var(--font-sans)">Enter your department credentials to access the admin portal.</p>
+
+        <!-- Error banner -->
+        @if (error()) {
+          <div
+            role="alert"
+            class="mb-5 px-4 py-3 rounded-[var(--radius-control)] text-sm font-medium flex items-center gap-2"
+            style="background: var(--color-danger-50); color: var(--color-danger-600); border: 1px solid rgba(217,45,32,0.3); font-family: var(--font-sans)">
+            <svg class="size-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            {{ error() }}
+          </div>
+        }
+
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+          <!-- Username -->
+          <div class="mb-4">
+            <label for="username" class="block text-sm font-medium text-[color:var(--color-ink-700)] mb-1.5" style="font-family: var(--font-sans)">
+              Username
+            </label>
+            <input
+              id="username"
+              type="text"
+              formControlName="username"
+              autocomplete="username"
+              placeholder="department.admin"
+              class="w-full px-4 py-3 rounded-[var(--radius-control)] text-sm transition-all border outline-none"
+              style="border-color: var(--color-paper-400); background: white; color: var(--color-ink-900); font-family: var(--font-sans);"
+              [style.borderColor]="form.get('username')?.invalid && form.get('username')?.touched ? 'var(--color-danger-600)' : ''"
+              onfocus="this.style.borderColor='var(--color-saffron-500)'; this.style.boxShadow='0 0 0 3px rgba(232,131,12,0.15)'"
+              onblur="this.style.boxShadow='none'">
+            @if (form.get('username')?.hasError('required') && form.get('username')?.touched) {
+              <p class="mt-1 text-xs" style="color: var(--color-danger-600); font-family: var(--font-sans)" role="alert">Username is required.</p>
+            }
+          </div>
+
+          <!-- Password -->
+          <div class="mb-6">
+            <label for="password" class="block text-sm font-medium text-[color:var(--color-ink-700)] mb-1.5" style="font-family: var(--font-sans)">
+              Password
+            </label>
+            <div class="relative">
+              <input
+                id="password"
+                [type]="showPassword() ? 'text' : 'password'"
+                formControlName="password"
+                autocomplete="current-password"
+                placeholder="••••••••"
+                class="w-full px-4 py-3 pr-11 rounded-[var(--radius-control)] text-sm transition-all border outline-none"
+                style="border-color: var(--color-paper-400); background: white; color: var(--color-ink-900); font-family: var(--font-sans);"
+                [style.borderColor]="form.get('password')?.invalid && form.get('password')?.touched ? 'var(--color-danger-600)' : ''"
+                onfocus="this.style.borderColor='var(--color-saffron-500)'; this.style.boxShadow='0 0 0 3px rgba(232,131,12,0.15)'"
+                onblur="this.style.boxShadow='none'">
+              <!-- Show/hide password toggle -->
+              <button
+                type="button"
+                (click)="togglePassword()"
+                [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+                [attr.aria-pressed]="showPassword()"
+                class="absolute inset-y-0 right-0 flex items-center px-3 text-[color:var(--color-ink-400)] hover:text-[color:var(--color-ink-700)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)] rounded-r-[var(--radius-control)]">
+                @if (!showPassword()) {
+                  <svg class="size-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                    <path d="M1 10s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z" stroke-linecap="round"/>
+                    <circle cx="10" cy="10" r="2.5"/>
+                  </svg>
+                } @else {
+                  <svg class="size-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                    <path d="M3 3l14 14M8.46 8.52a2.5 2.5 0 003.07 3.03M3.5 7C5.3 5.1 7.5 4 10 4c2.5 0 4.7 1.1 6.5 3M2 10s.5.9 1.5 2" stroke-linecap="round"/>
+                  </svg>
+                }
+              </button>
+            </div>
+            @if (form.get('password')?.hasError('required') && form.get('password')?.touched) {
+              <p class="mt-1 text-xs" style="color: var(--color-danger-600); font-family: var(--font-sans)" role="alert">Password is required.</p>
+            }
+          </div>
+
+          <!-- Submit button -->
+          <button
+            type="submit"
+            [disabled]="form.invalid || isLoading()"
+            class="w-full flex items-center justify-center gap-3 py-3 rounded-[var(--radius-control)] text-sm font-semibold text-white transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[color:var(--color-primary-600)]"
+            style="background: var(--color-primary-600); font-family: var(--font-sans);"
+            onmouseover="if(!this.disabled) this.style.background='var(--color-primary-700)'"
+            onmouseout="this.style.background='var(--color-primary-600)'">
+            @if (isLoading()) {
+              <span class="chakra-spinner chakra-spinner--light" aria-hidden="true"></span>
+              Signing in…
+            } @else {
+              Sign in to portal
+            }
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Back to citizen login -->
+    <p class="text-center mt-6 text-sm" style="color: var(--color-primary-400); font-family: var(--font-sans)">
+      <a routerLink="/login" class="hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)] rounded">
+        ← Back to citizen login
+      </a>
+    </p>
+  </div>
+</div>

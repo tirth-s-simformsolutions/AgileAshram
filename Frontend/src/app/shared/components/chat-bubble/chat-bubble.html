@@ -1,0 +1,26 @@
+<div [class]="wrapperClasses()" class="mb-3" style="animation: fadeInUp 0.2s ease both;">
+  <div [class]="bubbleClasses()" class="px-4 py-3 shadow-sm">
+    <!-- Optional image thumbnail -->
+    @if (message().imageUrl) {
+      <img
+        [src]="message().imageUrl"
+        alt="Attached image"
+        class="mb-2 rounded-lg max-h-48 w-auto object-cover"
+        loading="lazy">
+    }
+    <!-- Message text -->
+    <p class="text-sm leading-relaxed whitespace-pre-wrap break-words" style="font-family: var(--font-sans)">
+      {{ message().text }}
+    </p>
+    <!-- Timestamp -->
+    @if (message().timestamp) {
+      <p
+        [class]="timestampClasses()"
+        class="text-xs mt-1.5"
+        [style.color]="isUser() ? 'rgba(255,255,255,0.6)' : 'var(--color-ink-400)'"
+        style="font-family: var(--font-mono)">
+        {{ message().timestamp | date:'HH:mm' }}
+      </p>
+    }
+  </div>
+</div>

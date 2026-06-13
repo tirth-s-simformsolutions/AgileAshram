@@ -1,0 +1,43 @@
+# Compiled output
+dist/
+tmp/
+out-tsc/
+
+# Dependencies
+node_modules/
+
+# Angular cache
+.angular/
+
+# Environment files (never commit secrets)
+.env
+.env.*
+src/environments/environment.prod.ts
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+.history/
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+npm-debug.log*
+yarn-error.log
+*.log
+
+# Testing
+coverage/
+
+# Lock files (keep package-lock.json, ignore yarn/pnpm)
+yarn.lock
+pnpm-lock.yaml
+
+# Misc
+*.tsbuildinfo

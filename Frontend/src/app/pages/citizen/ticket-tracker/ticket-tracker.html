@@ -1,0 +1,250 @@
+<div class="min-h-screen flex flex-col bg-[color:var(--color-paper-100)]">
+  <app-navbar></app-navbar>
+
+  <main class="flex-1 max-w-2xl mx-auto w-full px-4 py-8">
+    <h1 class="text-2xl font-bold text-[color:var(--color-ink-900)] mb-1" style="font-family: var(--font-display)">Track your complaint</h1>
+    <p class="text-sm text-[color:var(--color-ink-500)] mb-6" style="font-family: var(--font-sans)">Enter your ticket ID to see status updates in real time.</p>
+
+    <!-- Search row -->
+    <div class="flex gap-2 mb-8">
+      <div class="flex-1 relative">
+        <label for="ticket-search" class="sr-only">Ticket ID</label>
+        <input
+          id="ticket-search"
+          type="text"
+          [(ngModel)]="ticketId"
+          placeholder="e.g. NV-2024-00123"
+          (keydown.enter)="search()"
+          class="w-full px-4 py-3 rounded-[var(--radius-control)] text-sm border outline-none transition-all"
+          style="border-color: var(--color-paper-400); background: white; color: var(--color-ink-900); font-family: var(--font-mono);"
+          [style.borderColor]="error() ? 'var(--color-danger-600)' : ''"
+          onfocus="this.style.borderColor='var(--color-saffron-500)'; this.style.boxShadow='0 0 0 3px rgba(232,131,12,0.15)'"
+          onblur="this.style.boxShadow='none'"
+          [attr.aria-invalid]="error() ? true : null"
+          [attr.aria-describedby]="error() ? 'search-error' : null">
+      </div>
+      <button
+        type="button"
+        (click)="search()"
+        [disabled]="!ticketId.trim()"
+        class="px-5 py-3 rounded-[var(--radius-control)] text-sm font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)]"
+        style="background: var(--color-primary-600); font-family: var(--font-sans);"
+        onmouseover="if(!this.disabled) this.style.background='var(--color-primary-700)'"
+        onmouseout="this.style.background='var(--color-primary-600)'">
+        Track
+      </button>
+    </div>
+
+    <!-- Error -->
+    @if (error()) {
+      <p id="search-error" role="alert" class="mb-4 text-sm font-medium px-4 py-3 rounded-[var(--radius-control)]" style="background: var(--color-danger-50); color: var(--color-danger-600); border: 1px solid rgba(217,45,32,0.3); font-family: var(--font-sans)">
+        {{ error() }}
+      </p>
+    }
+
+    <!-- Initial state -->
+    @if (!complaint() && !isLoading() && !error()) {
+      <div class="text-center py-16">
+        <svg class="size-14 mx-auto mb-4 text-[color:var(--color-paper-400)]" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <rect x="8" y="6" width="32" height="36" rx="3"/>
+          <path d="M16 18h16M16 24h10M16 30h6" stroke-linecap="round"/>
+          <circle cx="36" cy="36" r="8" fill="var(--color-paper-100)" stroke="currentColor"/>
+          <path d="M33 36h6M36 33v6" stroke-linecap="round"/>
+        </svg>
+        <p class="text-base font-medium text-[color:var(--color-ink-500)]" style="font-family: var(--font-sans)">Enter your ticket ID to see status</p>
+        <p class="text-sm text-[color:var(--color-ink-400)] mt-1" style="font-family: var(--font-sans)">Your ticket ID was sent when you filed your complaint</p>
+      </div>
+    }
+
+    <!-- Loading skeleton -->
+    @if (isLoading()) {
+      <div aria-label="Loading complaint details" aria-busy="true">
+        <div class="skeleton w-full h-12 mb-3"></div>
+        <div class="skeleton w-3/4 h-6 mb-2"></div>
+        <div class="skeleton w-full h-48"></div>
+      </div>
+    }
+
+    <!-- Complaint found -->
+    @if (complaint(); as c) {
+      <div class="rounded-[var(--radius-card)] bg-[color:var(--color-paper-50)] border border-[color:var(--color-paper-300)] overflow-hidden" style="box-shadow: var(--shadow-card)">
+        <!-- Tricolor rule -->
+        <div class="tricolor-rule" aria-hidden="true"></div>
+
+        <div class="p-6 md:p-8">
+          <!-- Ticket stub + copy -->
+          <div class="flex items-start gap-3 flex-wrap mb-5">
+            <span class="ticket-stub">
+              <svg class="size-4 text-[color:var(--color-saffron-500)]" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v3a1 1 0 010 2v3a2 2 0 01-2 2H4a2 2 0 01-2-2v-3a1 1 0 010-2V6z"/>
+              </svg>
+              {{ c.ticketId ?? ticketIdSignal() }}
+            </span>
+            <button
+              type="button"
+              (click)="copyTicketId()"
+              [attr.aria-label]="copied() ? 'Copied!' : 'Copy ticket ID to clipboard'"
+              class="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-full border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)]"
+              [style.color]="copied() ? 'var(--color-green-600)' : 'var(--color-ink-500)'"
+              [style.borderColor]="copied() ? 'rgba(26,127,75,0.4)' : 'var(--color-paper-400)'"
+              [style.background]="copied() ? 'rgba(26,127,75,0.06)' : 'white'">
+              @if (copied()) {
+                <svg class="size-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M2 6l3 3 5-5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Copied!
+              } @else {
+                <svg class="size-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                  <rect x="4" y="4" width="7" height="7" rx="1"/>
+                  <path d="M8 4V2a1 1 0 00-1-1H2a1 1 0 00-1 1v5a1 1 0 001 1h2" stroke-linecap="round"/>
+                </svg>
+                Copy
+              }
+            </button>
+          </div>
+
+          <!-- Status + severity row -->
+          <div class="flex flex-wrap items-center gap-2 mb-5">
+            <app-status-chip [status]="c.status"></app-status-chip>
+            <app-severity-badge [severity]="c.severity"></app-severity-badge>
+          </div>
+
+          <!-- Description -->
+          <p class="text-sm leading-relaxed text-[color:var(--color-ink-700)] mb-5" style="font-family: var(--font-sans)">
+            {{ c.description }}
+          </p>
+
+          <!-- Photo -->
+          @if (c.imageUrl) {
+            <div class="mb-6">
+              <button
+                type="button"
+                (click)="zoomImage.set(true)"
+                aria-label="View full size image"
+                class="block rounded-[var(--radius-control)] overflow-hidden border border-[color:var(--color-paper-300)] hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)]">
+                <img [src]="c.imageUrl" alt="Complaint photo" class="w-full max-h-56 object-cover" loading="lazy">
+              </button>
+            </div>
+            <!-- Image zoom modal -->
+            @if (zoomImage()) {
+              <div
+                class="fixed inset-0 z-50 flex items-center justify-center p-4"
+                style="background: rgba(28,37,51,0.85)"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Full size complaint photo"
+                (click)="zoomImage.set(false)">
+                <img [src]="c.imageUrl" alt="Complaint photo full size" class="max-w-full max-h-screen rounded-[var(--radius-card)] shadow-[var(--shadow-raised)]">
+              </div>
+            }
+          }
+
+          <!-- Progress stepper or Rejected stamp -->
+          @if (isRejected()) {
+            <div class="flex justify-center my-6">
+              <span class="stamp border-[color:var(--color-danger-600)] text-[color:var(--color-danger-600)] text-sm px-4 py-1.5">Rejected</span>
+            </div>
+          } @else {
+            <!-- Progress stepper -->
+            <div class="mb-6">
+              <h2 class="text-xs font-bold uppercase tracking-wide text-[color:var(--color-ink-400)] mb-4" style="font-family: var(--font-sans)">Progress</h2>
+              <!-- Horizontal stepper (sm+) -->
+              <div class="hidden sm:flex items-center" role="list" aria-label="Complaint progress steps">
+                @for (step of statusSteps; track step; let i = $index; let last = $last) {
+                  <div class="flex items-center" [class.flex-1]="!last" role="listitem">
+                    <div class="flex flex-col items-center gap-1">
+                      @if (i < currentStepIndex()) {
+                        <!-- Done -->
+                        <div class="size-7 rounded-full flex items-center justify-center" style="background: var(--color-green-600);" [attr.aria-label]="stepLabel(step) + ' - completed'">
+                          <svg class="size-3.5 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                            <path d="M2 6l3 3 5-5" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                        </div>
+                      } @else if (i === currentStepIndex()) {
+                        <!-- Current -->
+                        <div class="size-7 rounded-full flex items-center justify-center animate-pulse" style="background: var(--color-saffron-500);" [attr.aria-label]="stepLabel(step) + ' - current'">
+                          <div class="size-2 rounded-full bg-white"></div>
+                        </div>
+                      } @else {
+                        <!-- Future -->
+                        <div class="size-7 rounded-full border-2 flex items-center justify-center" style="border-color: var(--color-paper-400); background: var(--color-paper-100);" [attr.aria-label]="stepLabel(step) + ' - pending'">
+                          <div class="size-1.5 rounded-full" style="background: var(--color-paper-400)"></div>
+                        </div>
+                      }
+                      <span class="text-xs text-center w-16 leading-tight"
+                        [style.color]="i <= currentStepIndex() ? 'var(--color-ink-700)' : 'var(--color-ink-400)'"
+                        [style.fontWeight]="i === currentStepIndex() ? '600' : '400'"
+                        style="font-family: var(--font-sans)">{{ stepLabel(step) }}</span>
+                    </div>
+                    @if (!last) {
+                      <div class="flex-1 h-0.5 mx-2 rounded-full"
+                        [style.background]="i < currentStepIndex() ? 'var(--color-green-600)' : 'var(--color-paper-300)'"></div>
+                    }
+                  </div>
+                }
+              </div>
+
+              <!-- Vertical stepper (below sm) -->
+              <div class="sm:hidden space-y-3" role="list" aria-label="Complaint progress steps">
+                @for (step of statusSteps; track step; let i = $index) {
+                  <div class="flex items-center gap-3" role="listitem">
+                    @if (i < currentStepIndex()) {
+                      <div class="size-6 rounded-full flex items-center justify-center shrink-0" style="background: var(--color-green-600);">
+                        <svg class="size-3 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                          <path d="M2 6l3 3 5-5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </div>
+                    } @else if (i === currentStepIndex()) {
+                      <div class="size-6 rounded-full flex items-center justify-center shrink-0 animate-pulse" style="background: var(--color-saffron-500);">
+                        <div class="size-2 rounded-full bg-white"></div>
+                      </div>
+                    } @else {
+                      <div class="size-6 rounded-full border-2 flex items-center justify-center shrink-0" style="border-color: var(--color-paper-400); background: var(--color-paper-100);">
+                        <div class="size-1.5 rounded-full" style="background: var(--color-paper-400)"></div>
+                      </div>
+                    }
+                    <span class="text-sm"
+                      [style.color]="i <= currentStepIndex() ? 'var(--color-ink-700)' : 'var(--color-ink-400)'"
+                      [style.fontWeight]="i === currentStepIndex() ? '600' : '400'"
+                      style="font-family: var(--font-sans)">{{ stepLabel(step) }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Meta: dates, location -->
+          <div class="border-t border-[color:var(--color-paper-300)] pt-5 space-y-2">
+            @if (c.createdAt) {
+              <div class="flex items-center gap-2 text-sm text-[color:var(--color-ink-500)]" style="font-family: var(--font-sans)">
+                <svg class="size-4 shrink-0 text-[color:var(--color-ink-400)]" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <rect x="2" y="3" width="12" height="11" rx="1.5"/>
+                  <path d="M5 1v4M11 1v4M2 7h12" stroke-linecap="round"/>
+                </svg>
+                Filed {{ c.createdAt | date:'MMM d, y HH:mm' }}
+              </div>
+            }
+            @if (c.location?.address) {
+              <div class="flex items-start gap-2 text-sm text-[color:var(--color-ink-500)]" style="font-family: var(--font-sans)">
+                <svg class="size-4 shrink-0 mt-0.5 text-[color:var(--color-ink-400)]" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <path d="M8 1.5A4.5 4.5 0 0112.5 6c0 3-4.5 8-4.5 8S3.5 9 3.5 6A4.5 4.5 0 018 1.5z" stroke-linejoin="round"/>
+                  <circle cx="8" cy="6" r="1.5" fill="currentColor" stroke="none"/>
+                </svg>
+                <span>{{ c.location.address }}
+                  @if (c.location.lat && c.location.lng) {
+                    <button
+                      type="button"
+                      (click)="openMap(c.location.lat, c.location.lng)"
+                      class="ml-1.5 text-[color:var(--color-primary-600)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)] rounded">
+                      Open in map ↗
+                    </button>
+                  }
+                </span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </main>
+</div>

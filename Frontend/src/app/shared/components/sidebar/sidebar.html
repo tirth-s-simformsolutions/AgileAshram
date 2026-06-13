@@ -1,0 +1,127 @@
+<aside
+  [class.w-64]="!isCollapsed()"
+  [class.w-16]="isCollapsed()"
+  class="relative flex flex-col h-screen bg-[color:var(--color-primary-950)] transition-[width] duration-200 ease-in-out overflow-hidden shrink-0 dot-grid"
+  [attr.aria-label]="'Administration sidebar'"
+  [attr.aria-expanded]="!isCollapsed()">
+
+  <!-- Sidebar header with logo and toggle -->
+  <div class="flex items-center justify-between px-4 py-4">
+    @if (!isCollapsed()) {
+      <div class="flex items-center gap-2 min-w-0">
+        <!-- Saffron logo tile -->
+        <div class="size-8 rounded-lg flex items-center justify-center shrink-0"
+          style="background-color: var(--color-saffron-500);">
+          <svg class="size-4 text-white" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <circle cx="16" cy="16" r="13" stroke="white" stroke-width="2"/>
+            <circle cx="16" cy="16" r="3.5" fill="white"/>
+            <line x1="16" y1="3" x2="16" y2="9" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="16" y1="23" x2="16" y2="29" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="3" y1="16" x2="9" y2="16" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="23" y1="16" x2="29" y2="16" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="7.1" y1="7.1" x2="11.2" y2="11.2" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="20.8" y1="20.8" x2="24.9" y2="24.9" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="24.9" y1="7.1" x2="20.8" y2="11.2" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="11.2" y1="20.8" x2="7.1" y2="24.9" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <p class="text-sm font-bold text-white truncate" style="font-family: var(--font-display)">NagarVaani</p>
+          <p class="text-xs truncate" style="color: var(--color-primary-400)">{{ departmentLabel() }}</p>
+        </div>
+      </div>
+    } @else {
+      <div class="size-8 rounded-lg flex items-center justify-center mx-auto"
+        style="background-color: var(--color-saffron-500);">
+        <svg class="size-4" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <circle cx="16" cy="16" r="13" stroke="white" stroke-width="2"/>
+          <circle cx="16" cy="16" r="3.5" fill="white"/>
+        </svg>
+      </div>
+    }
+
+    <!-- Toggle button -->
+    <button
+      type="button"
+      (click)="toggleCollapse()"
+      [attr.aria-label]="isCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+      class="size-7 flex items-center justify-center rounded-lg transition-colors shrink-0"
+      style="color: var(--color-primary-400);"
+      onmouseenter="this.style.background='rgba(255,255,255,0.08)'"
+      onmouseleave="this.style.background=''"
+      [class.mx-auto]="isCollapsed()">
+      @if (!isCollapsed()) {
+        <svg class="size-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+          <path d="M13 5l-5 5 5 5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      } @else {
+        <svg class="size-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+          <path d="M7 5l5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      }
+    </button>
+  </div>
+
+  <!-- Tricolor rule under header -->
+  <div class="tricolor-rule mx-0" aria-hidden="true"></div>
+
+  <!-- Navigation -->
+  <nav class="flex-1 px-2 py-4 space-y-1" aria-label="Admin navigation">
+    <!-- Queue -->
+    <a
+      routerLink="/admin/queue"
+      routerLinkActive="bg-[color:var(--color-primary-800)] border-l-2 border-[color:var(--color-saffron-500)]"
+      class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 group relative"
+      style="color: var(--color-primary-300);"
+      onmouseenter="this.style.background='rgba(255,255,255,0.06)'"
+      onmouseleave="this.style.background=''"
+      [attr.title]="isCollapsed() ? 'Complaint Queue' : null">
+      <!-- Queue icon -->
+      <svg class="size-5 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+        <rect x="3" y="4" width="14" height="2.5" rx="1" fill="currentColor" stroke="none"/>
+        <rect x="3" y="8.75" width="10" height="2.5" rx="1" fill="currentColor" stroke="none"/>
+        <rect x="3" y="13.5" width="7" height="2.5" rx="1" fill="currentColor" stroke="none"/>
+      </svg>
+      @if (!isCollapsed()) {
+        <span class="text-sm font-medium" style="font-family: var(--font-sans)">Complaint Queue</span>
+      }
+    </a>
+
+    <!-- Analytics — disabled -->
+    <div
+      class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-not-allowed opacity-50"
+      style="color: var(--color-primary-400);"
+      role="menuitem"
+      aria-disabled="true"
+      [attr.title]="isCollapsed() ? 'Analytics — coming soon' : null">
+      <svg class="size-5 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+        <polyline points="3,14 7,8 11,11 15,5 17,7" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="3" y1="17" x2="17" y2="17" stroke-linecap="round"/>
+      </svg>
+      @if (!isCollapsed()) {
+        <span class="text-sm font-medium" style="font-family: var(--font-sans)">Analytics
+          <span class="text-xs ml-1.5 opacity-70">— soon</span>
+        </span>
+      }
+    </div>
+  </nav>
+
+  <!-- Logout at bottom -->
+  <div class="px-2 py-4 border-t" style="border-color: rgba(255,255,255,0.08)">
+    <button
+      type="button"
+      (click)="auth.logout()"
+      aria-label="Log out"
+      class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors"
+      style="color: var(--color-primary-400);"
+      onmouseenter="this.style.color='var(--color-danger-600)'; this.style.background='rgba(217,45,32,0.08)'"
+      onmouseleave="this.style.color='var(--color-primary-400)'; this.style.background=''">
+      <svg class="size-5 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+        <path d="M7 16H4a1 1 0 01-1-1V5a1 1 0 011-1h3M13 14l3-4m0 0l-3-4m3 4H7" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      @if (!isCollapsed()) {
+        <span class="text-sm font-medium" style="font-family: var(--font-sans)">Log out</span>
+      }
+    </button>
+  </div>
+</aside>

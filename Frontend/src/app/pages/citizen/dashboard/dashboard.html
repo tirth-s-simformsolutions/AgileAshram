@@ -1,0 +1,108 @@
+<div class="min-h-screen flex flex-col bg-[color:var(--color-paper-100)]">
+  <app-navbar></app-navbar>
+
+  <!-- Hero band -->
+  <section
+    class="bg-[color:var(--color-primary-900)] dot-grid text-white px-6 py-14 md:px-12 md:py-20"
+    aria-labelledby="dashboard-heading">
+    <div class="max-w-4xl mx-auto">
+      <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color: var(--color-saffron-400); font-family: var(--font-sans)">CITIZEN PORTAL</p>
+      <h1 id="dashboard-heading" class="text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight mb-3" style="font-family: var(--font-display)">
+        Namaste, <span style="color: var(--color-saffron-400)">{{ currentUser()?.name ?? 'Citizen' }}</span>
+      </h1>
+      <p class="text-base md:text-lg leading-relaxed max-w-xl" style="color: var(--color-primary-300); font-family: var(--font-sans)">
+        Report civic issues in your city and track their resolution — from pothole to pavement.
+      </p>
+    </div>
+    <!-- Tricolor rule at bottom -->
+    <div class="tricolor-rule mt-12 max-w-4xl mx-auto" aria-hidden="true"></div>
+  </section>
+
+  <!-- Action cards -->
+  <main class="flex-1 max-w-4xl mx-auto w-full px-6 md:px-12 py-10">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-10">
+
+      <!-- File a complaint card -->
+      <a
+        routerLink="/citizen/complaint"
+        class="group block rounded-[var(--radius-card)] p-7 bg-[color:var(--color-paper-50)] border border-[color:var(--color-paper-300)] border-l-4 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)] focus-visible:ring-offset-2"
+        style="border-left-color: var(--color-saffron-500); box-shadow: var(--shadow-card);"
+        onmouseover="this.style.boxShadow='var(--shadow-raised)'"
+        onmouseout="this.style.boxShadow='var(--shadow-card)'"
+        aria-label="File a complaint — report a civic issue in your city">
+        <div class="flex items-start justify-between mb-4">
+          <!-- Chat/complaint icon -->
+          <div class="size-12 rounded-xl flex items-center justify-center" style="background: var(--color-saffron-50);">
+            <svg class="size-6" style="color: var(--color-saffron-600)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z" stroke-linecap="round" stroke-linejoin="round"/>
+              <line x1="9" y1="10" x2="15" y2="10" stroke-linecap="round"/>
+              <line x1="9" y1="14" x2="12" y2="14" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <!-- Animated chevron -->
+          <svg
+            class="size-5 text-[color:var(--color-ink-400)] transition-transform duration-200 group-hover:translate-x-1"
+            viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+            <path d="M7 7l5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h2 class="text-lg font-bold text-[color:var(--color-ink-900)] mb-1.5" style="font-family: var(--font-display)">File a complaint</h2>
+        <p class="text-sm leading-relaxed text-[color:var(--color-ink-500)]" style="font-family: var(--font-sans)">
+          Report potholes, garbage, broken street lights, water leaks, and more. Our AI helps classify and route your complaint instantly.
+        </p>
+        <div class="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full" style="background: var(--color-saffron-50); color: var(--color-saffron-600);">
+          <svg class="size-3" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><circle cx="6" cy="6" r="6"/></svg>
+          AI-assisted
+        </div>
+      </a>
+
+      <!-- Track complaint card -->
+      <a
+        routerLink="/citizen/track"
+        class="group block rounded-[var(--radius-card)] p-7 bg-[color:var(--color-paper-50)] border border-[color:var(--color-paper-300)] border-l-4 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-2 focus-visible:ring-[color:var(--color-green-600)] focus-visible:ring-offset-2"
+        style="border-left-color: var(--color-green-600); box-shadow: var(--shadow-card);"
+        onmouseover="this.style.boxShadow='var(--shadow-raised)'"
+        onmouseout="this.style.boxShadow='var(--shadow-card)'"
+        aria-label="Track your complaint — check the status of a previously filed complaint">
+        <div class="flex items-start justify-between mb-4">
+          <!-- Ticket/track icon -->
+          <div class="size-12 rounded-xl flex items-center justify-center" style="background: rgba(26,127,75,0.08);">
+            <svg class="size-6" style="color: var(--color-green-600)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" stroke-linecap="round" stroke-linejoin="round"/>
+              <rect x="9" y="3" width="6" height="4" rx="1"/>
+              <path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <!-- Animated chevron -->
+          <svg
+            class="size-5 text-[color:var(--color-ink-400)] transition-transform duration-200 group-hover:translate-x-1"
+            viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+            <path d="M7 7l5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h2 class="text-lg font-bold text-[color:var(--color-ink-900)] mb-1.5" style="font-family: var(--font-display)">Track your complaint</h2>
+        <p class="text-sm leading-relaxed text-[color:var(--color-ink-500)]" style="font-family: var(--font-sans)">
+          Enter your ticket ID to see the current status of your complaint — from submission through resolution.
+        </p>
+        <div class="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full" style="background: rgba(26,127,75,0.08); color: var(--color-green-600);">
+          <svg class="size-3" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><circle cx="6" cy="6" r="6"/></svg>
+          Real-time status
+        </div>
+      </a>
+    </div>
+
+    <!-- Helpline strip -->
+    <div
+      class="flex items-center gap-3 px-5 py-4 rounded-[var(--radius-control)] border border-[color:var(--color-paper-300)]"
+      style="background: var(--color-paper-50);">
+      <svg class="size-5 shrink-0 text-[color:var(--color-ink-400)]" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+        <path d="M2 5a2 2 0 012-2h3l1.5 3-1.75 1.25a11.04 11.04 0 005 5L13 10.5l3 1.5v3a2 2 0 01-2 2A16 16 0 012 5z" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <p class="text-sm text-[color:var(--color-ink-500)]" style="font-family: var(--font-sans)">
+        <span class="font-medium text-[color:var(--color-ink-700)]">AMC Helpline:</span>
+        <a href="tel:18001234567" class="ml-1 font-semibold text-[color:var(--color-primary-600)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)] rounded">1800-123-4567</a>
+        <span class="text-[color:var(--color-ink-400)] ml-2">· Mon–Sat, 8 AM – 8 PM</span>
+      </p>
+    </div>
+  </main>
+</div>

@@ -1,0 +1,11 @@
+<span
+  class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold"
+  [attr.style]="'border-radius: var(--radius-chip); font-family: var(--font-sans); ' + config().pillStyle"
+  [attr.aria-label]="'Status: ' + config().label">
+  <span
+    class="size-1.5 rounded-full shrink-0"
+    [class]="config().dotClass"
+    aria-hidden="true">
+  </span>
+  {{ config().label }}
+</span>

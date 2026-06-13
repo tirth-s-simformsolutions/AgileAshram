@@ -1,0 +1,139 @@
+<div class="h-dvh flex flex-col bg-[color:var(--color-paper-100)]">
+
+  <!-- Slim header -->
+  <header class="bg-[color:var(--color-paper-50)] border-b border-[color:var(--color-paper-300)] px-4 py-3 flex items-center gap-3 shrink-0" style="box-shadow: var(--shadow-card)">
+    <button
+      type="button"
+      (click)="goBack()"
+      aria-label="Go back to dashboard"
+      class="size-8 flex items-center justify-center rounded-lg text-[color:var(--color-ink-500)] hover:text-[color:var(--color-ink-900)] hover:bg-[color:var(--color-paper-200)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)]">
+      <svg class="size-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+        <path d="M13 5l-5 5 5 5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <div class="flex-1 min-w-0">
+      <h1 class="text-sm font-bold text-[color:var(--color-ink-900)] truncate" style="font-family: var(--font-display)">File a complaint</h1>
+      <p class="text-xs text-[color:var(--color-ink-400)] truncate" style="font-family: var(--font-sans)">
+        @switch (currentStep()) {
+          @case ('chat') { Describe your civic issue }
+          @case ('confirming') { Review AI classification }
+          @case ('locating') { Getting your location }
+          @case ('submitting') { Submitting… }
+          @case ('done') { Submitted successfully }
+        }
+      </p>
+    </div>
+    <!-- Tricolor accent -->
+    <div class="size-2 rounded-full" style="background: var(--color-saffron-500)" aria-hidden="true"></div>
+  </header>
+
+  <!-- Message area -->
+  <div
+    #scrollContainer
+    class="flex-1 overflow-y-auto px-4 py-6 space-y-1"
+    aria-label="Conversation"
+    aria-live="polite">
+
+    <!-- Quick suggestion chips -->
+    @if (showSuggestions()) {
+      <div class="mb-4">
+        <p class="text-xs font-medium text-[color:var(--color-ink-400)] mb-2 text-center" style="font-family: var(--font-sans)">Tap to start quickly</p>
+        <div class="flex flex-wrap gap-2 justify-center">
+          @for (suggestion of quickSuggestions; track suggestion) {
+            <button
+              type="button"
+              (click)="selectSuggestion(suggestion)"
+              class="text-xs font-medium px-3 py-1.5 rounded-full border transition-all hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)]"
+              style="border-color: var(--color-paper-400); background: var(--color-paper-50); color: var(--color-ink-700); font-family: var(--font-sans);"
+              onmouseover="this.style.borderColor='var(--color-saffron-500)'; this.style.color='var(--color-saffron-600)'"
+              onmouseout="this.style.borderColor='var(--color-paper-400)'; this.style.color='var(--color-ink-700)'">
+              {{ suggestion }}
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Chat bubbles -->
+    @for (msg of messages(); track trackMessage($index, msg)) {
+      <app-chat-bubble [message]="msg"></app-chat-bubble>
+    }
+
+    <!-- Typing indicator -->
+    @if (isTyping()) {
+      <div class="flex justify-start mb-3" aria-live="polite" aria-label="Bot is typing">
+        <div class="flex items-center gap-1.5 px-4 py-3 rounded-[var(--radius-card)] rounded-tl-[var(--radius-control)] bg-[color:var(--color-paper-50)] border border-[color:var(--color-paper-300)]">
+          <span class="size-1.5 rounded-full animate-bounce" style="background: var(--color-ink-400); animation-delay: 0ms"></span>
+          <span class="size-1.5 rounded-full animate-bounce" style="background: var(--color-ink-400); animation-delay: 150ms"></span>
+          <span class="size-1.5 rounded-full animate-bounce" style="background: var(--color-ink-400); animation-delay: 300ms"></span>
+        </div>
+      </div>
+    }
+
+    <!-- Success ticket block -->
+    @if (currentStep() === 'done' && ticketId()) {
+      <div class="flex justify-center mt-4">
+        <div class="text-center p-4 rounded-[var(--radius-card)] border border-[color:var(--color-paper-300)] bg-[color:var(--color-paper-50)]" style="box-shadow: var(--shadow-card)">
+          <p class="text-xs font-medium text-[color:var(--color-ink-400)] mb-2" style="font-family: var(--font-sans)">Your Ticket ID</p>
+          <span class="ticket-stub text-base">
+            <svg class="size-4 text-[color:var(--color-saffron-500)]" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v3a1 1 0 010 2v3a2 2 0 01-2 2H4a2 2 0 01-2-2v-3a1 1 0 010-2V6z"/>
+            </svg>
+            {{ ticketId() }}
+          </span>
+          <a
+            routerLink="/citizen/track"
+            [queryParams]="{ id: ticketId() }"
+            class="mt-3 block text-sm font-semibold text-[color:var(--color-primary-600)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)] rounded"
+            style="font-family: var(--font-sans)">
+            Track this complaint →
+          </a>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Composer pinned at bottom -->
+  @if (currentStep() !== 'done') {
+    <div class="bg-[color:var(--color-paper-50)] border-t border-[color:var(--color-paper-300)] p-4 shrink-0">
+      <!-- File upload -->
+      <div class="mb-3">
+        <app-file-upload (fileChange)="onFileChange($event)"></app-file-upload>
+      </div>
+      <!-- Text input + send -->
+      <div class="flex items-end gap-2">
+        <textarea
+          [(ngModel)]="inputText"
+          (keydown)="onTextareaKeydown($event)"
+          rows="1"
+          class="flex-1 resize-none rounded-[var(--radius-control)] px-4 py-3 text-sm border outline-none transition-all min-h-[48px] max-h-32 overflow-y-auto"
+          style="border-color: var(--color-paper-400); background: white; color: var(--color-ink-900); font-family: var(--font-sans);"
+          onfocus="this.style.borderColor='var(--color-saffron-500)'; this.style.boxShadow='0 0 0 3px rgba(232,131,12,0.15)'"
+          onblur="this.style.boxShadow='none'"
+          [attr.aria-label]="currentStep() === 'confirming' ? 'Reply yes to confirm or rephrase your complaint' : 'Describe your civic problem'"
+          [placeholder]="currentStep() === 'confirming' ? 'Type yes to confirm or rephrase…' : 'Describe your problem…'">
+        </textarea>
+        <button
+          type="button"
+          (click)="onSend()"
+          [disabled]="!canSend()"
+          aria-label="Send message"
+          class="size-12 shrink-0 rounded-[var(--radius-control)] flex items-center justify-center transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)]"
+          style="background: var(--color-primary-600);"
+          onmouseover="if(!this.disabled) this.style.background='var(--color-primary-700)'"
+          onmouseout="this.style.background='var(--color-primary-600)'">
+          @if (isTyping()) {
+            <span class="chakra-spinner chakra-spinner--light size-4" aria-hidden="true"></span>
+          } @else {
+            <svg class="size-5 text-white" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+              <path d="M4 10h12M11 5l5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          }
+        </button>
+      </div>
+      <p class="text-xs text-[color:var(--color-ink-400)] mt-2 text-center" style="font-family: var(--font-sans)">
+        Press Enter to send · Shift+Enter for new line
+      </p>
+    </div>
+  }
+</div>

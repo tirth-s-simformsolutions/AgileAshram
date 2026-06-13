@@ -1,0 +1,256 @@
+<div class="flex h-screen overflow-hidden bg-[color:var(--color-paper-100)]">
+  <app-sidebar></app-sidebar>
+
+  <div class="flex-1 overflow-y-auto p-6">
+    <!-- Back link -->
+    <button
+      type="button"
+      (click)="goBack()"
+      aria-label="Return to complaint queue"
+      class="flex items-center gap-1.5 text-sm text-[color:var(--color-ink-500)] hover:text-[color:var(--color-ink-900)] transition-colors mb-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)] rounded">
+      <svg class="size-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+        <path d="M13 5l-5 5 5 5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Complaint queue
+    </button>
+
+    <!-- Loading skeleton -->
+    @if (isLoading()) {
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6" aria-label="Loading complaint details" aria-busy="true">
+        <div class="space-y-4">
+          <div class="skeleton w-full h-64 rounded-[var(--radius-card)]"></div>
+          <div class="skeleton w-3/4 h-8"></div>
+          <div class="skeleton w-full h-32"></div>
+        </div>
+        <div class="skeleton w-full h-80 rounded-[var(--radius-card)]"></div>
+      </div>
+    }
+
+    <!-- Not found state -->
+    @if (notFound()) {
+      <div class="flex flex-col items-center justify-center py-24 text-center">
+        <span class="stamp border-[color:var(--color-danger-600)] text-[color:var(--color-danger-600)] text-base px-6 py-2 mb-6">Not Found</span>
+        <p class="text-base font-medium text-[color:var(--color-ink-500)] mb-2" style="font-family: var(--font-sans)">This complaint does not exist</p>
+        <button
+          type="button"
+          (click)="goBack()"
+          class="text-sm text-[color:var(--color-primary-600)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)] rounded"
+          style="font-family: var(--font-sans)">
+          ← Back to queue
+        </button>
+      </div>
+    }
+
+    <!-- Complaint detail -->
+    @if (complaint(); as c) {
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 items-start">
+
+        <!-- Left card -->
+        <div class="relative rounded-[var(--radius-card)] bg-[color:var(--color-paper-50)] border border-[color:var(--color-paper-300)] p-6 md:p-8 overflow-hidden" style="box-shadow: var(--shadow-card)">
+
+          <!-- Stamps (absolute over corner) -->
+          @if (isResolved()) {
+            <div class="absolute -top-2 -right-2 rotate-6 z-10">
+              <span class="stamp border-[color:var(--color-green-600)] text-[color:var(--color-green-600)] text-xs px-3 py-1">Resolved</span>
+            </div>
+          }
+          @if (isRejected()) {
+            <div class="absolute -top-2 -right-2 rotate-6 z-10">
+              <span class="stamp border-[color:var(--color-danger-600)] text-[color:var(--color-danger-600)] text-xs px-3 py-1">Rejected</span>
+            </div>
+          }
+
+          <!-- Tricolor rule -->
+          <div class="tricolor-rule -mx-6 md:-mx-8 -mt-6 md:-mt-8 mb-6 rounded-t-[var(--radius-card)]" aria-hidden="true"></div>
+
+          <!-- Ticket stub header -->
+          <div class="mb-5">
+            <span class="ticket-stub">
+              <svg class="size-4 text-[color:var(--color-saffron-500)]" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v3a1 1 0 010 2v3a2 2 0 01-2 2H4a2 2 0 01-2-2v-3a1 1 0 010-2V6z"/>
+              </svg>
+              {{ c.ticketId ?? 'No ticket ID' }}
+            </span>
+          </div>
+
+          <!-- Status + Severity -->
+          <div class="flex flex-wrap items-center gap-2 mb-5">
+            <app-status-chip [status]="c.status"></app-status-chip>
+            <app-severity-badge [severity]="c.severity"></app-severity-badge>
+          </div>
+
+          <!-- Description -->
+          <p class="text-base leading-relaxed text-[color:var(--color-ink-700)] mb-6" style="font-family: var(--font-sans)">{{ c.description }}</p>
+
+          <!-- Photo -->
+          @if (c.imageUrl) {
+            <div class="mb-6">
+              <button
+                type="button"
+                (click)="zoomImage.set(true)"
+                aria-label="View full size complaint photo"
+                class="block w-full rounded-[var(--radius-control)] overflow-hidden border border-[color:var(--color-paper-300)] hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)]">
+                <img [src]="c.imageUrl" alt="Complaint photo" class="w-full max-h-64 object-cover" loading="lazy">
+              </button>
+            </div>
+            @if (zoomImage()) {
+              <div
+                class="fixed inset-0 z-50 flex items-center justify-center p-4"
+                style="background: rgba(28,37,51,0.85)"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Full size complaint photo"
+                (click)="zoomImage.set(false)">
+                <img [src]="c.imageUrl" alt="Complaint photo full size" class="max-w-full max-h-screen rounded-[var(--radius-card)] shadow-[var(--shadow-raised)]">
+              </div>
+            }
+          }
+
+          <!-- Meta rows -->
+          <div class="space-y-3 border-t border-[color:var(--color-paper-300)] pt-5">
+            @if (c.citizenName) {
+              <div class="flex items-center gap-2 text-sm text-[color:var(--color-ink-600)]" style="font-family: var(--font-sans)">
+                <svg class="size-4 shrink-0 text-[color:var(--color-ink-400)]" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <circle cx="8" cy="5" r="3"/>
+                  <path d="M2 14a6 6 0 0112 0" stroke-linecap="round"/>
+                </svg>
+                <span class="font-medium text-[color:var(--color-ink-700)]">Citizen:</span> {{ c.citizenName }}
+              </div>
+            }
+            @if (c.citizenPhone) {
+              <div class="flex items-center gap-2 text-sm text-[color:var(--color-ink-600)]" style="font-family: var(--font-sans)">
+                <svg class="size-4 shrink-0 text-[color:var(--color-ink-400)]" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <path d="M2 4a1.5 1.5 0 011.5-1.5H5l1.25 2.5L4.5 6.5A10.5 10.5 0 009.5 11.5l1.5-1.75L13.5 11v1.5A1.5 1.5 0 0112 14 11.5 11.5 0 012 4z" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="font-medium text-[color:var(--color-ink-700)]">Phone:</span>
+                <a [href]="'tel:' + c.citizenPhone" class="text-[color:var(--color-primary-600)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)] rounded">{{ c.citizenPhone }}</a>
+              </div>
+            }
+            @if (c.createdAt) {
+              <div class="flex items-center gap-2 text-sm text-[color:var(--color-ink-600)]" style="font-family: var(--font-sans)">
+                <svg class="size-4 shrink-0 text-[color:var(--color-ink-400)]" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <rect x="2" y="3" width="12" height="11" rx="1.5"/>
+                  <path d="M5 1v4M11 1v4M2 7h12" stroke-linecap="round"/>
+                </svg>
+                <span class="font-medium text-[color:var(--color-ink-700)]">Filed:</span> {{ c.createdAt | date:'MMM d, y · HH:mm' }}
+              </div>
+            }
+            @if (c.updatedAt) {
+              <div class="flex items-center gap-2 text-sm text-[color:var(--color-ink-600)]" style="font-family: var(--font-sans)">
+                <svg class="size-4 shrink-0 text-[color:var(--color-ink-400)]" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <path d="M13 8A5 5 0 103 8" stroke-linecap="round"/>
+                  <path d="M13 4v4h-4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="font-medium text-[color:var(--color-ink-700)]">Updated:</span> {{ c.updatedAt | date:'MMM d, y · HH:mm' }}
+              </div>
+            }
+            @if (c.location?.address) {
+              <div class="flex items-start gap-2 text-sm text-[color:var(--color-ink-600)]" style="font-family: var(--font-sans)">
+                <svg class="size-4 shrink-0 mt-0.5 text-[color:var(--color-ink-400)]" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <path d="M8 1.5A4.5 4.5 0 0112.5 6c0 3-4.5 8-4.5 8S3.5 9 3.5 6A4.5 4.5 0 018 1.5z" stroke-linejoin="round"/>
+                  <circle cx="8" cy="6" r="1.5" fill="currentColor" stroke="none"/>
+                </svg>
+                <span>
+                  <span class="font-medium text-[color:var(--color-ink-700)]">Location:</span> {{ c.location.address }}
+                  @if (c.location.lat && c.location.lng) {
+                    <button
+                      type="button"
+                      (click)="openMap(c.location.lat, c.location.lng)"
+                      class="ml-1.5 text-[color:var(--color-primary-600)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)] rounded">
+                      Open in map ↗
+                    </button>
+                  }
+                </span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Right: Update status panel (sticky) -->
+        <div class="lg:sticky lg:top-6">
+          <div class="rounded-[var(--radius-card)] bg-[color:var(--color-paper-50)] border border-[color:var(--color-paper-300)] p-6 overflow-hidden" style="box-shadow: var(--shadow-card)">
+            <div class="tricolor-rule -mx-6 -mt-6 mb-5 rounded-t-[var(--radius-card)]" aria-hidden="true"></div>
+
+            <h2 class="text-sm font-bold text-[color:var(--color-ink-900)] mb-4" style="font-family: var(--font-display)">Update status</h2>
+
+            <!-- Success banner -->
+            @if (updateSuccess()) {
+              <div
+                role="status"
+                class="mb-4 flex items-center gap-2 px-3 py-2.5 rounded-[var(--radius-control)] text-sm font-medium"
+                style="background: rgba(26,127,75,0.08); color: var(--color-green-600); border: 1px solid rgba(26,127,75,0.3); font-family: var(--font-sans)">
+                <svg class="size-4 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M3 8l4 4 6-6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Status updated successfully
+              </div>
+            }
+
+            <!-- Radio tile list -->
+            <div class="space-y-2 mb-5" role="radiogroup" aria-label="Select new status">
+              @for (opt of statusOptions; track opt.value) {
+                <label
+                  [for]="'status-' + opt.value"
+                  class="flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-control)] border cursor-pointer transition-all"
+                  [style.borderColor]="selectedStatus() === opt.value ? 'var(--color-saffron-500)' : 'var(--color-paper-400)'"
+                  [style.boxShadow]="selectedStatus() === opt.value ? '0 0 0 2px rgba(232,131,12,0.2)' : 'none'"
+                  [style.background]="selectedStatus() === opt.value ? 'var(--color-saffron-50)' : 'white'">
+                  <input
+                    type="radio"
+                    [id]="'status-' + opt.value"
+                    name="complaint-status"
+                    [value]="opt.value"
+                    [checked]="selectedStatus() === opt.value"
+                    (change)="selectStatus(opt.value)"
+                    class="sr-only">
+                  <span
+                    class="size-4 rounded-full border-2 flex items-center justify-center shrink-0"
+                    [style.borderColor]="selectedStatus() === opt.value ? 'var(--color-saffron-500)' : 'var(--color-paper-400)'"
+                    aria-hidden="true">
+                    @if (selectedStatus() === opt.value) {
+                      <span class="size-2 rounded-full" style="background: var(--color-saffron-500)"></span>
+                    }
+                  </span>
+                  <span class="text-sm font-medium text-[color:var(--color-ink-700)]" style="font-family: var(--font-sans)">{{ opt.label }}</span>
+                </label>
+              }
+            </div>
+
+            <!-- Apply / Reject confirm buttons -->
+            @if (showRejectConfirm()) {
+              <button
+                type="button"
+                (click)="confirmReject()"
+                class="w-full flex items-center justify-center gap-2 py-3 rounded-[var(--radius-control)] text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-danger-600)]"
+                style="background: var(--color-danger-600); color: white; font-family: var(--font-sans);">
+                <svg class="size-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M8 2v7M8 12v2" stroke-linecap="round"/>
+                </svg>
+                Confirm rejection?
+              </button>
+              <p class="text-xs text-center mt-2 text-[color:var(--color-ink-400)]" style="font-family: var(--font-sans)">This will auto-cancel in 3 seconds</p>
+            } @else {
+              <button
+                type="button"
+                (click)="applyStatus()"
+                [disabled]="!selectedStatus() || isUpdating()"
+                class="w-full flex items-center justify-center gap-2 py-3 rounded-[var(--radius-control)] text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-primary-600)]"
+                style="background: var(--color-primary-600); color: white; font-family: var(--font-sans);"
+                onmouseover="if(!this.disabled) this.style.background='var(--color-primary-700)'"
+                onmouseout="this.style.background='var(--color-primary-600)'">
+                @if (isUpdating()) {
+                  <span class="chakra-spinner chakra-spinner--light size-4" aria-hidden="true"></span>
+                  Updating…
+                } @else if (selectedIsReject()) {
+                  Reject complaint
+                } @else {
+                  Apply status
+                }
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

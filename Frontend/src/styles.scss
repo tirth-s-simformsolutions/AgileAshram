@@ -1,0 +1,29 @@
+html, body { height: 100%; }
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-paper-100);
+  color: var(--color-ink-700);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-saffron-500);
+  outline-offset: 2px;
+}
+
+::selection {
+  background-color: var(--color-saffron-100);
+  color: var(--color-ink-900);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
