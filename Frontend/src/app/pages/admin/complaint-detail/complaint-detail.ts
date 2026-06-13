@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, PLATFORM_ID } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, PLATFORM_ID, viewChild } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { isPlatformBrowser } from '@angular/common';
@@ -40,6 +40,8 @@ export class ComplaintDetail implements OnInit {
   protected readonly statusOptions = UPDATABLE_STATUSES;
 
   private rejectConfirmTimer: ReturnType<typeof setTimeout> | null = null;
+  protected readonly sidebarRef = viewChild(Sidebar);
+  protected openMobileNav(): void { this.sidebarRef()?.openMobileSidebar(); }
 
   protected readonly isResolved = computed(() => this.complaint()?.status === 'resolved');
   protected readonly isRejected = computed(() => this.complaint()?.status === 'rejected');

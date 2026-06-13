@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
@@ -42,6 +42,8 @@ export class ComplaintQueue implements OnInit {
 
   protected readonly statusFilters = STATUS_FILTERS;
   protected readonly skeletonRows = Array.from({ length: 6 });
+  protected readonly sidebarRef = viewChild(Sidebar);
+  protected openMobileNav(): void { this.sidebarRef()?.openMobileSidebar(); }
 
   readonly visibleComplaints = computed(() => {
     let list = this.complaints();

@@ -27,7 +27,7 @@
         type="button"
         (click)="search()"
         [disabled]="!ticketId.trim()"
-        class="px-5 py-3 rounded-[var(--radius-control)] text-sm font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)]"
+        class="px-5 py-3 shrink-0 rounded-[var(--radius-control)] text-sm font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-saffron-500)]"
         style="background: var(--color-primary-600); font-family: var(--font-sans);"
         onmouseover="if(!this.disabled) this.style.background='var(--color-primary-700)'"
         onmouseout="this.style.background='var(--color-primary-600)'">
@@ -71,7 +71,7 @@
         <!-- Tricolor rule -->
         <div class="tricolor-rule" aria-hidden="true"></div>
 
-        <div class="p-6 md:p-8">
+        <div class="p-4 sm:p-6 md:p-8">
           <!-- Ticket stub + copy -->
           <div class="flex items-start gap-3 flex-wrap mb-5">
             <span class="ticket-stub">

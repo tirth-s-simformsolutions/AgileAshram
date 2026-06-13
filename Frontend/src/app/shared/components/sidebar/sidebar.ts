@@ -1,6 +1,8 @@
-import { Component, signal, inject, computed } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, signal, inject, computed, HostListener, DestroyRef } from '@angular/core';
+import { RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { AuthService } from '../../../core/services/auth';
+import { filter } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-sidebar',
@@ -13,6 +15,7 @@ export class Sidebar {
   protected readonly currentUser = this.auth.currentUser;
 
   protected readonly isCollapsed = signal(false);
+  isMobileOpen = signal(false);
 
   protected readonly departmentLabel = computed(() => {
     const role = this.currentUser()?.role;
@@ -21,7 +24,25 @@ export class Sidebar {
     return 'Department';
   });
 
+  constructor() {
+    const router = inject(Router);
+    const destroyRef = inject(DestroyRef);
+
+    router.events.pipe(
+      filter(e => e instanceof NavigationEnd),
+      takeUntilDestroyed(destroyRef)
+    ).subscribe(() => this.isMobileOpen.set(false));
+  }
+
   protected toggleCollapse(): void {
     this.isCollapsed.update(v => !v);
+  }
+
+  openMobileSidebar(): void { this.isMobileOpen.set(true); }
+  closeMobileSidebar(): void { this.isMobileOpen.set(false); }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.isMobileOpen()) this.closeMobileSidebar();
   }
 }
