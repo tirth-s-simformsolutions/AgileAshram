@@ -5,7 +5,9 @@ import { Department, DepartmentDocument } from './schemas/department.schema';
 
 @Injectable()
 export class DepartmentRepository {
-  constructor(@InjectModel(Department.name) private readonly departmentModel: Model<DepartmentDocument>) {}
+  constructor(
+    @InjectModel(Department.name) private readonly departmentModel: Model<DepartmentDocument>,
+  ) {}
 
   insertMany(departments: Partial<Department>[]) {
     return this.departmentModel.insertMany(departments);
@@ -21,5 +23,9 @@ export class DepartmentRepository {
   countDocuments(search = '') {
     const filter = search ? { name: { $regex: search, $options: 'i' } } : {};
     return this.departmentModel.countDocuments(filter).exec();
+  }
+
+  findById(id: string) {
+    return this.departmentModel.findById(id).exec();
   }
 }

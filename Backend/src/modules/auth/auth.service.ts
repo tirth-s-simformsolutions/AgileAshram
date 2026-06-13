@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ConflictException,
-  HttpStatus,
   Injectable,
   InternalServerErrorException,
   UnauthorizedException,
@@ -14,8 +13,14 @@ import { compareHash, createHash, handleError } from '../../common/utils';
 import { ResponseResult } from '../../core/class/';
 import { UserRole, UserStatus } from '../user/schemas/user.schema';
 import { UserRepository } from '../user/user.repository';
-import { AdminLoginDto, ChangePasswordDto, SignupDto } from './dtos';
-import { ICookieConfig, ISetuInitiateResponse, ISetuStatusResponse, ITokenPayload, IUserValidationResult } from './interfaces';
+import { AdminLoginDto, ChangePasswordDto } from './dtos';
+import {
+  ICookieConfig,
+  ISetuInitiateResponse,
+  ISetuStatusResponse,
+  ITokenPayload,
+  IUserValidationResult,
+} from './interfaces';
 import { ERROR_MSG, SUCCESS_MSG } from './messages';
 
 @Injectable()
@@ -84,69 +89,6 @@ export class AuthService {
         return value * 24 * 60 * 60 * 1000; // days
       default:
         return 15 * 60 * 1000; // default 15 minutes
-    }
-  }
-
-  async signup(data: SignupDto, res: Response) {
-    try {
-      const { email, password, name } = data;
-
-      // validate user email
-      await this.validateUserBeforeCreate({ email });
-
-      const createUserPayload = {
-        email,
-        password: await createHash(password),
-        name,
-        status: UserStatus.ACTIVE,
-      };
-
-      const createdUserInfo = await this.userRepository.createUser(createUserPayload);
-
-      const accessToken = await this.jwtService.signAsync(
-        {
-          userId: createdUserInfo.id,
-        },
-        {
-          secret: this.accessTokenSecretKey,
-          expiresIn: this.accessTokenExpire,
-        },
-      );
-
-      const refreshToken = await this.jwtService.signAsync(
-        {
-          userId: createdUserInfo.id,
-        },
-        {
-          secret: this.refreshTokenSecretKey,
-          expiresIn: this.refreshTokenExpire,
-        },
-      );
-
-      const userInfo = await this.userRepository.findUserById(createdUserInfo.id);
-
-      // Set tokens in cookies
-      this.setTokenCookies(res, accessToken, refreshToken);
-
-      return new ResponseResult({
-        message: SUCCESS_MSG.USER.CREATED,
-        statusCode: HttpStatus.CREATED,
-        data: {
-          userInfo,
-        },
-      });
-    } catch (error) {
-      handleError(error);
-    }
-  }
-
-  async validateUserBeforeCreate({ email }: Partial<SignupDto>) {
-    // Check user exists with same email
-    const isEmailRegistered = await this.userRepository.findOneByCondition({
-      email,
-    });
-    if (isEmailRegistered) {
-      throw new ConflictException(ERROR_MSG.USER.USER_EXISTS_WITH_SAME_EMAIL);
     }
   }
 
@@ -339,7 +281,7 @@ export class AuthService {
         throw new InternalServerErrorException(ERROR_MSG.DIGILOCKER.FAILED);
       }
 
-      const body = await response.json() as ISetuInitiateResponse;
+      const body = (await response.json()) as ISetuInitiateResponse;
 
       return new ResponseResult({
         message: SUCCESS_MSG.USER.DIGILOCKER_INITIATE,
@@ -371,7 +313,7 @@ export class AuthService {
           throw new InternalServerErrorException(ERROR_MSG.DIGILOCKER.FAILED);
         }
 
-        const body = await response.json() as ISetuStatusResponse;
+        const body = (await response.json()) as ISetuStatusResponse;
 
         if (body.status !== 'authenticated') {
           throw new BadRequestException(ERROR_MSG.DIGILOCKER.NOT_AUTHENTICATED);

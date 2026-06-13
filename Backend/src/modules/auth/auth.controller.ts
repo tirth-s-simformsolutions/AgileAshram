@@ -1,9 +1,10 @@
 import { Body, Controller, Post, Req, Res, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { SWAGGER_TAGS } from '../../common/constants';
 import { ICurrentUser } from '../../common/interfaces';
-import { CurrentUser, Public } from '../../core/decorators';
+import { CurrentUser, Public, Roles } from '../../core/decorators';
+import { UserRole } from '../user/schemas/user.schema';
 import { AuthService } from './auth.service';
 import {
   AdminLoginDto,
@@ -15,28 +16,11 @@ import {
   DigilockerInitiateResponseDto,
   LogoutResponseDto,
   RefreshTokenResponseDto,
-  SignupDto,
-  SignupResponseDto,
 } from './dtos';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-
-  @ApiTags(SWAGGER_TAGS.AUTH)
-  @ApiOperation({
-    summary: 'Sign up for user API',
-    description: 'This API is used to register a new user',
-  })
-  @ApiCreatedResponse({
-    description: 'User created successfully',
-    type: SignupResponseDto,
-  })
-  @Public()
-  @Post('/signup')
-  signup(@Body() data: SignupDto, @Res({ passthrough: true }) res: Response) {
-    return this.authService.signup(data, res);
-  }
 
   @ApiTags(SWAGGER_TAGS.AUTH)
   @ApiOperation({
@@ -86,7 +70,8 @@ export class AuthController {
   @ApiTags(SWAGGER_TAGS.AUTH)
   @ApiOperation({
     summary: 'DigiLocker initiate API',
-    description: 'Initiates DigiLocker login for citizens — returns a loginUrl to redirect the user to',
+    description:
+      'Initiates DigiLocker login for citizens — returns a loginUrl to redirect the user to',
   })
   @ApiOkResponse({
     description: 'DigiLocker login initiated',
@@ -102,7 +87,8 @@ export class AuthController {
   @ApiTags(SWAGGER_TAGS.AUTH)
   @ApiOperation({
     summary: 'DigiLocker complete API',
-    description: 'Completes DigiLocker login — exchanges Setu request ID for a session (sets JWT cookies)',
+    description:
+      'Completes DigiLocker login — exchanges Setu request ID for a session (sets JWT cookies)',
   })
   @ApiOkResponse({
     description: 'Login successful',
@@ -111,7 +97,10 @@ export class AuthController {
   @Public()
   @HttpCode(HttpStatus.OK)
   @Post('/digilocker/complete')
-  digilockerComplete(@Body() data: DigilockerCompleteDto, @Res({ passthrough: true }) res: Response) {
+  digilockerComplete(
+    @Body() data: DigilockerCompleteDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     return this.authService.digilockerComplete(data.id, res);
   }
 
@@ -124,6 +113,7 @@ export class AuthController {
     description: 'Change password successful',
     type: ChangePasswordResponseDto,
   })
+  @Roles(UserRole.ADMIN, UserRole.DEPARTMENT)
   @Post('/change-password')
   changePassword(@CurrentUser() currentUser: ICurrentUser, @Body() data: ChangePasswordDto) {
     return this.authService.changePassword(currentUser.userId, data);
