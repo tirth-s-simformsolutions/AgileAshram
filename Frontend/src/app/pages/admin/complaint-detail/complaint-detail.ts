@@ -6,7 +6,8 @@ import { FormsModule } from '@angular/forms';
 import { switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ComplaintService } from '../../../core/services/complaint';
-import { Complaint, ComplaintStatus } from '../../../core/models/complaint.model';
+import { DepartmentService } from '../../../core/services/department';
+import { Complaint, ComplaintStatus, DepartmentItem } from '../../../core/models/complaint.model';
 import { Sidebar } from '../../../shared/components/sidebar/sidebar';
 import { StatusChip } from '../../../shared/components/status-chip/status-chip';
 import { SeverityBadge } from '../../../shared/components/severity-badge/severity-badge';
@@ -29,6 +30,7 @@ export class ComplaintDetail implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly complaintSvc = inject(ComplaintService);
+  private readonly departmentSvc = inject(DepartmentService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -40,6 +42,28 @@ export class ComplaintDetail implements OnInit {
   readonly updateSuccess = signal(false);
   readonly showRejectConfirm = signal(false);
   readonly zoomImage = signal(false);
+
+  // Reassign department
+  readonly departments = signal<DepartmentItem[]>([]);
+  private readonly _targetDeptId = signal('');
+  get targetDeptId(): string { return this._targetDeptId(); }
+  set targetDeptId(v: string) { this._targetDeptId.set(v); }
+  private readonly _reassignNote = signal('');
+  get reassignNote(): string { return this._reassignNote(); }
+  set reassignNote(v: string) { this._reassignNote.set(v); }
+  readonly isReassigning = signal(false);
+  readonly reassignSuccess = signal(false);
+  readonly reassignError = signal<string | null>(null);
+
+  // Other departments to reassign to (current one excluded).
+  protected readonly otherDepartments = computed(() =>
+    this.departments().filter(d => d._id !== this.complaint()?.departmentId),
+  );
+  protected readonly canReassign = computed(() =>
+    !this.isReassigning() &&
+    this._targetDeptId().length > 0 &&
+    this._reassignNote().trim().length > 0,
+  );
 
   // Action gate: a comment is mandatory for RESOLVED and REJECTED; RESOLVED also needs a proof photo.
   private readonly _comment = signal('');
@@ -72,6 +96,36 @@ export class ComplaintDetail implements OnInit {
     this.route.params.subscribe(params => {
       const id = params['id'] as string;
       this.loadComplaint(id);
+    });
+    this.departmentSvc.getDepartments()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: list => this.departments.set(list), error: () => {} });
+  }
+
+  protected reassign(): void {
+    const id = this.complaint()?.id;
+    const deptId = this._targetDeptId();
+    const note = this._reassignNote().trim();
+    if (!id || !deptId || !note || this.isReassigning()) return;
+
+    this.isReassigning.set(true);
+    this.reassignSuccess.set(false);
+    this.reassignError.set(null);
+    this.complaintSvc.reassignDepartment(id, deptId, note).subscribe({
+      next: () => {
+        this.isReassigning.set(false);
+        this.reassignSuccess.set(true);
+        // Response isn't populated — reflect the chosen department locally.
+        const dept = this.departments().find(d => d._id === deptId);
+        this.complaint.update(c => c ? { ...c, departmentId: deptId, department: dept?.name ?? c.department } : null);
+        this._targetDeptId.set('');
+        this._reassignNote.set('');
+        setTimeout(() => this.reassignSuccess.set(false), 4000);
+      },
+      error: () => {
+        this.isReassigning.set(false);
+        this.reassignError.set('Could not reassign. Please try again.');
+      },
     });
   }
 
@@ -139,7 +193,7 @@ export class ComplaintDetail implements OnInit {
   private submitUpdate(id: string, status: ComplaintStatus, note?: string): void {
     this.isUpdating.set(true);
     this.updateSuccess.set(false);
-    this.complaintSvc.updateStatus(id, status, note).subscribe({
+    this.complaintSvc.updateStatus(id, status, { note }).subscribe({
       next: () => {
         this.isUpdating.set(false);
         this.updateSuccess.set(true);
@@ -151,8 +205,7 @@ export class ComplaintDetail implements OnInit {
     });
   }
 
-  // RESOLVED requires proof: upload the photo, then PATCH with the comment as the note
-  // (the photo URL is folded into the note since the status endpoint has no image field).
+  // RESOLVED requires proof: upload the photo, then PATCH with resolutionNote { comment, imageUrl }.
   private submitResolve(id: string): void {
     const comment = this._comment().trim();
     const file = this.resolveFile();
@@ -162,10 +215,11 @@ export class ComplaintDetail implements OnInit {
     this.updateSuccess.set(false);
     this.complaintSvc.getPresignedUrl(file.name, file.type).pipe(
       switchMap(res => {
-        const photoUrl = res.data.publicUrl;
-        const note = `${comment}\n\n[Resolution photo] ${photoUrl}`;
+        const imageUrl = res.data.publicUrl;
         return this.complaintSvc.uploadToStorage(res.data.presignedUrl, file).pipe(
-          switchMap(() => this.complaintSvc.updateStatus(id, 'RESOLVED', note)),
+          switchMap(() => this.complaintSvc.updateStatus(id, 'RESOLVED', {
+            resolutionNote: { comment, imageUrl },
+          })),
         );
       }),
       takeUntilDestroyed(this.destroyRef),

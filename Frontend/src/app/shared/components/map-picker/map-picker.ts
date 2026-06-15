@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, debounceTime, switchMap, catchError, of } from 'rxjs';
+import { loadLeaflet } from '../../../core/utils/leaflet';
 
 export interface PickedLocation {
   lat: number;
@@ -143,7 +144,7 @@ export class MapPicker {
     const el = this.mapContainer()?.nativeElement;
     if (!el || this.map) return;
 
-    const L = await import('leaflet');
+    const L = await loadLeaflet();
 
     const amcLatLngBounds = L.latLngBounds(
       [AMC_BOUNDS.south, AMC_BOUNDS.west],
@@ -255,7 +256,7 @@ export class MapPicker {
 
   private async applyRadiusRestriction(lat: number, lng: number): Promise<void> {
     if (!this.map) return;
-    const L = await import('leaflet');
+    const L = await loadLeaflet();
 
     // Reset any previous pin from an earlier (denied/retry) session
     if (this.marker) {
@@ -306,7 +307,7 @@ export class MapPicker {
       return;
     }
     this.radiusError.set(null);
-    import('leaflet').then(L => {
+    loadLeaflet().then(L => {
       const pinIcon = L.divIcon({
         html: PIN_SVG,
         className: '',

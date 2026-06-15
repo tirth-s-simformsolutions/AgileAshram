@@ -5,6 +5,7 @@ import {
 import { isPlatformBrowser } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ComplaintService } from '../../../core/services/complaint';
+import { loadLeaflet } from '../../../core/utils/leaflet';
 import { Sidebar } from '../../../shared/components/sidebar/sidebar';
 
 interface GpsPoint { lat: number; lng: number; }
@@ -105,7 +106,7 @@ export class HotspotMap {
     const el = this.mapContainer()?.nativeElement;
     if (!el || this.map) return;
 
-    const L = await import('leaflet');
+    const L = await loadLeaflet();
     this.L = L;
 
     const bounds = L.latLngBounds(

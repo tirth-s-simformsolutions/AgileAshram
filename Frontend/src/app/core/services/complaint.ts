@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import {
   Complaint, ComplaintCategory, ComplaintSeverity, ComplaintStatus,
-  CreateComplaintDto, PresignedUrlResponse, SlaStatus, SubmittedComplaint
+  CreateComplaintDto, PresignedUrlResponse, ResolutionNote, SlaStatus, SubmittedComplaint
 } from '../models/complaint.model';
 
 // ---------------------------------------------------------------------------
@@ -66,6 +66,7 @@ export class ComplaintService {
       severity: (raw.severity ?? '').toLowerCase() as ComplaintSeverity,
       status: (raw.status as ComplaintStatus) ?? 'OPEN',
       department: raw.departmentId?.name ?? '',
+      departmentId: raw.departmentId?._id,
       location: {
         lat: raw.gps?.lat ?? 0,
         lng: raw.gps?.lng ?? 0,
@@ -137,10 +138,24 @@ export class ComplaintService {
       .pipe(map(res => this.mapComplaint(res.data)));
   }
 
-  updateStatus(id: string, status: ComplaintStatus, note?: string): Observable<StatusUpdateResponse> {
-    const body: { status: ComplaintStatus; note?: string } = { status };
-    if (note?.trim()) body.note = note.trim();
+  // Matches PATCH /complaints/:id/status: { status, note?, resolutionNote? }.
+  // RESOLVED requires resolutionNote: { comment, imageUrl? } (not the free-text note).
+  updateStatus(
+    id: string,
+    status: ComplaintStatus,
+    opts?: { note?: string; resolutionNote?: ResolutionNote },
+  ): Observable<StatusUpdateResponse> {
+    const body: { status: ComplaintStatus; note?: string; resolutionNote?: ResolutionNote } = { status };
+    if (opts?.note?.trim()) body.note = opts.note.trim();
+    if (opts?.resolutionNote) body.resolutionNote = opts.resolutionNote;
     return this.http.patch<StatusUpdateResponse>(`/api/v1/complaints/${id}/status`, body);
+  }
+
+  // Reassign a complaint to a different department (admin/department). Note is required by the API.
+  reassignDepartment(id: string, departmentId: string, note: string): Observable<Complaint> {
+    return this.http
+      .patch<{ data: RawComplaint }>(`/api/v1/complaints/${id}/department`, { departmentId, note })
+      .pipe(map(res => this.mapComplaint(res.data)));
   }
 
   // Citizen feedback on a resolved complaint (rating 1–5 + optional comment). One per complaint.
