@@ -6,6 +6,36 @@ An AI platform where DigiLocker-verified citizens report civic issues via text o
 
 ---
 
+## Screenshots
+
+### Citizen — Mobile
+
+<p align="center">
+  <img src="Photos/Project/citizen-login-digilocker-mobile.png" width="160" alt="DigiLocker Login" title="DigiLocker Login" />
+  &nbsp;
+  <img src="Photos/Project/citizen-complaint-intake-mobile.png" width="160" alt="Complaint Intake" title="Complaint Intake" />
+  &nbsp;
+  <img src="Photos/Project/citizen-gps-location-picker-mobile.png" width="160" alt="GPS Location Picker" title="GPS Location Picker" />
+  &nbsp;
+  <img src="Photos/Project/citizen-complaint-tracker-mobile.png" width="160" alt="Complaint Tracker" title="Complaint Tracker" />
+  &nbsp;
+  <img src="Photos/Project/citizen-ticket-tracker-mobile.png" width="160" alt="Ticket Tracker" title="Ticket Tracker" />
+</p>
+
+### Department — Desktop
+
+<p align="center">
+  <img src="Photos/Project/department-complaint-queue-desktop.png" width="700" alt="Complaint Queue" title="Complaint Queue" />
+</p>
+<p align="center">
+  <img src="Photos/Project/department-complaint-detail-desktop.png" width="700" alt="Complaint Detail" title="Complaint Detail" />
+</p>
+<p align="center">
+  <img src="Photos/Project/department-hotspot-map-desktop.png" width="700" alt="Hotspot Map" title="Hotspot Map" />
+</p>
+
+---
+
 ## Team
 
 | Name | Role |
