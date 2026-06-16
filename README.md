@@ -11,15 +11,15 @@ An AI platform where DigiLocker-verified citizens report civic issues via text o
 ### Citizen — Mobile
 
 <p align="center">
-  <img src="Photos/Project/citizen-login-digilocker-mobile.png" width="160" alt="DigiLocker Login" title="DigiLocker Login" />
+  <img src="Photos/Project/citizen-login-digilocker-mobile.png" height="320" alt="DigiLocker Login" title="DigiLocker Login" />
   &nbsp;
-  <img src="Photos/Project/citizen-complaint-intake-mobile.png" width="160" alt="Complaint Intake" title="Complaint Intake" />
+  <img src="Photos/Project/citizen-complaint-intake-mobile.png" height="320" alt="Complaint Intake" title="Complaint Intake" />
   &nbsp;
-  <img src="Photos/Project/citizen-gps-location-picker-mobile.png" width="160" alt="GPS Location Picker" title="GPS Location Picker" />
+  <img src="Photos/Project/citizen-gps-location-picker-mobile.png" height="320" alt="GPS Location Picker" title="GPS Location Picker" />
   &nbsp;
-  <img src="Photos/Project/citizen-complaint-tracker-mobile.png" width="160" alt="Complaint Tracker" title="Complaint Tracker" />
+  <img src="Photos/Project/citizen-complaint-tracker-mobile.png" height="320" alt="Complaint Tracker" title="Complaint Tracker" />
   &nbsp;
-  <img src="Photos/Project/citizen-ticket-tracker-mobile.png" width="160" alt="Ticket Tracker" title="Ticket Tracker" />
+  <img src="Photos/Project/citizen-ticket-tracker-mobile.png" height="320" alt="Ticket Tracker" title="Ticket Tracker" />
 </p>
 
 ### Department — Desktop
